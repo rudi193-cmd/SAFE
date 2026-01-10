@@ -16,10 +16,16 @@ Consent expires with the session. Data is deleted by default. Users own their da
 
 | Document | Purpose |
 |----------|---------|
-| `governance/SESSION_CONSENT.md` | Complete SAFE protocol specification |
-| `governance/DUAL_COMMIT.md` | AI proposes, human ratifies model |
+| `governance/GOVERNANCE_INDEX.md` | Precedence hierarchy for all governance docs |
+| `governance/CHARTER.md` | Foundational authority and system purpose |
 | `governance/HARD_STOPS.md` | Five absolute boundaries |
 | `governance/HARD_STOPS_GROUNDING.md` | Biographical precedent for hard stops |
+| `governance/HARD_STOPS_LEDGER.md` | Record of hard stop invocations |
+| `governance/SESSION_CONSENT.md` | Complete SAFE protocol specification |
+| `governance/DUAL_COMMIT.md` | AI proposes, human ratifies model |
+| `governance/CONTRIBUTOR_PROTOCOL.md` | Rights and process for contributors |
+| `governance/NAMING_PROTOCOL.md` | Naming conventions |
+| `governance/THE_ELEVEN_PRINCIPLE.md` | Trust accumulation principle |
 
 ### Data Schemas
 
