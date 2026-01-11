@@ -118,6 +118,10 @@ If it asks for data, it should ask every session.
 
 ---
 
+Sugested Donation. $1. 
+
+---
+
 ## Implementation
 
 ### Reference Implementations
