@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Willow Control Desktop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 20px; font-size: 24px; }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1600px;
+        }
+
+        .card {
+            background: #111;
+            border: 1px solid #00ff00;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .card:hover {
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        .card h2 { font-size: 18px; margin-bottom: 10px; }
+        .card p { color: #00cc00; font-size: 14px; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; align-items: center; justify-content: center; }
+
+        .modal {
+            background: #0a0a0a;
+            border: 2px solid #00ff00;
+            padding: 30px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            width: 1200px;
+        }
+        .modal h2 { margin-bottom: 20px; border-bottom: 1px solid #00ff00; padding-bottom: 10px; }
+        .modal button {
+            background: #003300;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .modal button:hover { background: #00ff00; color: #000; }
+
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #00ff00; }
+        td { color: #00cc00; }
+    </style>
+</head>
+<body>
+    <h1>🧠 WILLOW CONTROL DESKTOP</h1>
+
+    <div class="cards">
+        <div class="card" onclick="openModal('providers')">
+            <h2>🌐 Providers</h2>
+            <p id="providers-summary">Loading...</p>
+        </div>
+        <div class="card" onclick="openModal('queues')">
+            <h2>📥 Queues</h2>
+            <p id="queues-summary">Loading...</p>
+        </div>
+        <div class="card" onclick="openModal('nodes')">
+            <h2>🌳 Nodes</h2>
+            <p id="nodes-summary">Loading...</p>
+        </div>
+        <div class="card" onclick="openModal('learning')">
+            <h2>🧠 Learning</h2>
+            <p id="learning-summary">Loading...</p>
+        </div>
+        <div class="card" onclick="openModal('rules')">
+            <h2>💡 Rules</h2>
+            <p id="rules-summary">Loading...</p>
+        </div>
+        <div class="card" onclick="openModal('patterns')">
+            <h2>📊 Patterns</h2>
+            <p id="patterns-summary">Loading...</p>
+        </div>
+        <div class="card" onclick="openModal('governance')">
+            <h2>⚖️ Governance</h2>
+            <p id="governance-summary">Loading...</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModalIfOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2 id="modal-title"></h2>
+            <div id="modal-body"></div>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        async function loadSummaries() {
+            // Providers
+            try {
+                const r = await fetch('/api/health/providers');
+                const d = await r.json();
+                const p = Object.values(d.providers || {});
+                const h = p.filter(x => x.status === 'healthy').length;
+                const dg = p.filter(x => x.status === 'degraded').length;
+                const b = p.filter(x => x.status === 'blacklisted').length;
+                document.getElementById('providers-summary').textContent = `${h} healthy, ${dg} degraded, ${b} blacklisted`;
+            } catch(e) { document.getElementById('providers-summary').textContent = 'Error'; }
+
+            // Queues
+            try {
+                const r = await fetch('/api/health/queues');
+                const d = await r.json();
+                const q = Object.values(d.queues || {});
+                const total = q.reduce((sum, x) => sum + x.count, 0);
+                document.getElementById('queues-summary').textContent = `${total} files in ${q.length} queues`;
+            } catch(e) { document.getElementById('queues-summary').textContent = 'Error'; }
+
+            // Nodes
+            try {
+                const r = await fetch('/api/health/nodes');
+                const d = await r.json();
+                const n = Object.values(d.nodes || {});
+                const h = n.filter(x => x.status === 'healthy').length;
+                const nodb = n.filter(x => x.status === 'no_db').length;
+                document.getElementById('nodes-summary').textContent = `${h} healthy, ${nodb} no_db`;
+            } catch(e) { document.getElementById('nodes-summary').textContent = 'Error'; }
+
+            // Learning (Fleet Feedback)
+            try {
+                const r = await fetch('/api/feedback/stats');
+                const d = await r.json();
+                const providers = Object.keys(d.by_provider || {}).length;
+                const tasks = Object.keys(d.by_task || {}).length;
+                document.getElementById('learning-summary').textContent = `${providers} providers, ${tasks} task types tracked`;
+            } catch(e) { document.getElementById('learning-summary').textContent = 'Error'; }
+
+            // Rules
+            try {
+                const r = await fetch('/api/patterns/suggestions');
+                const d = await r.json();
+                document.getElementById('rules-summary').textContent = `${(d.suggestions || []).length} rules suggested`;
+            } catch(e) { document.getElementById('rules-summary').textContent = 'Error'; }
+
+            // Patterns
+            try {
+                const r = await fetch('/api/patterns/stats');
+                const d = await r.json();
+                document.getElementById('patterns-summary').textContent = `${d.total_routings || 0} total routings`;
+            } catch(e) { document.getElementById('patterns-summary').textContent = 'Error'; }
+
+            // Governance
+            try {
+                const r = await fetch('/api/system/status');
+                const d = await r.json();
+                const pending = d.governance?.pending_commits || 0;
+                const lastRat = d.governance?.last_ratification;
+                const status = pending > 0 ? `${pending} pending` : 'All clear';
+                document.getElementById('governance-summary').textContent = status;
+            } catch(e) { document.getElementById('governance-summary').textContent = 'Error'; }
+        }
+
+        async function openModal(type) {
+            document.getElementById('modal-title').textContent = getModalTitle(type);
+            document.getElementById('modal-body').innerHTML = 'Loading...';
+            document.getElementById('modal-overlay').classList.add('show');
+
+            try {
+                if (type === 'nodes') await loadNodesModal();
+                else if (type === 'governance') await loadGovernanceModal();
+                else if (type === 'learning') await loadLearningModal();
+                else document.getElementById('modal-body').innerHTML = `<p>${type} modal coming soon...</p>`;
+            } catch(e) {
+                document.getElementById('modal-body').innerHTML = `<p>Error: ${e.message}</p>`;
+            }
+        }
+
+        async function loadNodesModal() {
+            const r = await fetch('/api/health/nodes');
+            const d = await r.json();
+            const nodes = d.nodes || {};
+
+            let html = '<table><tr><th>Node</th><th>Status</th><th>Message</th><th>Actions</th></tr>';
+            for (const [name, node] of Object.entries(nodes)) {
+                const color = node.status === 'healthy' ? '#00ff00' : node.status === 'no_db' ? '#ff0000' : '#ffaa00';
+                let actions = '';
+                if (node.status === 'no_db') {
+                    actions = `<button onclick="createNodeDB('${name}')" style="background: #003300; border: 1px solid #00ff00; color: #00ff00; padding: 5px 10px; cursor: pointer;">Create DB</button>`;
+                }
+                html += `<tr><td>${name}</td><td style="color:${color}">${node.status}</td><td>${node.message}</td><td>${actions}</td></tr>`;
+            }
+            html += '</table>';
+            document.getElementById('modal-body').innerHTML = html;
+        }
+
+        async function createNodeDB(nodeName) {
+            if (!confirm(`Create knowledge database for node: ${nodeName}?`)) {
+                return;
+            }
+
+            try {
+                const r = await fetch('/api/nodes/create_db', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({node_name: nodeName})
+                });
+                const data = await r.json();
+
+                if (data.success) {
+                    alert(`✓ Database created for ${nodeName}!\n\nThe node now has a knowledge.db file and can store knowledge atoms.`);
+                    // Reload modal to show updated status
+                    loadNodesModal();
+                } else {
+                    alert(`Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch(e) {
+                alert(`Failed to create database: ${e.message}`);
+            }
+        }
+
+        async function loadGovernanceModal() {
+            const r = await fetch('/api/system/status');
+            const d = await r.json();
+            const gov = d.governance || {};
+
+            let html = '<div>';
+            html += `<p><strong>Pending Commits:</strong> ${gov.pending_commits || 0}</p>`;
+            if (gov.last_ratification) {
+                const date = new Date(gov.last_ratification).toLocaleString();
+                html += `<p><strong>Last Ratification:</strong> ${date}</p>`;
+            }
+            html += '<p style="margin-top: 20px;"><a href="/governance" target="_blank" style="color: #00ff00; text-decoration: underline;">Open Full Governance Dashboard →</a></p>';
+            html += '</div>';
+
+            document.getElementById('modal-body').innerHTML = html;
+        }
+
+        async function loadLearningModal() {
+            // Fetch feedback stats
+            const statsR = await fetch('/api/feedback/stats');
+            const stats = await statsR.json();
+
+            // Fetch unannotated routings
+            const routingsR = await fetch('/api/annotations/unannotated?limit=10');
+            const routingsData = await routingsR.json();
+            const routings = routingsData.routings || [];
+
+            // Fetch annotation stats
+            const annotStatsR = await fetch('/api/annotations/stats');
+            const annotStats = await annotStatsR.json();
+
+            let html = '<div>';
+
+            // Stats by provider
+            html += '<h3 style="margin-bottom: 10px;">📊 Fleet Performance by Provider</h3>';
+            html += '<table><tr><th>Provider</th><th>Avg Quality</th><th>Total Feedback</th><th>Poor Count</th></tr>';
+            for (const [provider, data] of Object.entries(stats.by_provider || {})) {
+                const qualColor = data.avg_quality >= 4 ? '#00ff00' : data.avg_quality >= 3 ? '#ffaa00' : '#ff0000';
+                html += `<tr><td>${provider}</td><td style="color:${qualColor}">${data.avg_quality}/5</td><td>${data.total}</td><td>${data.poor_count}</td></tr>`;
+            }
+            html += '</table>';
+
+            // Stats by task type
+            html += '<h3 style="margin: 20px 0 10px;">📝 Fleet Performance by Task Type</h3>';
+            html += '<table><tr><th>Task Type</th><th>Avg Quality</th><th>Total Feedback</th></tr>';
+            for (const [task, data] of Object.entries(stats.by_task || {})) {
+                const qualColor = data.avg_quality >= 4 ? '#00ff00' : data.avg_quality >= 3 ? '#ffaa00' : '#ff0000';
+                html += `<tr><td>${task}</td><td style="color:${qualColor}">${data.avg_quality}/5</td><td>${data.total}</td></tr>`;
+            }
+            html += '</table>';
+
+            // File Routing Annotations Section
+            html += '<h3 style="margin: 30px 0 10px;">📁 File Routing Decisions (Verify & Annotate)</h3>';
+            if (annotStats.overall) {
+                const acc = annotStats.overall.accuracy_rate || 0;
+                const accColor = acc >= 90 ? '#00ff00' : acc >= 75 ? '#ffaa00' : '#ff0000';
+                html += `<p style="color: #00cc00;">Routing Accuracy: <span style="color:${accColor}">${acc.toFixed(1)}%</span> `;
+                html += `(${annotStats.overall.correct_count} correct, ${annotStats.overall.incorrect_count} wrong, ${annotStats.overall.total_annotations} total annotations)</p>`;
+            }
+
+            if (routings.length > 0) {
+                html += '<table style="margin-top: 10px;"><tr><th>File</th><th>Type</th><th>Routed To</th><th>Reason</th><th>Confidence</th><th>Action</th></tr>';
+                for (const r of routings) {
+                    const routedTo = JSON.parse(r.routed_to || '[]').join(', ');
+                    const confColor = r.confidence >= 0.8 ? '#00ff00' : r.confidence >= 0.5 ? '#ffaa00' : '#ff0000';
+                    html += `<tr>`;
+                    html += `<td>${r.filename}</td>`;
+                    html += `<td>${r.file_type || 'N/A'}</td>`;
+                    html += `<td>${routedTo}</td>`;
+                    html += `<td style="font-size: 12px;">${(r.reason || '').substring(0, 50)}...</td>`;
+                    html += `<td style="color:${confColor}">${(r.confidence || 0).toFixed(2)}</td>`;
+                    html += `<td><button onclick="openAnnotationForm(${r.id}, '${r.filename}', '${r.routed_to}')" style="background: #003300; border: 1px solid #00ff00; color: #00ff00; padding: 5px 10px; cursor: pointer;">Annotate</button></td>`;
+                    html += `</tr>`;
+                }
+                html += '</table>';
+            } else {
+                html += '<p style="color: #00cc00;">No routing decisions pending annotation. Great work!</p>';
+            }
+
+            // Add feedback form
+            html += '<h3 style="margin: 30px 0 10px;">➕ Provide Fleet Feedback</h3>';
+            html += '<form id="feedback-form" style="background: #111; padding: 20px; border: 1px solid #00ff00; margin-top: 10px;">';
+            html += '<div style="margin-bottom: 10px;"><label>Provider: <input type="text" id="fb-provider" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 200px;" placeholder="e.g. Groq"></label></div>';
+            html += '<div style="margin-bottom: 10px;"><label>Task Type: <input type="text" id="fb-task" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 200px;" placeholder="e.g. html_generation"></label></div>';
+            html += '<div style="margin-bottom: 10px;"><label>Quality (1-5): <input type="number" id="fb-quality" min="1" max="5" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 80px;" value="3"></label></div>';
+            html += '<div style="margin-bottom: 10px;"><label>Issues: <input type="text" id="fb-issues" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 400px;" placeholder="comma-separated: wrong_tech_stack, syntax_errors"></label></div>';
+            html += '<div style="margin-bottom: 10px;"><label>Notes: <textarea id="fb-notes" rows="3" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 100%;" placeholder="Explain what was wrong and why..."></textarea></label></div>';
+            html += '<div style="margin-bottom: 10px;"><label>Prompt: <textarea id="fb-prompt" rows="2" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 100%;" placeholder="Original prompt sent to fleet"></textarea></label></div>';
+            html += '<div style="margin-bottom: 10px;"><label>Output: <textarea id="fb-output" rows="3" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 100%;" placeholder="What the fleet generated"></textarea></label></div>';
+            html += '<button type="button" onclick="submitFeedback()" style="background: #003300; border: 1px solid #00ff00; color: #00ff00; padding: 10px 20px; cursor: pointer;">Submit Feedback</button>';
+            html += '</form>';
+
+            // Annotation Form (hidden by default)
+            html += '<div id="annotation-form-container" style="display: none; background: #111; padding: 20px; border: 2px solid #00ff00; margin-top: 20px;">';
+            html += '<h3>✍️ Annotate Routing Decision</h3>';
+            html += '<p id="annotation-file-info" style="color: #00cc00; margin-bottom: 15px;"></p>';
+            html += '<input type="hidden" id="annotation-routing-id">';
+            html += '<input type="hidden" id="annotation-filename">';
+            html += '<input type="hidden" id="annotation-routed-to">';
+            html += '<div style="margin-bottom: 15px;">';
+            html += '<label style="margin-right: 20px;"><input type="radio" name="is-correct" value="true"> ✓ Correct</label>';
+            html += '<label><input type="radio" name="is-correct" value="false"> ✗ Wrong</label>';
+            html += '</div>';
+            html += '<div style="margin-bottom: 15px;"><label>Notes (explain WHY):<br><textarea id="annotation-notes" rows="4" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 100%;" placeholder="Explain why this routing is correct or wrong..."></textarea></label></div>';
+            html += '<div id="corrected-dest-container" style="margin-bottom: 15px; display: none;"><label>Corrected Destination (comma-separated):<br><input type="text" id="corrected-destination" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 100%;" placeholder="e.g. code_review, documents"></label></div>';
+            html += '<button onclick="submitAnnotation()" style="background: #003300; border: 1px solid #00ff00; color: #00ff00; padding: 10px 20px; cursor: pointer; margin-right: 10px;">Submit Annotation</button>';
+            html += '<button onclick="closeAnnotationForm()" style="background: #330000; border: 1px solid #ff0000; color: #ff0000; padding: 10px 20px; cursor: pointer;">Cancel</button>';
+            html += '</div>';
+
+            html += '</div>';
+            document.getElementById('modal-body').innerHTML = html;
+
+            // Add event listener for correct/wrong radio buttons
+            const radios = document.getElementsByName('is-correct');
+            for (const radio of radios) {
+                radio.addEventListener('change', () => {
+                    const correctedContainer = document.getElementById('corrected-dest-container');
+                    if (radio.value === 'false' && radio.checked) {
+                        correctedContainer.style.display = 'block';
+                    } else {
+                        correctedContainer.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        function openAnnotationForm(routingId, filename, routedToJson) {
+            const routedTo = JSON.parse(routedToJson || '[]');
+            document.getElementById('annotation-routing-id').value = routingId;
+            document.getElementById('annotation-filename').value = filename;
+            document.getElementById('annotation-routed-to').value = routedToJson;
+            document.getElementById('annotation-file-info').textContent = `File: ${filename} → Routed to: ${routedTo.join(', ')}`;
+            document.getElementById('annotation-form-container').style.display = 'block';
+            // Clear previous values
+            document.getElementById('annotation-notes').value = '';
+            document.getElementById('corrected-destination').value = '';
+            const radios = document.getElementsByName('is-correct');
+            for (const r of radios) r.checked = false;
+            document.getElementById('corrected-dest-container').style.display = 'none';
+        }
+
+        function closeAnnotationForm() {
+            document.getElementById('annotation-form-container').style.display = 'none';
+        }
+
+        async function submitAnnotation() {
+            const routingId = parseInt(document.getElementById('annotation-routing-id').value);
+            const filename = document.getElementById('annotation-filename').value;
+            const routedToJson = document.getElementById('annotation-routed-to').value;
+            const routedTo = JSON.parse(routedToJson || '[]');
+            const notes = document.getElementById('annotation-notes').value;
+            const isCorrectRadio = document.querySelector('input[name="is-correct"]:checked');
+            const correctedDestStr = document.getElementById('corrected-destination').value;
+
+            // Validate
+            if (!isCorrectRadio) {
+                alert('Please select whether the routing was correct or wrong');
+                return;
+            }
+            if (!notes.trim()) {
+                alert('Please provide notes explaining why');
+                return;
+            }
+
+            const isCorrect = isCorrectRadio.value === 'true';
+            let correctedDestination = null;
+
+            if (!isCorrect && correctedDestStr.trim()) {
+                correctedDestination = correctedDestStr.split(',').map(s => s.trim()).filter(s => s);
+            }
+
+            // Submit
+            try {
+                const r = await fetch('/api/annotations/provide', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        routing_id: routingId,
+                        filename: filename,
+                        routed_to: routedTo,
+                        is_correct: isCorrect,
+                        notes: notes,
+                        corrected_destination: correctedDestination
+                    })
+                });
+                const data = await r.json();
+                if (data.success) {
+                    alert('Annotation submitted successfully!');
+                    closeAnnotationForm();
+                    // Reload modal to show updated stats and remove annotated item
+                    loadLearningModal();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch(e) {
+                alert('Failed to submit annotation: ' + e.message);
+            }
+        }
+
+        async function submitFeedback() {
+            const provider = document.getElementById('fb-provider').value;
+            const task = document.getElementById('fb-task').value;
+            const quality = parseInt(document.getElementById('fb-quality').value);
+            const issuesStr = document.getElementById('fb-issues').value;
+            const notes = document.getElementById('fb-notes').value;
+            const prompt = document.getElementById('fb-prompt').value;
+            const output = document.getElementById('fb-output').value;
+
+            // Validate
+            if (!provider || !task || !notes || !prompt || !output) {
+                alert('Please fill in all required fields: provider, task, notes, prompt, output');
+                return;
+            }
+
+            // Parse issues
+            const issues = issuesStr ? issuesStr.split(',').map(s => s.trim()) : [];
+
+            // Submit
+            try {
+                const r = await fetch('/api/feedback/provide', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        provider, task_type: task, quality, issues, notes, prompt, output
+                    })
+                });
+                const data = await r.json();
+                if (data.success) {
+                    alert('Feedback submitted successfully!');
+                    // Clear form
+                    document.getElementById('fb-provider').value = '';
+                    document.getElementById('fb-task').value = '';
+                    document.getElementById('fb-quality').value = '3';
+                    document.getElementById('fb-issues').value = '';
+                    document.getElementById('fb-notes').value = '';
+                    document.getElementById('fb-prompt').value = '';
+                    document.getElementById('fb-output').value = '';
+                    // Reload modal to show updated stats
+                    loadLearningModal();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch(e) {
+                alert('Failed to submit feedback: ' + e.message);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('show');
+        }
+
+        function closeModalIfOverlay(e) {
+            if (e.target.id === 'modal-overlay') closeModal();
+        }
+
+        function getModalTitle(type) {
+            const titles = {
+                'providers': '🌐 Provider Mesh Details',
+                'queues': '📥 Queue Management',
+                'nodes': '🌳 Node Health & Database Management',
+                'learning': '🧠 Learned Routing Patterns',
+                'rules': '💡 Suggested Routing Rules',
+                'patterns': '📊 Pattern Recognition Stats',
+                'governance': '⚖️ Governance & Dual Commit'
+            };
+            return titles[type] || type;
+        }
+
+        loadSummaries();
+    </script>
+</body>
+</html>

@@ -15,12 +15,63 @@ import os
 import json
 import logging
 import requests
+import time
 from pathlib import Path
 from typing import Optional, Dict, List
 from dataclasses import dataclass
 
+# Import health tracking for resilient provider mesh
+try:
+    from . import provider_health
+except ImportError:
+    import provider_health
+
+# Import performance tracking for learning optimal routing
+try:
+    from . import patterns_provider
+except ImportError:
+    import patterns_provider
+
+# Import fleet feedback for prompt enhancement
+try:
+    from . import fleet_feedback
+except ImportError:
+    import fleet_feedback
+
 # Round-robin state
 _round_robin_index = {"free": 0, "cheap": 0, "paid": 0}
+
+# Task type inference for performance tracking
+def _infer_task_type(prompt: str) -> str:
+    """Infer task type from prompt for performance tracking."""
+    prompt_lower = prompt.lower()
+
+    # Check for code generation types
+    if 'html' in prompt_lower or '<div' in prompt_lower or 'webpage' in prompt_lower:
+        return 'html_generation'
+    if 'javascript' in prompt_lower or 'function' in prompt_lower and ('js' in prompt_lower or 'script' in prompt_lower):
+        return 'javascript_generation'
+    if 'css' in prompt_lower or 'style' in prompt_lower and 'color' in prompt_lower:
+        return 'css_generation'
+    if 'python' in prompt_lower or 'def ' in prompt_lower or 'import ' in prompt_lower:
+        return 'python_generation'
+
+    # Check for task types
+    if 'refactor' in prompt_lower or 'improve' in prompt_lower or 'optimize' in prompt_lower:
+        return 'code_refactoring'
+    if 'fix' in prompt_lower or 'debug' in prompt_lower or 'error' in prompt_lower:
+        return 'debugging'
+    if 'explain' in prompt_lower or 'what does' in prompt_lower or 'how does' in prompt_lower:
+        return 'code_explanation'
+    if 'summarize' in prompt_lower or 'summary' in prompt_lower:
+        return 'text_summarization'
+    if 'translate' in prompt_lower:
+        return 'translation'
+    if 'test' in prompt_lower and ('write' in prompt_lower or 'generate' in prompt_lower):
+        return 'test_generation'
+
+    # Default
+    return 'general_completion'
 
 # --- 1. KEY LOADER ( The Fix) ---
 def load_keys_from_json():
@@ -148,6 +199,16 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
     Returns:
         RouterResponse or None if all providers fail
     """
+    # Infer task type from original prompt (before enhancement)
+    task_type = _infer_task_type(prompt)
+
+    # Enhance prompt with learned corrections from past feedback
+    try:
+        enhanced_prompt = fleet_feedback.enhance_prompt_with_feedback(prompt, task_type)
+    except Exception as e:
+        logging.warning(f"Failed to enhance prompt with feedback: {e}")
+        enhanced_prompt = prompt  # Fall back to original prompt
+
     available = get_available_providers()
 
     # Flatten priority list
@@ -173,8 +234,34 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
     if not priority:
         return None
 
+    # Filter out blacklisted providers
+    provider_names = [p.name for p in priority]
+    healthy_names = provider_health.get_healthy_providers(provider_names)
+    healthy_providers = [p for p in priority if p.name in healthy_names]
+
+    # Separate Ollama (local) from cloud providers
+    ollama_provider = None
+    cloud_providers = []
+    for p in healthy_providers:
+        if p.name == "Ollama":
+            ollama_provider = p
+        else:
+            cloud_providers.append(p)
+
+    # Prefer cloud providers; only use Ollama if no cloud providers available
+    if cloud_providers:
+        healthy_providers = cloud_providers
+        logging.info(f"Using {len(cloud_providers)} cloud providers (Ollama available as backup)")
+    elif ollama_provider:
+        healthy_providers = [ollama_provider]
+        logging.info("All cloud providers unavailable, using local Ollama")
+    else:
+        logging.warning("No healthy providers available — all blacklisted")
+        return None
+
     # Try providers in order
-    for provider in priority:
+    for provider in healthy_providers:
+        start_time = time.time()
         try:
             # --- ORACLE OCI ADAPTER ---
             if provider.name == "Oracle OCI":
@@ -202,7 +289,7 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                         compartment_id=compartment_id,
                         serving_mode=OnDemandServingMode(model_id=provider.model),
                         chat_request=CohereChatRequest(
-                            message=prompt,
+                            message=enhanced_prompt,
                             max_tokens=1024,
                             temperature=0.7
                         )
@@ -211,8 +298,24 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                     # Call Oracle OCI
                     response = client.chat(chat_details)
 
-                    return RouterResponse(response.data.chat_response.text, provider.name, provider.tier)
+                    response_time_ms = int((time.time() - start_time) * 1000)
+                    response_text = response.data.chat_response.text
+
+                    # Health tracking
+                    provider_health.record_success(provider.name, response_time_ms)
+
+                    # Performance tracking (task_type already computed at top of function)
+                    patterns_provider.log_provider_performance(
+                        provider=provider.name,
+                        file_type='text',
+                        category=task_type,
+                        response_time_ms=response_time_ms,
+                        success=True
+                    )
+
+                    return RouterResponse(response_text, provider.name, provider.tier)
                 except Exception as oci_err:
+                    provider_health.record_failure(provider.name, type(oci_err).__name__, str(oci_err))
                     logging.warning(f"Oracle OCI failed: {oci_err} — trying next")
                     continue
 
@@ -220,12 +323,27 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
             elif provider.name == "Ollama":
                 resp = requests.post(provider.base_url, json={
                     "model": provider.model,
-                    "prompt": prompt,
+                    "prompt": enhanced_prompt,
                     "stream": False
                 }, timeout=120)
                 if resp.status_code == 200:
-                    return RouterResponse(resp.json()['response'], provider.name, provider.tier)
+                    response_time_ms = int((time.time() - start_time) * 1000)
+                    response_text = resp.json()['response']
+
+                    provider_health.record_success(provider.name, response_time_ms)
+
+                    # Performance tracking (task_type already computed at top of function)
+                    patterns_provider.log_provider_performance(
+                        provider=provider.name,
+                        file_type='text',
+                        category=task_type,
+                        response_time_ms=response_time_ms,
+                        success=True
+                    )
+
+                    return RouterResponse(response_text, provider.name, provider.tier)
                 else:
+                    provider_health.record_failure(provider.name, str(resp.status_code), resp.text[:200])
                     logging.warning(f"Provider {provider.name} returned {resp.status_code} — trying next")
                     continue
 
@@ -237,31 +355,63 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
 
                 payload = {
                     "model": provider.model,
-                    "messages": [{"role": "user", "content": prompt}]
+                    "messages": [{"role": "user", "content": enhanced_prompt}]
                 }
 
                 resp = requests.post(provider.base_url, json=payload, headers=headers, timeout=30)
                 if resp.status_code == 200:
-                    return RouterResponse(resp.json()['choices'][0]['message']['content'], provider.name, provider.tier)
+                    response_time_ms = int((time.time() - start_time) * 1000)
+                    response_text = resp.json()['choices'][0]['message']['content']
+
+                    provider_health.record_success(provider.name, response_time_ms)
+
+                    # Performance tracking (task_type already computed at top of function)
+                    patterns_provider.log_provider_performance(
+                        provider=provider.name,
+                        file_type='text',
+                        category=task_type,
+                        response_time_ms=response_time_ms,
+                        success=True
+                    )
+
+                    return RouterResponse(response_text, provider.name, provider.tier)
                 elif resp.status_code == 429:
+                    provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
                     continue
                 else:
                     body = resp.text[:200] if resp.text else "no body"
+                    provider_health.record_failure(provider.name, str(resp.status_code), body)
                     logging.warning(f"Provider {provider.name} returned {resp.status_code}: {body} — trying next")
                     continue
 
             # --- GEMINI ADAPTER ---
             elif provider.name == "Google Gemini":
                 url = f"{provider.base_url}{provider.model}:generateContent?key={os.environ.get(provider.env_key)}"
-                payload = {"contents": [{"parts": [{"text": prompt}]}]}
+                payload = {"contents": [{"parts": [{"text": enhanced_prompt}]}]}
                 resp = requests.post(url, json=payload, timeout=30)
                 if resp.status_code == 200:
-                    return RouterResponse(resp.json()['candidates'][0]['content']['parts'][0]['text'], provider.name, provider.tier)
+                    response_time_ms = int((time.time() - start_time) * 1000)
+                    response_text = resp.json()['candidates'][0]['content']['parts'][0]['text']
+
+                    provider_health.record_success(provider.name, response_time_ms)
+
+                    # Performance tracking (task_type already computed at top of function)
+                    patterns_provider.log_provider_performance(
+                        provider=provider.name,
+                        file_type='text',
+                        category=task_type,
+                        response_time_ms=response_time_ms,
+                        success=True
+                    )
+
+                    return RouterResponse(response_text, provider.name, provider.tier)
                 elif resp.status_code == 429:
+                    provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
                     continue
                 else:
+                    provider_health.record_failure(provider.name, str(resp.status_code), resp.text[:200])
                     logging.warning(f"Provider {provider.name} returned {resp.status_code} — trying next")
                     continue
 
@@ -275,15 +425,31 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                 payload = {
                     "model": provider.model,
                     "max_tokens": 1024,
-                    "messages": [{"role": "user", "content": prompt}]
+                    "messages": [{"role": "user", "content": enhanced_prompt}]
                 }
                 resp = requests.post(provider.base_url, json=payload, headers=headers, timeout=30)
                 if resp.status_code == 200:
-                    return RouterResponse(resp.json()['content'][0]['text'], provider.name, provider.tier)
+                    response_time_ms = int((time.time() - start_time) * 1000)
+                    response_text = resp.json()['content'][0]['text']
+
+                    provider_health.record_success(provider.name, response_time_ms)
+
+                    # Performance tracking (task_type already computed at top of function)
+                    patterns_provider.log_provider_performance(
+                        provider=provider.name,
+                        file_type='text',
+                        category=task_type,
+                        response_time_ms=response_time_ms,
+                        success=True
+                    )
+
+                    return RouterResponse(response_text, provider.name, provider.tier)
                 elif resp.status_code == 429:
+                    provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
                     continue
                 else:
+                    provider_health.record_failure(provider.name, str(resp.status_code), resp.text[:200])
                     logging.warning(f"Provider {provider.name} returned {resp.status_code} — trying next")
                     continue
 
@@ -295,19 +461,36 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                 }
                 payload = {
                     "model": provider.model,
-                    "message": prompt
+                    "message": enhanced_prompt
                 }
                 resp = requests.post(provider.base_url, json=payload, headers=headers, timeout=30)
                 if resp.status_code == 200:
-                    return RouterResponse(resp.json()['text'], provider.name, provider.tier)
+                    response_time_ms = int((time.time() - start_time) * 1000)
+                    response_text = resp.json()['text']
+
+                    provider_health.record_success(provider.name, response_time_ms)
+
+                    # Performance tracking (task_type already computed at top of function)
+                    patterns_provider.log_provider_performance(
+                        provider=provider.name,
+                        file_type='text',
+                        category=task_type,
+                        response_time_ms=response_time_ms,
+                        success=True
+                    )
+
+                    return RouterResponse(response_text, provider.name, provider.tier)
                 elif resp.status_code == 429:
+                    provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
                     continue
                 else:
+                    provider_health.record_failure(provider.name, str(resp.status_code), resp.text[:200])
                     logging.warning(f"Provider {provider.name} returned {resp.status_code} — trying next")
                     continue
 
         except Exception as e:
+            provider_health.record_failure(provider.name, type(e).__name__, str(e))
             logging.warning(f"Provider {provider.name} failed: {e}")
             continue
 

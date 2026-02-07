@@ -1,0 +1,282 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            font-family: Courier New, monospace;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+        .card {
+            padding: 16px;
+            margin: 8px;
+            width: 200px;
+            border: 1px solid #00ff00;
+            display: inline-block;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        .modal-content {
+            background-color: #0a0a0a;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #00ff00;
+            width: 80%;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="modals">
+        <div class="modal" id="providers-modal">
+            <div class="modal-content">
+                <h2 id="providers-modal-title"></h2>
+                <table id="providers-modal-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Service
+                            </th>
+                            <th>
+                                Status
+                            </th>
+                            <th>
+                                Message
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="providers-modal-body">
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="closeModal('providers-modal')">Close</button>
+        </div>
+        <div class="modal" id="queues-modal">
+            <div class="modal-content">
+                <h2 id="queues-modal-title"></h2>
+                <table id="queues-modal-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Queue
+                            </th>
+                            <th>
+                                Count
+                            </th>
+                            <th>
+                                Status
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="queues-modal-body">
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="closeModal('queues-modal')">Close</button>
+        </div>
+        <div class="modal" id="nodes-modal">
+            <div class="modal-content">
+                <h2 id="nodes-modal-title"></h2>
+                <table id="nodes-modal-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Node
+                            </th>
+                            <th>
+                                Status
+                            </th>
+                            <th>
+                                Message
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="nodes-modal-body">
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="closeModal('nodes-modal')">Close</button>
+        </div>
+        <div class="modal" id="learning-modal">
+            <div class="modal-content">
+                <h2 id="learning-modal-title"></h2>
+                <ul id="learning-modal-list">
+                </ul>
+            </div>
+            <button onclick="closeModal('learning-modal')">Close</button>
+        </div>
+        <div class="modal" id="rules-modal">
+            <div class="modal-content">
+                <h2 id="rules-modal-title"></h2>
+                <ul id="rules-modal-list">
+                </ul>
+            </div>
+            <button onclick="closeModal('rules-modal')">Close</button>
+        </div>
+        <div class="modal" id="patterns-modal">
+            <div class="modal-content">
+                <h2 id="patterns-modal-title"></h2>
+                <ul id="patterns-modal-list">
+                    <li>Preferences: <span id="patterns-modal-preferences"></span></li>
+                    <li>Suggestions: <span id="patterns-modal-suggestions"></span></li>
+                    <li>Total Routings: <span id="patterns-modal-total-routings"></span></li>
+                </ul>
+            </div>
+            <button onclick="closeModal('patterns-modal')">Close</button>
+        </div>
+    </div>
+    <div class="card" id="providers-card">
+        <h2>Providers</h2>
+        <p id="providers-summary">Health check result (API call)</p>
+        <button onclick="openModal('providers-modal')">Details</button>
+    </div>
+    <div class="card" id="queues-card">
+        <h2>Queues</h2>
+        <p id="queues-summary">Health check result (API call)</p>
+        <button onclick="openModal('queues-modal')">Details</button>
+    </div>
+    <div class="card" id="nodes-card">
+        <h2>Noddos</h2>
+        <p id="nodes-summary">Health check result (API call)</p>
+        <button onclick="openModal('nodes-modal')">Details</button>
+    </div>
+    <div class="card" id="learning-card">
+        <h2>Learning</h2>
+        <p id="learning-summary">Health check result (API call)</p>
+        <button onclick="openModal('learning-modal')">Details</button>
+    </div>
+    <div class="card" id="rules-card">
+        <h2>Rules</h2>
+        <p id="rules-summary">Health check result (API call)</p>
+        <button onclick="openModal('rules-modal')">Details</button>
+    </div>
+    <div class="card" id="patterns-card">
+        <h2>Patterns</h2>
+        <p id="patterns-summary">Health check result (API call)</p>
+        <button onclick="openModal('patterns-modal')">Details</button>
+    </div>
+
+    <script>
+        const openModal = (id) => {
+            const modal = document.getElementById(id);
+            modal.style.display = "block";
+            const body = document.getElementById(id + '-modal-body');
+            fetch('/api/health/providers')
+                .then(res => res.json())
+                .then(data => {
+                    const table = document.createElement('table');
+                    table.innerHTML = '<thead><tr><th>Service</th><th>Status</th><th>Message</th></tr></thead><tbody>';
+                    data.providers.forEach(provider => {
+                        table.innerHTML += '<tr><td>' + provider.name + '</td><td>' + provider.status + '</td><td>' + provider.message + '</td></tr>';
+                    });
+                    table.innerHTML += '</tbody>';
+                    body.appendChild(table);
+                });
+            const title = document.getElementById(id + '-modal-title');
+            fetch('/api/health/queues')
+                .then(res => res.json())
+                .then(data => {
+                    title.innerHTML = 'Queues: ' + data.queues.length;
+                });
+            const queuesTitle = document.getElementById(id + '-modal-title');
+            const table = document.getElementById(id + '-modal-table');
+            fetch('/api/queues')
+                .then(res => res.json())
+                .then(data => {
+                    data.queues.forEach(que => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td>' + que.name + '</td><td>' + que.count + '</td><td>' + que.status + '</td>';
+                        table.tBodies[0].appendChild(row);
+                    });
+                });
+            const nodesTitle = document.getElementById(id + '-modal-title');
+            const nodesTable = document.getElementById(id + '-modal-table');
+            fetch('/api/health/nodes')
+                .then(res => res.json())
+                .then(data => {
+                    title.innerHTML = 'Nodes: ' + data.nodes.length;
+                });
+            const table = document.createElement('table');
+            table.innerHTML = '<thead><tr><th>Node</th><th>Health</th><th>Message</th></tr></thead><tbody>';
+            data.nodes.forEach(node => {
+                table.innerHTML += '<tr><td>' + node.name + '</td><td>' + node.status + '</td><td>' + node.message + '</td></tr>';
+            });
+            nodesTable.innerHTML = table.innerHTML;
+            const learningTitle = document.getElementById(id + '-modal-title');
+            const learningList = document.getElementById(id + '-modal-list');
+            fetch('/api/learning/preferences')
+                .then(res => res.json())
+                .then(data => {
+                    title.innerHTML = 'Learning: ' + data.preferences.count;
+                });
+            fetch('/api/learning/suggestions')
+                .then(res => res.json())
+                .then(data => {
+                    title.innerHTML = 'Learning: ' + data.suggestions.count;
+                });
+            const rulesTitle = document.getElementById(id + '-modal-title');
+            const rulesList = document.getElementById(id + '-modal-list');
+            fetch('/api/rules/preferences')
+                .then(res => res.json())
+                .then(data => {
+                    title.innerHTML = 'Rules: ' + data.count;
+                });
+            const patternsTitle = document.getElementById(id + '-modal-title');
+            const patternsList = document.getElementById(id + '-modal-list');
+            fetch('/api/patterns/preferences')
+                .then(res => res.json())
+                .then(data => {
+                    patternsList.innerHTML = '';
+                    data.forEach(p => {
+                        const item = document.createElement('li');
+                        item.innerHTML = p.name;
+                        patternsList.appendChild(item);
+                    });
+                    patternsTitle.innerHTML = 'Patterns: Preferences: ' + data.length;
+                });
+            fetch('/api/patterns/suggestions')
+                .then(res => res.json())
+                .then(data => {
+                    patternsList.innerHTML = '';
+                    data.forEach(p => {
+                        const item = document.createElement('li');
+                        item.innerHTML = p.name;
+                        patternsList.appendChild(item);
+                    });
+                    patternsTitle.innerHTML = 'Patterns: Suggestions: ' + data.length;
+                });
+            fetch('/api/patterns/stats')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('patterns-modal-total-routings').innerHTML = data.total_routings;
+                });
+        };
+        const closeModal = (id) => {
+            const modal = document.getElementById(id);
+            modal.style.display = "none";
+        };
+        document.getElementById('providers-card').onclick = openModal;
+        document.getElementById('queues-card').onclick = openModal;
+        document.getElementById('nodes-card').onclick = openModal;
+        document.getElementById('learning-card').onclick = openModal;
+        document.getElementById('rules-card').onclick = openModal;
+        document.getElementById('patterns-card').onclick = openModal;
+    </script>
+</body>
+</html>
+```
+
+Please note, in the above code, we're making multiple API calls to fetch all the data to populate the modals. In a real-world scenario, you should optimize this to avoid making multiple requests to reduce the overhead.

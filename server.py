@@ -665,6 +665,508 @@ async def governance_reject(request: Request):
         return {"error": str(e), "success": False}
 
 
+# --- Pattern Recognition & Health Monitoring ---
+
+@app.get("/api/patterns/stats")
+def patterns_stats():
+    """Get routing pattern statistics."""
+    try:
+        from core import patterns
+        stats = patterns.get_routing_stats(days=30)
+        return stats
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/patterns/preferences")
+def patterns_preferences():
+    """Get learned routing preferences."""
+    try:
+        from core import patterns
+        prefs = patterns.get_learned_preferences(min_confidence=0.3)
+        return {"preferences": prefs}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/patterns/suggestions")
+def patterns_suggestions():
+    """Get suggested automatic routing rules."""
+    try:
+        from core import patterns
+        suggestions = patterns.suggest_rules()
+        return {"suggestions": suggestions}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/patterns/confirm_rule")
+async def patterns_confirm_rule(request: Request):
+    """User confirms a suggested routing rule."""
+    try:
+        from core import patterns
+        body = await request.json()
+        pattern_type = body.get("pattern_type")
+        pattern_value = body.get("pattern_value")
+        destination = body.get("destination")
+
+        if not all([pattern_type, pattern_value, destination]):
+            return {"error": "Missing required fields"}
+
+        patterns.confirm_rule(pattern_type, pattern_value, destination)
+        return {"success": True}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/patterns/anomalies")
+def patterns_anomalies():
+    """Detect routing and entity anomalies."""
+    try:
+        from core import patterns
+        anomalies = patterns.detect_anomalies(lookback_days=7)
+        return {"anomalies": anomalies}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- Fleet Feedback Endpoints ---
+
+@app.get("/api/feedback/stats")
+def feedback_stats():
+    """Get feedback statistics by provider and task type."""
+    try:
+        from core import fleet_feedback
+        stats = fleet_feedback.get_feedback_stats()
+        return stats
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/feedback/tasks/{task_type}")
+def feedback_for_task(task_type: str, min_quality: Optional[int] = None, limit: int = 10):
+    """Get feedback for a specific task type."""
+    try:
+        from core import fleet_feedback
+        feedback = fleet_feedback.get_feedback_for_task(task_type, min_quality, limit)
+        return {"task_type": task_type, "feedback": feedback, "count": len(feedback)}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/feedback/provide")
+async def provide_feedback(request: Request):
+    """
+    Submit feedback about a fleet output.
+
+    Body: {
+        "provider": "Groq",
+        "task_type": "html_generation",
+        "prompt": "original prompt",
+        "output": "what the fleet generated",
+        "quality": 2,  // 1-5 stars
+        "issues": ["wrong_tech_stack", "syntax_errors"],
+        "notes": "Generated React code instead of vanilla JS",
+        "corrected": "optional corrected version"
+    }
+    """
+    try:
+        from core import fleet_feedback
+        body = await request.json()
+
+        # Validate required fields
+        required = ["provider", "task_type", "prompt", "output", "quality", "issues", "notes"]
+        missing = [f for f in required if f not in body]
+        if missing:
+            return {"error": f"Missing required fields: {missing}"}
+
+        # Validate quality rating
+        quality = body["quality"]
+        if not isinstance(quality, int) or quality < 1 or quality > 5:
+            return {"error": "quality must be an integer between 1 and 5"}
+
+        # Store feedback
+        fleet_feedback.provide_feedback(
+            provider=body["provider"],
+            task_type=body["task_type"],
+            prompt=body["prompt"],
+            output=body["output"],
+            quality=quality,
+            issues_list=body["issues"],
+            notes=body["notes"],
+            corrected=body.get("corrected")
+        )
+
+        return {
+            "success": True,
+            "message": f"Feedback recorded for {body['provider']} - {body['task_type']}"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- File Annotation Endpoints ---
+
+@app.get("/api/annotations/unannotated")
+def get_unannotated_routings(limit: int = 20):
+    """Get routing decisions that haven't been annotated yet."""
+    try:
+        from core import file_annotations
+        routings = file_annotations.get_unannotated_routings(limit=limit)
+        return {"routings": routings, "count": len(routings)}
+    except Exception as e:
+        return {"error": str(e), "routings": []}
+
+
+@app.post("/api/annotations/provide")
+async def provide_annotation(request: Request):
+    """
+    Submit an annotation for a routing decision.
+
+    Body: {
+        "routing_id": 123,
+        "filename": "test.py",
+        "routed_to": ["node1", "node2"],
+        "is_correct": false,
+        "notes": "Should have gone to code_review because...",
+        "corrected_destination": ["code_review"]
+    }
+    """
+    try:
+        from core import file_annotations
+        body = await request.json()
+
+        # Validate required fields
+        required = ["routing_id", "filename", "routed_to", "is_correct", "notes"]
+        missing = [f for f in required if f not in body]
+        if missing:
+            return {"error": f"Missing required fields: {missing}"}
+
+        # Store annotation
+        file_annotations.provide_annotation(
+            routing_id=body["routing_id"],
+            filename=body["filename"],
+            routed_to=body["routed_to"],
+            is_correct=body["is_correct"],
+            notes=body["notes"],
+            corrected_destination=body.get("corrected_destination"),
+            annotated_by=body.get("annotated_by", "user")
+        )
+
+        return {
+            "success": True,
+            "message": f"Annotation recorded for routing {body['routing_id']}"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/annotations/stats")
+def get_annotation_stats():
+    """Get file annotation statistics."""
+    try:
+        from core import file_annotations
+        stats = file_annotations.get_annotation_stats()
+        by_type = file_annotations.get_annotations_by_file_type()
+        recent = file_annotations.get_recent_annotations(limit=10)
+        return {
+            "overall": stats,
+            "by_file_type": by_type,
+            "recent_annotations": recent
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/health/report")
+def health_report():
+    """Comprehensive system health report."""
+    try:
+        from core import health
+        report = health.get_health_report()
+        return report
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/health/nodes")
+def health_nodes():
+    """Check health of all nodes' knowledge databases."""
+    try:
+        from core import health
+        nodes = health.check_node_health(stale_threshold_hours=24)
+        return {"nodes": nodes}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/nodes/create_db")
+async def create_node_db(request: Request):
+    """
+    Create knowledge database for a node.
+
+    Body: {"node_name": "some_node"}
+    """
+    try:
+        from core import knowledge
+        body = await request.json()
+        node_name = body.get("node_name")
+
+        if not node_name:
+            return {"error": "Missing node_name"}
+
+        # Validate node name (alphanumeric, underscore, hyphen only)
+        import re
+        if not re.match(r'^[a-zA-Z0-9_-]+$', node_name):
+            return {"error": "Invalid node_name. Use only letters, numbers, underscores, and hyphens."}
+
+        # Create database
+        knowledge.init_db(node_name)
+
+        return {
+            "success": True,
+            "message": f"Knowledge database created for node: {node_name}",
+            "node_name": node_name
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/health/queues")
+def health_queues():
+    """Check pending queue backlogs."""
+    try:
+        from core import health
+        queues = health.check_queue_health(backlog_threshold=50)
+        return {"queues": queues}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/health/apis")
+def health_apis():
+    """Check API health (Ollama, Gemini, Groq, etc.)."""
+    try:
+        from core import health
+        apis = health.check_api_health()
+        return {"apis": apis}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/health/issues")
+def health_issues():
+    """Get unresolved health issues."""
+    try:
+        from core import health
+        issues = health.get_unresolved_issues()
+        return {"issues": issues}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/health/heal")
+async def health_heal(request: Request):
+    """Attempt to self-heal a specific issue."""
+    try:
+        from core import health
+        body = await request.json()
+        issue_id = body.get("issue_id")
+
+        if not issue_id:
+            return {"error": "Missing issue_id"}
+
+        success = health.attempt_self_heal(issue_id)
+        return {"success": success, "issue_id": issue_id}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- Provider Health Endpoints ---
+
+@app.get("/api/health/providers")
+def get_provider_health():
+    """Get health status for all LLM providers."""
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent / "core"))
+        import provider_health
+
+        health_data = provider_health.get_all_health_status()
+
+        # Convert ProviderHealth objects to dicts
+        providers = {}
+        for name, h in health_data.items():
+            providers[name] = {
+                "provider": h.provider,
+                "status": h.status,
+                "consecutive_failures": h.consecutive_failures,
+                "last_success": h.last_success,
+                "last_failure": h.last_failure,
+                "blacklisted_until": h.blacklisted_until,
+                "total_requests": h.total_requests,
+                "total_successes": h.total_successes,
+                "total_failures": h.total_failures,
+                "success_rate": (h.total_successes / h.total_requests * 100) if h.total_requests > 0 else 0
+            }
+
+        return {"providers": providers}
+    except Exception as e:
+        return {"error": str(e), "providers": {}}
+
+
+@app.post("/api/health/providers/unblacklist")
+async def unblacklist_provider(request: Request):
+    """Manually unblacklist a provider."""
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent / "core"))
+        import provider_health
+        import sqlite3
+
+        body = await request.json()
+        provider_name = body.get("provider")
+
+        if not provider_name:
+            return {"error": "Missing provider name"}
+
+        # Manually unblacklist by updating database
+        conn = provider_health._connect()
+        conn.execute("""
+            UPDATE provider_health
+            SET status = 'healthy', blacklisted_until = NULL, consecutive_failures = 0
+            WHERE provider = ?
+        """, (provider_name,))
+        conn.commit()
+        conn.close()
+
+        return {"success": True, "provider": provider_name, "message": f"{provider_name} unblacklisted"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/health/providers/reset")
+async def reset_provider_health(request: Request):
+    """Reset health counters for a provider."""
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent / "core"))
+        import provider_health
+
+        body = await request.json()
+        provider_name = body.get("provider")
+
+        if not provider_name:
+            return {"error": "Missing provider name"}
+
+        # Reset health counters
+        conn = provider_health._connect()
+        conn.execute("""
+            UPDATE provider_health
+            SET status = 'healthy',
+                consecutive_failures = 0,
+                blacklisted_until = NULL
+            WHERE provider = ?
+        """, (provider_name,))
+        conn.commit()
+        conn.close()
+
+        return {"success": True, "provider": provider_name, "message": f"{provider_name} health reset"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- Intake Queue Management ---
+
+@app.post("/api/intake/retry/{stage}")
+async def retry_intake_stage(stage: str):
+    """Retry all files in an intake stage by moving them back to dump."""
+    try:
+        intake_base = Path("intake")
+        stage_path = intake_base / stage
+        dump_path = intake_base / "dump"
+
+        if not stage_path.exists():
+            return {"error": f"Stage '{stage}' not found"}
+
+        if not dump_path.exists():
+            dump_path.mkdir(parents=True, exist_ok=True)
+
+        # Move all files from stage back to dump
+        moved_count = 0
+        for file_path in stage_path.iterdir():
+            if file_path.is_file():
+                dest = dump_path / file_path.name
+                file_path.rename(dest)
+                moved_count += 1
+
+        return {
+            "success": True,
+            "stage": stage,
+            "files_retried": moved_count,
+            "message": f"Moved {moved_count} files from {stage} back to dump for retry"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/intake/clear/{stage}")
+async def clear_intake_stage(stage: str):
+    """Clear all files from an intake stage (moves to clear)."""
+    try:
+        intake_base = Path("intake")
+        stage_path = intake_base / stage
+        clear_path = intake_base / "clear"
+
+        if not stage_path.exists():
+            return {"error": f"Stage '{stage}' not found"}
+
+        if not clear_path.exists():
+            clear_path.mkdir(parents=True, exist_ok=True)
+
+        # Move all files from stage to clear
+        cleared_count = 0
+        for file_path in stage_path.iterdir():
+            if file_path.is_file():
+                dest = clear_path / file_path.name
+                file_path.rename(dest)
+                cleared_count += 1
+
+        return {
+            "success": True,
+            "stage": stage,
+            "files_cleared": cleared_count,
+            "message": f"Cleared {cleared_count} files from {stage}"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- Issue Management ---
+
+@app.post("/api/health/issues/dismiss")
+async def dismiss_issue(request: Request):
+    """Dismiss a health issue by ID."""
+    try:
+        from core import health
+        body = await request.json()
+        issue_id = body.get("issue_id")
+
+        if not issue_id:
+            return {"error": "Missing issue_id"}
+
+        # Mark issue as dismissed
+        success = health.dismiss_issue(issue_id)
+
+        return {
+            "success": success,
+            "issue_id": issue_id,
+            "message": f"Issue {issue_id} dismissed" if success else "Failed to dismiss issue"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # --- Pocket Willow (mobile-friendly, served same-origin) ---
 
 POCKET_HTML = Path(__file__).parent / "neocities" / "index.html"
@@ -687,6 +1189,18 @@ def serve_governance_dashboard():
     if not GOVERNANCE_DASHBOARD.exists():
         return {"error": "governance/dashboard.html not found"}
     return FileResponse(GOVERNANCE_DASHBOARD, media_type="text/html")
+
+
+# --- System Dashboard ---
+
+SYSTEM_DASHBOARD = Path(__file__).parent / "system" / "dashboard.html"
+
+@app.get("/system")
+def serve_system_dashboard():
+    """Serve system dashboard for pattern recognition and health monitoring."""
+    if not SYSTEM_DASHBOARD.exists():
+        return {"error": "system/dashboard.html not found"}
+    return FileResponse(SYSTEM_DASHBOARD, media_type="text/html")
 
 
 # --- Static file serving (production) ---
