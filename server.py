@@ -7,8 +7,14 @@ GOVERNANCE: Localhost-only. No external network binding.
 
 import sys
 import hashlib
+import httpx
+import psutil
+import queue
+import threading
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +33,9 @@ from apps.pa import drive_scan, drive_organize
 
 app = FastAPI(title="Willow", docs_url=None, redoc_url=None)
 
+# Track server start time for uptime
+SERVER_START_TIME = datetime.now()
+
 # CORS for Vite dev server
 app.add_middleware(
     CORSMiddleware,
@@ -44,6 +53,93 @@ USERNAME = local_api.DEFAULT_USER
 def health():
     """Fast health check — no Ollama ping, no DB queries."""
     return {"status": "ok"}
+
+
+@app.get("/api/system/status")
+async def system_status():
+    """
+    Comprehensive system status for Willow health monitoring.
+    Checks: Ollama, server uptime, governance queue, intake pipeline, engine, tunnel.
+    """
+    status = {
+        "ollama": {"running": False, "models": []},
+        "server": {"uptime_seconds": 0, "port": 8420},
+        "governance": {"pending_commits": 0, "last_ratification": None},
+        "intake": {"dump": 0, "hold": 0, "process": 0, "route": 0, "clear": 0},
+        "engine": {"running": False},
+        "tunnel": {"url": None, "reachable": False}
+    }
+
+    # --- Ollama Check ---
+    try:
+        async with httpx.AsyncClient(timeout=3) as client:
+            r = await client.get("http://127.0.0.1:11434/api/tags")
+            r.raise_for_status()
+            data = r.json()
+            status["ollama"]["running"] = True
+            status["ollama"]["models"] = [m["name"] for m in data.get("models", [])]
+    except:
+        pass
+
+    # --- Server Uptime ---
+    status["server"]["uptime_seconds"] = int((datetime.now() - SERVER_START_TIME).total_seconds())
+
+    # --- Governance Check ---
+    try:
+        gov_dir = Path("governance/commits")
+        if gov_dir.is_dir():
+            pending = list(gov_dir.glob("*.pending"))
+            status["governance"]["pending_commits"] = len(pending)
+
+            # Last ratification = most recent non-pending file
+            all_files = [f for f in gov_dir.iterdir() if f.is_file() and not f.name.endswith(".pending")]
+            if all_files:
+                latest = max(all_files, key=lambda f: f.stat().st_mtime)
+                status["governance"]["last_ratification"] = datetime.fromtimestamp(latest.stat().st_mtime).isoformat()
+    except:
+        pass
+
+    # --- Intake Check ---
+    try:
+        intake_dir = Path("intake")
+        for stage in ["dump", "hold", "process", "route", "clear"]:
+            stage_path = intake_dir / stage
+            if stage_path.is_dir():
+                status["intake"][stage] = len(list(stage_path.iterdir()))
+    except:
+        pass
+
+    # --- Engine Check (kart process) ---
+    try:
+        for proc in psutil.process_iter(['name']):
+            if 'kart' in proc.info['name'].lower() or 'python' in proc.info['name'].lower():
+                # Check if it's running kart.py (basic heuristic)
+                try:
+                    if any('kart' in arg.lower() for arg in proc.cmdline()):
+                        status["engine"]["running"] = True
+                        break
+                except (psutil.AccessDenied, psutil.NoSuchProcess):
+                    pass
+    except:
+        pass
+
+    # --- Tunnel Check ---
+    try:
+        tunnel_file = Path(".tunnel_url")
+        if tunnel_file.is_file():
+            tunnel_url = tunnel_file.read_text().strip()
+            if tunnel_url:
+                status["tunnel"]["url"] = tunnel_url
+                try:
+                    async with httpx.AsyncClient(timeout=5) as client:
+                        r = await client.head(tunnel_url + "/api/health")
+                        status["tunnel"]["reachable"] = r.is_success
+                except:
+                    pass
+    except:
+        pass
+
+    return status
 
 
 @app.get("/api/status")
@@ -124,6 +220,94 @@ async def chat(request: Request):
             pass
 
         yield "event: done\ndata: [DONE]\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@app.post("/api/chat/multi")
+async def chat_multi(request: Request):
+    """
+    Parallel multi-persona chat.
+
+    Body: {"tasks": [{"persona": "Kart", "prompt": "..."}, ...]}
+
+    Spawns threads for each persona, streams all responses tagged by persona.
+    """
+    body = await request.json()
+    tasks = body.get("tasks", [])
+
+    if not tasks:
+        return {"error": "No tasks provided"}
+
+    # Validate tasks
+    for task in tasks:
+        if "persona" not in task or "prompt" not in task:
+            return {"error": "Each task must have 'persona' and 'prompt'"}
+
+    def generate():
+        # Queue for collecting chunks from all threads
+        chunk_queue = queue.Queue()
+        active_personas = set(task["persona"] for task in tasks)
+
+        def worker(persona: str, prompt: str):
+            """Worker thread that streams from one persona."""
+            try:
+                full_response = []
+                for chunk in local_api.process_smart_stream(prompt, persona=persona, user=USERNAME):
+                    full_response.append(chunk)
+                    # Tag chunk with persona and put in queue
+                    chunk_queue.put((persona, "chunk", chunk))
+
+                # Log conversation for this persona
+                try:
+                    coherence = local_api.log_conversation(
+                        persona=persona,
+                        user_input=prompt,
+                        assistant_response="".join(full_response),
+                        model="streamed",
+                        tier=0,
+                    )
+                    chunk_queue.put((persona, "coherence", coherence))
+                except:
+                    pass
+
+                # Signal this persona is done
+                chunk_queue.put((persona, "done", None))
+            except Exception as e:
+                chunk_queue.put((persona, "error", str(e)))
+
+        # Start all threads
+        with ThreadPoolExecutor(max_workers=len(tasks)) as executor:
+            futures = []
+            for task in tasks:
+                future = executor.submit(worker, task["persona"], task["prompt"])
+                futures.append(future)
+
+            # Stream events as they arrive
+            while active_personas:
+                try:
+                    persona, event_type, data = chunk_queue.get(timeout=0.1)
+
+                    if event_type == "chunk":
+                        yield f"event: {persona}\ndata: {data}\n\n"
+
+                    elif event_type == "coherence":
+                        import json
+                        yield f"event: coherence_{persona}\ndata: {json.dumps(data)}\n\n"
+
+                    elif event_type == "done":
+                        yield f"event: done_{persona}\ndata: [DONE]\n\n"
+                        active_personas.discard(persona)
+
+                    elif event_type == "error":
+                        yield f"event: error_{persona}\ndata: {data}\n\n"
+                        active_personas.discard(persona)
+
+                except queue.Empty:
+                    continue
+
+            # All personas finished
+            yield "event: complete\ndata: [COMPLETE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 
@@ -370,6 +554,117 @@ def neocities_info():
         return {"error": str(e)}
 
 
+# --- Governance (Dual Commit) ---
+
+GOV_COMMITS_DIR = Path("governance/commits")
+GOV_COMMITS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@app.get("/api/governance/pending")
+def governance_pending():
+    """List all pending governance commits awaiting ratification."""
+    try:
+        pending = []
+        for f in GOV_COMMITS_DIR.glob("*.pending"):
+            stat = f.stat()
+            pending.append({
+                "id": f.stem,
+                "filename": f.name,
+                "timestamp": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                "size": stat.st_size,
+            })
+        # Sort by timestamp descending (newest first)
+        pending.sort(key=lambda x: x["timestamp"], reverse=True)
+        return {"pending": pending}
+    except Exception as e:
+        return {"error": str(e), "pending": []}
+
+
+@app.get("/api/governance/history")
+def governance_history(limit: int = 50):
+    """List ratified and rejected commits (history)."""
+    try:
+        history = []
+        for f in list(GOV_COMMITS_DIR.glob("*.commit")) + list(GOV_COMMITS_DIR.glob("*.reject")):
+            stat = f.stat()
+            action = "approved" if f.suffix == ".commit" else "rejected"
+            history.append({
+                "id": f.stem,
+                "filename": f.name,
+                "action": action,
+                "timestamp": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            })
+        # Sort by timestamp descending
+        history.sort(key=lambda x: x["timestamp"], reverse=True)
+        return {"history": history[:limit]}
+    except Exception as e:
+        return {"error": str(e), "history": []}
+
+
+@app.get("/api/governance/diff/{commit_id}")
+def governance_diff(commit_id: str):
+    """Get the contents of a pending commit for review."""
+    try:
+        filepath = GOV_COMMITS_DIR / f"{commit_id}.pending"
+        if not filepath.exists():
+            return {"error": "Commit not found"}
+        content = filepath.read_text(encoding="utf-8")
+        return {"id": commit_id, "content": content}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/governance/approve")
+async def governance_approve(request: Request):
+    """Approve (ratify) a pending commit. Moves .pending → .commit."""
+    try:
+        body = await request.json()
+        commit_id = body.get("commit_id")
+        if not commit_id:
+            return {"error": "Missing commit_id"}
+
+        pending_file = GOV_COMMITS_DIR / f"{commit_id}.pending"
+        if not pending_file.exists():
+            return {"error": "Commit not found"}
+
+        # Move to .commit
+        approved_file = GOV_COMMITS_DIR / f"{commit_id}.commit"
+        pending_file.rename(approved_file)
+
+        return {"success": True, "action": "approved", "commit_id": commit_id}
+    except Exception as e:
+        return {"error": str(e), "success": False}
+
+
+@app.post("/api/governance/reject")
+async def governance_reject(request: Request):
+    """Reject a pending commit. Moves .pending → .reject and appends reason."""
+    try:
+        body = await request.json()
+        commit_id = body.get("commit_id")
+        reason = body.get("reason", "No reason provided")
+
+        if not commit_id:
+            return {"error": "Missing commit_id"}
+
+        pending_file = GOV_COMMITS_DIR / f"{commit_id}.pending"
+        if not pending_file.exists():
+            return {"error": "Commit not found"}
+
+        # Move to .reject
+        rejected_file = GOV_COMMITS_DIR / f"{commit_id}.reject"
+        content = pending_file.read_text(encoding="utf-8")
+
+        # Append rejection reason
+        new_content = f"{content}\n\n---\nREJECTED: {datetime.now().isoformat()}\nReason: {reason}\n"
+        rejected_file.write_text(new_content, encoding="utf-8")
+        pending_file.unlink()
+
+        return {"success": True, "action": "rejected", "commit_id": commit_id}
+    except Exception as e:
+        return {"error": str(e), "success": False}
+
+
 # --- Pocket Willow (mobile-friendly, served same-origin) ---
 
 POCKET_HTML = Path(__file__).parent / "neocities" / "index.html"
@@ -380,6 +675,18 @@ def serve_pocket():
     if not POCKET_HTML.exists():
         return {"error": "neocities/index.html not found"}
     return FileResponse(POCKET_HTML, media_type="text/html")
+
+
+# --- Governance Dashboard ---
+
+GOVERNANCE_DASHBOARD = Path(__file__).parent / "governance" / "dashboard.html"
+
+@app.get("/governance")
+def serve_governance_dashboard():
+    """Serve governance dashboard for dual commit review (admin only)."""
+    if not GOVERNANCE_DASHBOARD.exists():
+        return {"error": "governance/dashboard.html not found"}
+    return FileResponse(GOVERNANCE_DASHBOARD, media_type="text/html")
 
 
 # --- Static file serving (production) ---

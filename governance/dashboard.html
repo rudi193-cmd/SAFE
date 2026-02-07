@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Governance Dashboard — Willow</title>
+<style>
+  :root { --bg: #0a0a0f; --surface: #14141f; --border: #2a2a3a; --text: #e0e0e8; --dim: #888; --accent: #7ab4ff; --green: #4ade80; --yellow: #fbbf24; --red: #f87171; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+
+  header { margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 5px; }
+  .subtitle { font-size: 0.85rem; color: var(--dim); }
+
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  h2 { font-size: 1.1rem; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  .pending-list, .history-list { display: flex; flex-direction: column; gap: 10px; }
+  .commit-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 15px; }
+  .commit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .commit-id { font-weight: 600; color: var(--accent); }
+  .commit-timestamp { font-size: 0.8rem; color: var(--dim); }
+  .commit-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { opacity: 0.9; }
+  .btn-view { background: var(--border); color: var(--text); }
+  .btn-view:hover { background: var(--dim); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 25px; width: 90%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+  .modal-header h3 { font-size: 1.1rem; }
+  .modal-close { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 1.5rem; padding: 0; }
+  .modal-content { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+  .diff-view { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 15px; font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; line-height: 1.6; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; border-top: 1px solid var(--border); }
+
+  .reject-reason { width: 100%; padding: 10px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 15px; resize: vertical; min-height: 80px; }
+
+  .empty-state { text-align: center; color: var(--dim); padding: 40px 20px; }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-approved { background: var(--green); color: #000; }
+  .badge-rejected { background: var(--red); color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛡️ Governance Dashboard</h1>
+  <p class="subtitle">Dual Commit — Review and ratify AI proposals</p>
+</header>
+
+<div class="section">
+  <h2>Pending Commits</h2>
+  <div id="pending-list" class="pending-list">
+    <div class="empty-state">Loading...</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>History</h2>
+  <div id="history-list" class="history-list">
+    <div class="empty-state">Loading...</div>
+  </div>
+</div>
+
+<!-- Diff Modal -->
+<div class="modal-overlay" id="diff-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Commit Details</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <div id="diff-content" class="diff-view"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-view" onclick="closeModal()">Close</button>
+      <button class="btn-danger" onclick="showRejectPrompt()">Reject</button>
+      <button class="btn-primary" onclick="approveCommit()">Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Reason Modal -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Reject Commit</h3>
+      <button class="modal-close" onclick="closeRejectModal()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Rejection Reason:</label>
+      <textarea id="reject-reason" class="reject-reason" placeholder="Explain why this commit is being rejected..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-view" onclick="closeRejectModal()">Cancel</button>
+      <button class="btn-danger" onclick="confirmReject()">Confirm Reject</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentCommitId = null;
+
+async function loadPending() {
+  try {
+    const r = await fetch('/api/governance/pending');
+    const data = await r.json();
+    const list = document.getElementById('pending-list');
+
+    if (!data.pending || data.pending.length === 0) {
+      list.innerHTML = '<div class="empty-state">No pending commits. System is clean.</div>';
+      return;
+    }
+
+    list.innerHTML = data.pending.map(commit => `
+      <div class="commit-card">
+        <div class="commit-header">
+          <span class="commit-id">${commit.id}</span>
+          <span class="commit-timestamp">${new Date(commit.timestamp).toLocaleString()}</span>
+        </div>
+        <div class="commit-actions">
+          <button class="btn-view" onclick="viewCommit('${commit.id}')">View Diff</button>
+          <button class="btn-primary" onclick="viewCommit('${commit.id}')">Review</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('pending-list').innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+  }
+}
+
+async function loadHistory() {
+  try {
+    const r = await fetch('/api/governance/history');
+    const data = await r.json();
+    const list = document.getElementById('history-list');
+
+    if (!data.history || data.history.length === 0) {
+      list.innerHTML = '<div class="empty-state">No history yet.</div>';
+      return;
+    }
+
+    list.innerHTML = data.history.map(commit => `
+      <div class="commit-card">
+        <div class="commit-header">
+          <div>
+            <span class="commit-id">${commit.id}</span>
+            <span class="badge badge-${commit.action}">${commit.action}</span>
+          </div>
+          <span class="commit-timestamp">${new Date(commit.timestamp).toLocaleString()}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('history-list').innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+  }
+}
+
+async function viewCommit(commitId) {
+  currentCommitId = commitId;
+  try {
+    const r = await fetch(`/api/governance/diff/${commitId}`);
+    const data = await r.json();
+
+    if (data.error) {
+      alert('Error loading commit: ' + data.error);
+      return;
+    }
+
+    document.getElementById('modal-title').textContent = `Commit: ${commitId}`;
+    document.getElementById('diff-content').textContent = data.content;
+    document.getElementById('diff-modal').classList.add('show');
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+function closeModal() {
+  document.getElementById('diff-modal').classList.remove('show');
+  currentCommitId = null;
+}
+
+function showRejectPrompt() {
+  document.getElementById('reject-modal').classList.add('show');
+}
+
+function closeRejectModal() {
+  document.getElementById('reject-modal').classList.remove('show');
+  document.getElementById('reject-reason').value = '';
+}
+
+async function approveCommit() {
+  if (!currentCommitId) return;
+
+  if (!confirm(`Approve commit "${currentCommitId}"?\n\nThis will ratify the proposal and mark it as accepted.`)) {
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/governance/approve', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({commit_id: currentCommitId})
+    });
+    const data = await r.json();
+
+    if (data.success) {
+      alert('Commit approved ✓');
+      closeModal();
+      loadPending();
+      loadHistory();
+    } else {
+      alert('Error: ' + (data.error || 'Unknown error'));
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function confirmReject() {
+  if (!currentCommitId) return;
+
+  const reason = document.getElementById('reject-reason').value.trim();
+  if (!reason) {
+    alert('Please provide a rejection reason.');
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/governance/reject', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({commit_id: currentCommitId, reason})
+    });
+    const data = await r.json();
+
+    if (data.success) {
+      alert('Commit rejected ✗');
+      closeRejectModal();
+      closeModal();
+      loadPending();
+      loadHistory();
+    } else {
+      alert('Error: ' + (data.error || 'Unknown error'));
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// Load on boot
+loadPending();
+loadHistory();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Governance Proposal: Test Commit
+
+**Proposer:** Willow (AI)
+**Date:** 2026-02-06T12:00:00Z
+**Type:** Configuration Change
+
+## Summary
+
+This is a test governance commit to demonstrate the Dual Commit dashboard.
+
+## Proposed Changes
+
+1. Add new routing rule for file types `.jsonl` → route to Kart for processing
+2. Update intake pipeline timeout from 30s to 60s
+3. Enable auto-coherence checks every 100 conversations
+
+## Rationale
+
+Current intake pipeline times out on large JSONL training files. Kart can process these more efficiently than the generic pipeline.
+
+Auto-coherence checks would catch drift earlier without manual intervention.
+
+## Risk Assessment
+
+- **Low Risk**: Configuration only, no code changes
+- **Reversible**: Yes, can revert via new commit
+- **Testing**: Tested locally with 3 sample files
+
+## ΔE Impact
+
+Expected ΔE change: +0.012 (minor increase in system complexity, offset by improved reliability)
+
+---
+
+**Awaiting Human Ratification**
+
+ΔΣ=42

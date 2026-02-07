@@ -36,10 +36,11 @@ def load_keys_from_json():
         # Flatten simple JSON structure
         # We look for specific keys expected by the router
         target_keys = [
-            "GEMINI_API_KEY", "GROQ_API_KEY", "CEREBRAS_API_KEY", 
+            "GEMINI_API_KEY", "GROQ_API_KEY", "CEREBRAS_API_KEY",
             "SAMBANOVA_API_KEY", "HUGGINGFACE_API_KEY", "DEEPSEEK_API_KEY",
             "MISTRAL_API_KEY", "TOGETHER_API_KEY", "OPENROUTER_API_KEY",
-            "ANTHROPIC_API_KEY", "OPENAI_API_KEY"
+            "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "FIREWORKS_API_KEY",
+            "COHERE_API_KEY"
         ]
         
         loaded_count = 0
@@ -73,13 +74,16 @@ class ProviderConfig:
     cost_per_m: float = 0.0
 
 PROVIDERS = [
-    # --- TIER 1: TRULY FREE (Local / Grant) ---
-    ProviderConfig("Ollama", "PATH", "http://localhost:11434/api/generate", "llama3.2:latest", "free"),
-    ProviderConfig("Google Gemini", "GEMINI_API_KEY", "https://generativelanguage.googleapis.com/v1beta/models/", "gemini-2.5-flash", "free"),
+    # --- TIER 1: TRULY FREE (Cloud First, Local Fallback) ---
+    # ProviderConfig("Oracle OCI", "ORACLE_OCI", "", "cohere.command-r-16k", "free"),  # Disabled - auth issues
     ProviderConfig("Groq", "GROQ_API_KEY", "https://api.groq.com/openai/v1/chat/completions", "llama-3.1-8b-instant", "free"),
     ProviderConfig("Cerebras", "CEREBRAS_API_KEY", "https://api.cerebras.ai/v1/chat/completions", "llama3.1-8b", "free"),
+    ProviderConfig("Google Gemini", "GEMINI_API_KEY", "https://generativelanguage.googleapis.com/v1beta/models/", "gemini-2.5-flash", "free"),
     ProviderConfig("SambaNova", "SAMBANOVA_API_KEY", "https://api.sambanova.ai/v1/chat/completions", "Meta-Llama-3.1-8B-Instruct", "free"),
+    ProviderConfig("Fireworks", "FIREWORKS_API_KEY", "https://api.fireworks.ai/inference/v1/chat/completions", "accounts/fireworks/models/llama-v3p1-8b-instruct", "free"),
+    ProviderConfig("Cohere", "COHERE_API_KEY", "https://api.cohere.ai/v1/chat", "command-r", "free"),
     ProviderConfig("HuggingFace Inference", "HUGGINGFACE_API_KEY", "https://api-inference.huggingface.co/models/", "meta-llama/Meta-Llama-3-8B-Instruct", "free"),
+    ProviderConfig("Ollama", "PATH", "http://localhost:11434/api/generate", "llama3.2:latest", "free"),  # LOCAL FALLBACK
 
     # --- TIER 2: CHEAP (High Performance / Low Cost) ---
     ProviderConfig("DeepSeek", "DEEPSEEK_API_KEY", "https://api.deepseek.com/chat/completions", "deepseek-chat", "cheap"),
@@ -101,20 +105,33 @@ class RouterResponse:
 def get_available_providers() -> Dict[str, List[ProviderConfig]]:
     """Check environment for available API keys."""
     available = {"free": [], "cheap": [], "paid": []}
-    
-    # Check Ollama Local
-    try:
-        if requests.get("http://localhost:11434/api/tags", timeout=1).status_code == 200:
-            available["free"].append(PROVIDERS[0])
-    except:
-        pass
 
-    # Check Cloud Keys
-    for p in PROVIDERS[1:]:
-        if os.environ.get(p.env_key):
+    for p in PROVIDERS:
+        # Check Ollama by testing local endpoint
+        if p.name == "Ollama":
+            try:
+                if requests.get("http://localhost:11434/api/tags", timeout=1).status_code == 200:
+                    available[p.tier].append(p)
+            except:
+                pass
+        # Check cloud providers by API key
+        elif os.environ.get(p.env_key):
             available[p.tier].append(p)
-            
+
     return available
+
+def get_provider_count() -> Dict[str, int]:
+    """
+    Get count of available providers by tier.
+    Returns: {"free": N, "cheap": N, "paid": N, "total": N}
+    """
+    avail = get_available_providers()
+    return {
+        "free": len(avail["free"]),
+        "cheap": len(avail["cheap"]),
+        "paid": len(avail["paid"]),
+        "total": sum(len(v) for v in avail.values())
+    }
 
 def ask(prompt: str, preferred_tier: str = "free") -> Optional[RouterResponse]:
     """
@@ -139,8 +156,48 @@ def ask(prompt: str, preferred_tier: str = "free") -> Optional[RouterResponse]:
     # Try providers in order
     for provider in priority:
         try:
+            # --- ORACLE OCI ADAPTER ---
+            if provider.name == "Oracle OCI":
+                try:
+                    import oci
+                    from oci.generative_ai_inference import GenerativeAiInferenceClient
+                    from oci.generative_ai_inference.models import CohereChatRequest, OnDemandServingMode, ChatDetails
+
+                    # Load Oracle config from credentials.json
+                    creds_path = Path("credentials.json")
+                    with open(creds_path) as f:
+                        creds = json.load(f)
+
+                    oracle_config = creds.get("ORACLE_OCI", {})
+                    compartment_id = oracle_config.get("compartment_id")
+                    endpoint = oracle_config.get("endpoint")
+                    config_path = oracle_config.get("config_path", str(Path.home() / ".oci" / "config"))
+
+                    # Initialize OCI config and client
+                    config = oci.config.from_file(config_path)
+                    client = GenerativeAiInferenceClient(config=config, service_endpoint=endpoint)
+
+                    # Create chat request with proper structure
+                    chat_details = ChatDetails(
+                        compartment_id=compartment_id,
+                        serving_mode=OnDemandServingMode(model_id=provider.model),
+                        chat_request=CohereChatRequest(
+                            message=prompt,
+                            max_tokens=1024,
+                            temperature=0.7
+                        )
+                    )
+
+                    # Call Oracle OCI
+                    response = client.chat(chat_details)
+
+                    return RouterResponse(response.data.chat_response.text, provider.name, provider.tier)
+                except Exception as oci_err:
+                    logging.warning(f"Oracle OCI failed: {oci_err} — trying next")
+                    continue
+
             # --- OLLAMA ADAPTER ---
-            if provider.name == "Ollama":
+            elif provider.name == "Ollama":
                 resp = requests.post(provider.base_url, json={
                     "model": provider.model,
                     "prompt": prompt,
@@ -152,8 +209,8 @@ def ask(prompt: str, preferred_tier: str = "free") -> Optional[RouterResponse]:
                     logging.warning(f"Provider {provider.name} returned {resp.status_code} — trying next")
                     continue
 
-            # --- OPENAI-COMPATIBLE ADAPTER (Groq, DeepSeek, Cerebras, etc) ---
-            elif provider.name in ["Groq", "DeepSeek", "Cerebras", "SambaNova", "Together.ai", "OpenRouter", "OpenAI"]:
+            # --- OPENAI-COMPATIBLE ADAPTER (Groq, DeepSeek, Cerebras, Fireworks, etc) ---
+            elif provider.name in ["Groq", "DeepSeek", "Cerebras", "SambaNova", "Together.ai", "OpenRouter", "OpenAI", "Fireworks", "Mistral"]:
                 headers = {"Authorization": f"Bearer {os.environ.get(provider.env_key)}"}
                 if provider.name == "OpenRouter":
                     headers["HTTP-Referer"] = "https://github.com/die-namic"
@@ -203,6 +260,26 @@ def ask(prompt: str, preferred_tier: str = "free") -> Optional[RouterResponse]:
                 resp = requests.post(provider.base_url, json=payload, headers=headers, timeout=30)
                 if resp.status_code == 200:
                     return RouterResponse(resp.json()['content'][0]['text'], provider.name, provider.tier)
+                elif resp.status_code == 429:
+                    logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
+                    continue
+                else:
+                    logging.warning(f"Provider {provider.name} returned {resp.status_code} — trying next")
+                    continue
+
+            # --- COHERE ADAPTER ---
+            elif provider.name == "Cohere":
+                headers = {
+                    "Authorization": f"Bearer {os.environ.get(provider.env_key)}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": provider.model,
+                    "message": prompt
+                }
+                resp = requests.post(provider.base_url, json=payload, headers=headers, timeout=30)
+                if resp.status_code == 200:
+                    return RouterResponse(resp.json()['text'], provider.name, provider.tier)
                 elif resp.status_code == 429:
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
                     continue

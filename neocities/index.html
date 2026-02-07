@@ -15,9 +15,11 @@
   .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 0.82rem; max-width: 200px; }
   .mode-label { font-size: 0.7rem; color: var(--dim); padding: 3px 7px; border: 1px solid var(--border); border-radius: 4px; }
-  #config-btn { background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: 0.75rem; }
+  #config-btn, #multi-btn { background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: 0.75rem; }
+  #multi-btn:hover, #config-btn:hover { background: var(--border); }
 
-  .chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  #chat { flex: 1; position: relative; overflow: hidden; }
+  .chat { position: absolute; inset: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
   .msg { max-width: 80%; padding: 9px 13px; border-radius: 10px; line-height: 1.45; font-size: 0.9rem; white-space: pre-wrap; word-wrap: break-word; }
   .msg.user { align-self: flex-end; background: #1e3a5f; border-bottom-right-radius: 2px; }
   .msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
@@ -55,6 +57,7 @@
   <h1><span class="status-dot dot-red" id="status-dot"></span><span id="persona-label">Willow</span> <span class="mode-label" id="mode-label">offline</span></h1>
   <div class="controls">
     <select id="persona"></select>
+    <button id="multi-btn">Multi</button>
     <button id="config-btn">config</button>
   </div>
 </header>
@@ -92,6 +95,36 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="multi-modal">
+  <div class="modal">
+    <h2>Multi-Persona Tasks</h2>
+    <p style="font-size: 0.85rem; color: var(--dim); margin-bottom: 15px;">Assign tasks to multiple personas. They'll work in parallel.</p>
+    <div id="task-list">
+      <div class="task-row">
+        <select class="task-persona">
+          <option value="Kart">Kart</option>
+          <option value="Riggs">Riggs</option>
+          <option value="Ada">Ada</option>
+          <option value="Willow">Willow</option>
+          <option value="Mitra">Mitra</option>
+        </select>
+        <input type="text" class="task-prompt" placeholder="Task for this persona..." />
+      </div>
+    </div>
+    <button onclick="addTaskRow()" style="margin-top: 10px; padding: 5px 12px; font-size: 0.8rem; background: var(--border); color: var(--text); border: none; border-radius: 4px; cursor: pointer;">+ Add Task</button>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeMultiModal()">Cancel</button>
+      <button class="btn-save" onclick="runMultiTasks()">Run All</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.task-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.task-persona { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; font-size: 0.82rem; width: 120px; }
+.task-prompt { flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; font-size: 0.82rem; }
+</style>
+
 <script>
 // === PERSONA PROMPTS (baked in for Gemini direct mode) ===
 const PERSONA_PROMPTS = {
@@ -114,7 +147,10 @@ const PERSONA_PROMPTS = {
 // === STATE ===
 let mode = "offline"; // "local" | "tunnel" | "fleet" | "offline"
 let activeBase = "";
-let chatHistory = [];
+let currentPersona = "Willow";
+
+// Per-persona thread storage: { personaName: { history: [], dom: HTMLElement } }
+const threads = {};
 
 // === BAKED DEFAULTS (patched by tunnel.py at deploy time) ===
 const BAKED_LAN = "192.168.12.189";
@@ -129,13 +165,47 @@ const cfg = {
 
 // === INIT ===
 const selP = document.getElementById("persona");
-Object.keys(PERSONA_PROMPTS).forEach(k => {
-  const o = document.createElement("option"); o.value = k; o.textContent = k; selP.appendChild(o);
-});
-
-const chat = document.getElementById("chat");
+const chatContainer = document.getElementById("chat");
 const input = document.getElementById("input");
 const sendBtn = document.getElementById("send");
+const personaLabel = document.getElementById("persona-label");
+
+Object.keys(PERSONA_PROMPTS).forEach(k => {
+  const o = document.createElement("option"); o.value = k; o.textContent = k; selP.appendChild(o);
+  // Initialize thread storage for each persona
+  const chatDiv = document.createElement("div");
+  chatDiv.className = "chat";
+  chatDiv.style.display = "none";
+  threads[k] = { history: [], dom: chatDiv };
+});
+
+// Set initial persona
+threads["Willow"].dom.style.display = "flex";
+chatContainer.appendChild(threads["Willow"].dom);
+
+// Persona switcher
+selP.addEventListener("change", () => {
+  const prev = currentPersona;
+  const next = selP.value;
+
+  // Hide previous thread
+  threads[prev].dom.style.display = "none";
+
+  // Show new thread
+  currentPersona = next;
+  threads[next].dom.style.display = "flex";
+
+  // Ensure thread is in DOM
+  if (!chatContainer.contains(threads[next].dom)) {
+    chatContainer.appendChild(threads[next].dom);
+  }
+
+  // Update label
+  personaLabel.textContent = next;
+
+  // Scroll to bottom
+  threads[next].dom.scrollTop = threads[next].dom.scrollHeight;
+});
 
 // === CONNECTION DISCOVERY ===
 async function probe(url, label, timeout = 8000) {
@@ -249,8 +319,10 @@ async function doSend() {
   if (!text) return;
   input.value = "";
   input.style.height = "auto";
+
+  const thread = threads[currentPersona];
   addMsg("user", text);
-  chatHistory.push({ role: "user", content: text });
+  thread.history.push({ role: "user", content: text });
 
   if (mode === "fleet") {
     await sendFleetDirect(text);
@@ -260,12 +332,13 @@ async function doSend() {
 }
 
 async function sendServer(text) {
+  const thread = threads[currentPersona];
   const msgEl = addMsg("assistant", "");
   try {
     const r = await fetch(activeBase + "/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: text, persona: selP.value })
+      body: JSON.stringify({ prompt: text, persona: currentPersona })
     });
     const reader = r.body.getReader();
     const dec = new TextDecoder();
@@ -280,11 +353,11 @@ async function sendServer(text) {
         if (line.startsWith("data: ") && line.slice(6) !== "[DONE]") {
           full += line.slice(6);
           msgEl.textContent = full;
-          chat.scrollTop = chat.scrollHeight;
+          thread.dom.scrollTop = thread.dom.scrollHeight;
         }
       }
     }
-    chatHistory.push({ role: "assistant", content: full });
+    thread.history.push({ role: "assistant", content: full });
   } catch(e) {
     msgEl.textContent = "Connection lost. Retrying discovery...";
     discover();
@@ -293,13 +366,13 @@ async function sendServer(text) {
 
 // === GEMINI DIRECT (only fleet provider with browser CORS) ===
 async function sendFleetDirect(text) {
+  const thread = threads[currentPersona];
   const msgEl = addMsg("assistant", "");
-  const persona = selP.value;
-  const sysPrompt = PERSONA_PROMPTS[persona] || PERSONA_PROMPTS["Willow"];
+  const sysPrompt = PERSONA_PROMPTS[currentPersona] || PERSONA_PROMPTS["Willow"];
 
-  // Build Gemini conversation
+  // Build Gemini conversation from this persona's thread
   const contents = [];
-  chatHistory.forEach(m => {
+  thread.history.forEach(m => {
     contents.push({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] });
   });
 
@@ -324,8 +397,8 @@ async function sendFleetDirect(text) {
     const reply = d?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (reply) {
       msgEl.textContent = reply;
-      chatHistory.push({ role: "assistant", content: reply });
-      chat.scrollTop = chat.scrollHeight;
+      thread.history.push({ role: "assistant", content: reply });
+      thread.dom.scrollTop = thread.dom.scrollHeight;
       return;
     }
     msgEl.textContent = "Gemini returned empty response.";
@@ -335,11 +408,12 @@ async function sendFleetDirect(text) {
 }
 
 function addMsg(role, text) {
+  const thread = threads[currentPersona];
   const d = document.createElement("div");
   d.className = "msg " + role;
   d.textContent = text;
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
+  thread.dom.appendChild(d);
+  thread.dom.scrollTop = thread.dom.scrollHeight;
   return d;
 }
 
@@ -366,6 +440,7 @@ fileInput.onchange = () => {
 };
 
 async function uploadFile(file) {
+  const thread = threads[currentPersona];
   if (mode === "local" || mode === "tunnel") {
     // Server mode: POST to /api/ingest
     const form = new FormData();
@@ -387,7 +462,7 @@ async function uploadFile(file) {
       const text = await file.text();
       const preview = text.length > 2000 ? text.slice(0, 2000) + "\n...(truncated)" : text;
       addMsg("system", "File: " + file.name + "\n" + preview);
-      chatHistory.push({ role: "user", content: "[File: " + file.name + "]\n" + text.slice(0, 4000) });
+      thread.history.push({ role: "user", content: "[File: " + file.name + "]\n" + text.slice(0, 4000) });
     } catch(e) {
       addMsg("system", "Could not read file: " + e.message);
     }
@@ -395,6 +470,129 @@ async function uploadFile(file) {
   pendingFile = null;
   filePreview.style.display = "none";
   fileInput.value = "";
+}
+
+// === MULTI-TASK MODAL ===
+document.getElementById("multi-btn").onclick = () => {
+  document.getElementById("multi-modal").classList.add("show");
+};
+
+function closeMultiModal() {
+  document.getElementById("multi-modal").classList.remove("show");
+}
+
+function addTaskRow() {
+  const taskList = document.getElementById("task-list");
+  const row = document.createElement("div");
+  row.className = "task-row";
+  row.innerHTML = `
+    <select class="task-persona">
+      <option value="Kart">Kart</option>
+      <option value="Riggs">Riggs</option>
+      <option value="Ada">Ada</option>
+      <option value="Willow">Willow</option>
+      <option value="Mitra">Mitra</option>
+      <option value="Consus">Consus</option>
+      <option value="Nova">Nova</option>
+      <option value="Hanz">Hanz</option>
+    </select>
+    <input type="text" class="task-prompt" placeholder="Task for this persona..." />
+  `;
+  taskList.appendChild(row);
+}
+
+async function runMultiTasks() {
+  // Collect tasks from modal
+  const rows = document.querySelectorAll("#task-list .task-row");
+  const tasks = [];
+
+  rows.forEach(row => {
+    const persona = row.querySelector(".task-persona").value;
+    const prompt = row.querySelector(".task-prompt").value.trim();
+    if (prompt) {
+      tasks.push({ persona, prompt });
+    }
+  });
+
+  if (tasks.length === 0) {
+    alert("No tasks entered");
+    return;
+  }
+
+  closeMultiModal();
+
+  // Add system message showing what's running
+  const taskSummary = tasks.map(t => `${t.persona}: ${t.prompt.slice(0, 40)}...`).join("\n");
+  addMsg("system", `Running ${tasks.length} parallel tasks:\n${taskSummary}`);
+
+  // Call /api/chat/multi
+  try {
+    const r = await fetch(activeBase + "/api/chat/multi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tasks })
+    });
+
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    const personaResponses = {};
+
+    // Create message elements for each persona
+    tasks.forEach(task => {
+      const thread = threads[task.persona];
+      if (!thread) return;
+      personaResponses[task.persona] = addMsg("assistant", "");
+      thread.history.push({ role: "user", content: task.prompt });
+    });
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith("event: ")) continue;
+
+        const eventMatch = line.match(/^event: (.+)$/);
+        const dataMatch = lines[lines.indexOf(line) + 1]?.match(/^data: (.+)$/);
+
+        if (!eventMatch || !dataMatch) continue;
+
+        const event = eventMatch[1];
+        const data = dataMatch[1];
+
+        // Check if this is a persona chunk
+        const personaName = tasks.find(t => event === t.persona)?.persona;
+        if (personaName && personaResponses[personaName]) {
+          const msgEl = personaResponses[personaName];
+          msgEl.textContent += data;
+          threads[personaName].dom.scrollTop = threads[personaName].dom.scrollHeight;
+        }
+
+        // Check for done events
+        if (event.startsWith("done_")) {
+          const persona = event.replace("done_", "");
+          if (threads[persona] && personaResponses[persona]) {
+            threads[persona].history.push({
+              role: "assistant",
+              content: personaResponses[persona].textContent
+            });
+          }
+        }
+
+        // Complete event
+        if (event === "complete") {
+          addMsg("system", `All ${tasks.length} tasks completed.`);
+        }
+      }
+    }
+  } catch(e) {
+    addMsg("system", "Multi-task error: " + e.message);
+  }
 }
 
 // === BOOT ===

@@ -142,7 +142,7 @@ def verify_tunnel(tunnel_url: str, retries: int = 10, delay: int = 3) -> bool:
 def deploy_with_url(tunnel_url: str) -> dict:
     """
     Read the pocket Willow template, inject the tunnel URL as default,
-    and deploy to Neocities.
+    deploy to Neocities, and save locally so /pocket serves the fresh version.
     """
     template_path = Path(__file__).parent.parent / "neocities" / "index.html"
     if not template_path.exists():
@@ -156,6 +156,10 @@ def deploy_with_url(tunnel_url: str) -> dict:
         f'const BAKED_TUNNEL = "{tunnel_url}";  // TUNNEL_INJECT_POINT',
     )
 
+    # Save patched version locally (so /pocket serves the updated tunnel URL)
+    template_path.write_text(patched, encoding="utf-8")
+
+    # Deploy to Neocities
     from apps.neocities import upload_text
     result = upload_text({"willow/index.html": patched})
     return result

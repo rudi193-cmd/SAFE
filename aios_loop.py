@@ -1095,6 +1095,21 @@ FOLDER:"""
                     sync_to_master(filename, fhash, destination_folder, auth_source, prov, username)
                     knowledge.ingest_file_knowledge(username, filename, fhash, destination_folder, context_content, prov)
                     deep_extract(dest_filepath, target_dir)
+
+                    # --- SMART ROUTING (multi-destination) ---
+                    # Route screenshots to social-media-tracker, kart-interface, etc.
+                    if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+                        try:
+                            sys.path.insert(0, os.path.join(EARTH_PATH, "apps"))
+                            from smart_routing import route_screenshot
+                            ocr_text = desc if 'desc' in locals() and desc else None
+                            routing_result = route_screenshot(filename, dest_filepath, ocr_text, username)
+                            routed_to = routing_result.get('routed_to', [])
+                            if len(routed_to) > 1:  # More than just user-profile
+                                logging.info(f"ROUTING [{username}]: {filename} -> {', '.join(routed_to)}")
+                        except Exception as e:
+                            logging.warning(f"ROUTING [{username}]: {filename} failed: {e}")
+
                     update_folder_readme(target_dir)
                     # Archive to Drive (move: upload + delete local)
                     archive_to_drive(drive_service, dest_filepath, username, destination_folder)
