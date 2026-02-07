@@ -462,6 +462,8 @@ def visual_cortex(filepath):
                 result = response.json()
                 text = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
                 if text:
+                    # Rate limit: Gemini vision free tier is ~15 req/min
+                    time.sleep(4)  # 4 seconds = 15 requests per minute max
                     return text
             elif response.status_code == 429:
                 logging.warning("VISION: Gemini quota exceeded — cascading to fleet")
