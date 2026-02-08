@@ -665,6 +665,46 @@ def files_list(folder: str = "pending", page: int = 1, per_page: int = 50):
         return {"error": str(e)}
 
 
+@app.get("/api/files/preview")
+def files_preview(file: str, folder: str):
+    """Return file preview: image as base64, text as snippet, binary as metadata."""
+    base = os.path.join("artifacts", USERNAME)
+    path = os.path.join(base, folder, file)
+    if not os.path.isfile(path):
+        return {"error": "Not found"}
+    try:
+        ext = os.path.splitext(file)[1].lower()
+        size = os.path.getsize(path)
+        IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
+        TEXT_EXTS = {".txt", ".md", ".py", ".js", ".ts", ".jsx", ".tsx",
+                     ".json", ".csv", ".html", ".css", ".sh", ".bat", ".yaml", ".toml"}
+        if ext in IMAGE_EXTS:
+            import base64
+            with open(path, "rb") as f:
+                data = base64.b64encode(f.read()).decode()
+            mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
+                    "gif": "image/gif", "webp": "image/webp"}.get(ext.lstrip("."), "image/jpeg")
+            return {"type": "image", "data": data, "mime": mime, "size": size, "name": file}
+        elif ext in TEXT_EXTS:
+            with open(path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read(3000)
+            return {"type": "text", "content": content, "size": size, "name": file,
+                    "truncated": os.path.getsize(path) > 3000}
+        elif ext == ".pdf":
+            try:
+                import pdfplumber
+                with pdfplumber.open(path) as pdf:
+                    pages = len(pdf.pages)
+                    text = pdf.pages[0].extract_text() or "" if pages > 0 else ""
+                return {"type": "text", "content": f"[PDF: {pages} pages]\n\n{text[:2000]}", "size": size, "name": file}
+            except Exception:
+                return {"type": "binary", "size": size, "name": file, "ext": ext}
+        else:
+            return {"type": "binary", "size": size, "name": file, "ext": ext}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def _human_size(n: int) -> str:
     for unit in ("B", "KB", "MB", "GB"):
         if n < 1024:

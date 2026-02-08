@@ -941,16 +941,14 @@
             if (files.length === 0) {
                 html += '<p style="color:#666;">Empty folder.</p>';
             } else {
-                html += '<table style="width:100%;font-size:12px;"><tr><th style="text-align:left;">Name</th><th>Size</th><th>Modified</th><th>Actions</th></tr>';
+                html += '<table style="width:100%;font-size:12px;"><tr><th style="text-align:left;">Name</th><th>Size</th><th>Modified</th></tr>';
                 for (const f of files) {
                     html += `<tr>
-                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.name}">${f.name}</td>
+                        <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            <span onclick="openFileDetail('${escapeQ(f.name)}','${escapeQ(folder)}')" style="cursor:pointer;color:#00ff00;text-decoration:underline;" title="Click to view, tag, chat">${f.name}</span>
+                        </td>
                         <td style="color:#888;">${f.size_human}</td>
                         <td style="color:#888;">${f.modified}</td>
-                        <td>
-                            <button onclick="openFileTag('${escapeQ(f.name)}','${escapeQ(folder)}')" style="background:#001100;border:1px solid #00ff00;color:#00ff00;font-size:10px;cursor:pointer;padding:2px 6px;">Tag</button>
-                            <button onclick="openFileMove('${escapeQ(f.name)}','${escapeQ(folder)}')" style="background:#110011;border:1px solid #aa00ff;color:#aa00ff;font-size:10px;cursor:pointer;padding:2px 6px;">Move</button>
-                        </td>
                     </tr>`;
                 }
                 html += '</table>';
@@ -969,6 +967,163 @@
         }
 
         function escapeQ(s) { return s.replace(/'/g, "\\'"); }
+
+        async function openFileDetail(filename, folder) {
+            // Fetch preview and schema in parallel
+            const [prevR, schemaR] = await Promise.all([
+                fetch(`/api/files/preview?file=${encodeURIComponent(filename)}&folder=${encodeURIComponent(folder)}`),
+                fetch('/api/routing/schema')
+            ]);
+            const prev = await prevR.json();
+            const schema = await schemaR.json();
+
+            let previewHtml = '';
+            if (prev.type === 'image') {
+                previewHtml = `<img src="data:${prev.mime};base64,${prev.data}" style="max-width:100%;max-height:300px;border:1px solid #333;">`;
+            } else if (prev.type === 'text') {
+                previewHtml = `<pre style="background:#111;padding:10px;font-size:11px;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;">${prev.content.replace(/</g,'&lt;')}${prev.truncated ? '\n\n[truncated...]' : ''}</pre>`;
+            } else {
+                previewHtml = `<div style="padding:20px;text-align:center;color:#666;">Binary file (${prev.ext || 'unknown'})<br>${_fmtSize(prev.size)}</div>`;
+            }
+
+            const folderOpts = (schema.canonical || []).map(f =>
+                `<option value="${f}"${f===folder?' selected':''}>${f}</option>`).join('');
+
+            const overlay = document.createElement('div');
+            overlay.id = 'file-detail-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.97);z-index:3000;display:flex;flex-direction:column;';
+            overlay.innerHTML = `
+                <div style="display:flex;align-items:center;padding:10px 20px;border-bottom:1px solid #00ff00;">
+                    <span style="flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${filename}"><strong>${filename}</strong> &mdash; ${folder}/</span>
+                    <button onclick="document.getElementById('file-detail-overlay').remove()" style="background:#330000;border:1px solid #ff0000;color:#ff0000;padding:5px 15px;cursor:pointer;">Close</button>
+                </div>
+                <div style="display:flex;flex:1;overflow:hidden;">
+                    <!-- LEFT: preview + tag -->
+                    <div style="width:420px;flex-shrink:0;border-right:1px solid #333;padding:15px;overflow-y:auto;">
+                        <div style="margin-bottom:15px;">${previewHtml}</div>
+                        <div style="font-size:11px;color:#666;margin-bottom:15px;">
+                            ${_fmtSize(prev.size)} &bull; ${prev.ext || '?'} &bull; ${folder}/
+                        </div>
+
+                        <h4 style="margin-bottom:8px;">Tag this file</h4>
+                        <label style="font-size:11px;">Ring</label>
+                        <select id="fd-ring" style="width:100%;background:#111;border:1px solid #333;color:#aaa;padding:4px;margin:2px 0 8px;font-size:11px;">
+                            <option value="">-- no change --</option>
+                            <option value="source">source</option>
+                            <option value="bridge">bridge</option>
+                            <option value="continuity">continuity</option>
+                        </select>
+                        <label style="font-size:11px;">Category</label>
+                        <input id="fd-category" type="text" placeholder="e.g. governance, personal" style="width:100%;background:#111;border:1px solid #333;color:#aaa;padding:4px;margin:2px 0 8px;font-size:11px;">
+                        <label style="font-size:11px;">Move to folder</label>
+                        <select id="fd-move" style="width:100%;background:#111;border:1px solid #333;color:#aaa;padding:4px;margin:2px 0 8px;font-size:11px;">
+                            ${folderOpts}
+                        </select>
+                        <label style="font-size:11px;">Was routing correct?</label>
+                        <div style="margin:4px 0 8px;">
+                            <label style="font-size:11px;"><input type="radio" name="fd-correct" value="true"> Yes</label>
+                            <label style="font-size:11px;margin-left:10px;"><input type="radio" name="fd-correct" value="false"> No, should be:
+                                <select id="fd-corrected" style="background:#111;border:1px solid #333;color:#ff6666;padding:2px;font-size:11px;">
+                                    <option value="">--</option>${folderOpts}
+                                </select>
+                            </label>
+                        </div>
+                        <button onclick="submitFileDetail('${escapeQ(filename)}','${escapeQ(folder)}')" style="width:100%;background:#003300;border:1px solid #00ff00;color:#00ff00;padding:8px;cursor:pointer;margin-top:5px;">Save</button>
+                    </div>
+
+                    <!-- RIGHT: contextual chat -->
+                    <div style="flex:1;display:flex;flex-direction:column;padding:15px;">
+                        <h4 style="margin-bottom:8px;">Chat about this file</h4>
+                        <div id="fd-chat-log" style="flex:1;overflow-y:auto;background:#0a0a0a;border:1px solid #222;padding:10px;font-size:12px;margin-bottom:10px;min-height:200px;">
+                            <div style="color:#666;font-style:italic;">Ask Willow about this file, its content, where it belongs, or anything about the system...</div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <input id="fd-chat-input" type="text" placeholder="Ask about this file or folder..." onkeydown="if(event.key==='Enter')sendFileChat('${escapeQ(filename)}','${escapeQ(folder)}')"
+                                style="flex:1;background:#111;border:1px solid #00ff00;color:#00ff00;padding:8px;font-family:monospace;font-size:12px;">
+                            <button onclick="sendFileChat('${escapeQ(filename)}','${escapeQ(folder)}')" style="background:#003300;border:1px solid #00ff00;color:#00ff00;padding:8px 15px;cursor:pointer;">Send</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+
+            // Seed chat with file context (silent — not shown to user, just context)
+            window._fdChatContext = `[File context: "${filename}" in folder "${folder}". Size: ${_fmtSize(prev.size)}. Type: ${prev.type}.${prev.type==='text'?' Content preview: '+prev.content?.slice(0,300):''}]`;
+        }
+
+        function _fmtSize(n) {
+            if (!n) return '?';
+            if (n < 1024) return n + 'B';
+            if (n < 1048576) return (n/1024).toFixed(0) + 'KB';
+            return (n/1048576).toFixed(1) + 'MB';
+        }
+
+        async function sendFileChat(filename, folder) {
+            const input = document.getElementById('fd-chat-input');
+            const log = document.getElementById('fd-chat-log');
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+
+            // Append user message
+            log.innerHTML += `<div style="margin:8px 0;"><span style="color:#888;">You:</span> ${msg.replace(/</g,'&lt;')}</div>`;
+            log.innerHTML += `<div id="fd-chat-response" style="margin:8px 0;"><span style="color:#00ff00;">Willow:</span> <span id="fd-chat-text" style="color:#ccc;"></span></div>`;
+            log.scrollTop = log.scrollHeight;
+
+            // Inject file context into prompt
+            const contextPrompt = window._fdChatContext + '\n\nUser: ' + msg;
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: contextPrompt, persona: 'Willow'})
+                });
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder();
+                let text = '';
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    for (const line of chunk.split('\n')) {
+                        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                            text += line.slice(6);
+                            document.getElementById('fd-chat-text').textContent = text;
+                            log.scrollTop = log.scrollHeight;
+                        }
+                    }
+                }
+                // Build up context for follow-ups
+                window._fdChatContext += `\nUser: ${msg}\nWillow: ${text}`;
+            } catch(e) {
+                document.getElementById('fd-chat-text').textContent = `Error: ${e.message}`;
+            }
+        }
+
+        async function submitFileDetail(filename, fromFolder) {
+            const ring = document.getElementById('fd-ring').value;
+            const category = document.getElementById('fd-category').value;
+            const toFolder = document.getElementById('fd-move').value;
+            const correctRadio = document.querySelector('input[name="fd-correct"]:checked');
+            const correct = correctRadio?.value;
+            const corrected = document.getElementById('fd-corrected').value;
+
+            // Move if folder changed
+            if (toFolder && toFolder !== fromFolder) {
+                await fetch(`/api/files/move?filename=${encodeURIComponent(filename)}&from_folder=${encodeURIComponent(fromFolder)}&to_folder=${encodeURIComponent(toFolder)}`, {method: 'POST'});
+            }
+
+            // Tag
+            let url = `/api/files/tag?filename=${encodeURIComponent(filename)}&folder=${encodeURIComponent(toFolder||fromFolder)}`;
+            if (ring) url += `&ring=${ring}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+            if (correct) url += `&feedback_correct=${correct}`;
+            if (correct === 'false' && corrected) url += `&corrected_folder=${encodeURIComponent(corrected)}`;
+            await fetch(url, {method: 'POST'});
+
+            document.getElementById('file-detail-overlay').remove();
+            await loadFileList(toFolder || fromFolder, _currentPage);
+        }
 
         async function openFileTag(filename, folder) {
             const r = await fetch('/api/routing/schema');
