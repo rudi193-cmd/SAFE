@@ -5,7 +5,9 @@ Willow UI Server — FastAPI wrapper around local_api.py
 GOVERNANCE: Localhost-only. No external network binding.
 """
 
+import os
 import sys
+import shutil
 import hashlib
 import httpx
 import psutil
@@ -599,6 +601,129 @@ def routing_reject(folder: str):
                 os.rmdir(proposed_path)
             return {"rejected": folder}
         return {"error": f"'{folder}' not in proposed"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- File Browser Endpoints ---
+
+@app.get("/api/files/folders")
+def files_folders():
+    """List canonical folders with file counts."""
+    base = os.path.join("artifacts", USERNAME)
+    schema_path = os.path.join(os.path.dirname(__file__), "data", "routing_folders.json")
+    try:
+        import json
+        with open(schema_path) as f:
+            schema = json.load(f)
+        folders = []
+        for name in sorted(schema["canonical"]) + ["_proposed", "pending"]:
+            path = os.path.join(base, name)
+            count = 0
+            if os.path.isdir(path):
+                count = sum(1 for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)))
+            folders.append({"name": name, "count": count, "path": path})
+        # Also include _proposed subfolders
+        proposed_path = os.path.join(base, "_proposed")
+        if os.path.isdir(proposed_path):
+            for sub in sorted(os.listdir(proposed_path)):
+                sub_path = os.path.join(proposed_path, sub)
+                if os.path.isdir(sub_path):
+                    count = sum(1 for f in os.listdir(sub_path) if os.path.isfile(os.path.join(sub_path, f)))
+                    folders.append({"name": f"_proposed/{sub}", "count": count, "path": sub_path})
+        return {"folders": folders, "proposed": schema.get("proposed", {})}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/files/list")
+def files_list(folder: str = "pending", page: int = 1, per_page: int = 50):
+    """List files in a folder with metadata."""
+    base = os.path.join("artifacts", USERNAME)
+    path = os.path.join(base, folder)
+    if not os.path.isdir(path):
+        return {"files": [], "total": 0, "folder": folder}
+    try:
+        all_files = sorted([f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))])
+        total = len(all_files)
+        start = (page - 1) * per_page
+        page_files = all_files[start:start + per_page]
+        files = []
+        for name in page_files:
+            fp = os.path.join(path, name)
+            stat = os.stat(fp)
+            files.append({
+                "name": name,
+                "folder": folder,
+                "size": stat.st_size,
+                "size_human": _human_size(stat.st_size),
+                "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M"),
+                "ext": os.path.splitext(name)[1].lower(),
+            })
+        return {"files": files, "total": total, "page": page, "per_page": per_page, "folder": folder}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _human_size(n: int) -> str:
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.0f}{unit}"
+        n /= 1024
+    return f"{n:.1f}TB"
+
+
+@app.post("/api/files/move")
+def files_move(filename: str, from_folder: str, to_folder: str):
+    """Move a file between folders."""
+    base = os.path.join("artifacts", USERNAME)
+    src = os.path.join(base, from_folder, filename)
+    dest_dir = os.path.join(base, to_folder)
+    dest = os.path.join(dest_dir, filename)
+    if not os.path.isfile(src):
+        return {"error": f"File not found: {src}"}
+    try:
+        os.makedirs(dest_dir, exist_ok=True)
+        if os.path.exists(dest):
+            name, ext = os.path.splitext(filename)
+            dest = os.path.join(dest_dir, f"{name}_moved{ext}")
+        shutil.move(src, dest)
+        # Log as knowledge feedback
+        log.info(f"FILE MOVE: {filename} {from_folder} -> {to_folder} (manual)")
+        return {"moved": filename, "from": from_folder, "to": to_folder}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/files/tag")
+def files_tag(filename: str, folder: str, ring: str = None, category: str = None,
+              tags: str = None, feedback_correct: bool = None, corrected_folder: str = None):
+    """Tag a file and optionally provide routing feedback for learning."""
+    try:
+        # Store annotation
+        from core import file_annotations
+        note = f"Manual tag: ring={ring}, category={category}, tags={tags}"
+        if feedback_correct is False and corrected_folder:
+            note += f" | CORRECTION: should be {corrected_folder}"
+        file_annotations.add_annotation(
+            routing_id=f"{folder}/{filename}",
+            filename=filename,
+            routed_to=[folder],
+            is_correct=feedback_correct,
+            corrected_destination=corrected_folder,
+            notes=note
+        )
+        # If ring override specified, update knowledge DB
+        if ring and ring in ("source", "bridge", "continuity"):
+            import hashlib
+            fhash = hashlib.md5(f"{folder}/{filename}".encode()).hexdigest()
+            conn = knowledge._connect(USERNAME)
+            conn.execute("UPDATE knowledge SET ring=?, ring_override=? WHERE source_id=?",
+                        (ring, ring, fhash))
+            conn.commit()
+            conn.close()
+        log.info(f"FILE TAG: {folder}/{filename} ring={ring} cat={category} correct={feedback_correct}")
+        return {"tagged": filename, "folder": folder}
     except Exception as e:
         return {"error": str(e)}
 

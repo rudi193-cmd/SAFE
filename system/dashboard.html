@@ -105,6 +105,10 @@
             <h2>⚖️ Governance</h2>
             <p id="governance-summary">Loading...</p>
         </div>
+        <div class="card" onclick="openModal('files')">
+            <h2>📁 Files</h2>
+            <p id="files-summary">Loading...</p>
+        </div>
     </div>
 
     <div class="modal-overlay" id="modal-overlay" onclick="closeModalIfOverlay(event)">
@@ -179,6 +183,17 @@
                 const status = pending > 0 ? `${pending} pending` : 'All clear';
                 document.getElementById('governance-summary').textContent = status;
             } catch(e) { document.getElementById('governance-summary').textContent = 'Error'; }
+
+            // Files
+            try {
+                const r = await fetch('/api/files/folders');
+                const d = await r.json();
+                const folders = d.folders || [];
+                const total = folders.reduce((s, f) => s + f.count, 0);
+                const proposed = Object.keys(d.proposed || {}).length;
+                document.getElementById('files-summary').textContent =
+                    `${total} files, ${folders.length} folders${proposed ? `, ${proposed} proposed` : ''}`;
+            } catch(e) { document.getElementById('files-summary').textContent = 'Error'; }
         }
 
         async function openModal(type) {
@@ -194,6 +209,7 @@
                 else if (type === 'nodes') await loadNodesModal();
                 else if (type === 'governance') await loadGovernanceModal();
                 else if (type === 'learning') await loadLearningModal();
+                else if (type === 'files') await loadFilesModal();
                 else document.getElementById('modal-body').innerHTML = `<p>${type} modal coming soon...</p>`;
             } catch(e) {
                 document.getElementById('modal-body').innerHTML = `<p>Error: ${e.message}</p>`;
@@ -879,6 +895,194 @@
             }
         }
 
+        // ── FILES MODAL ──────────────────────────────────────────────
+        let _currentFolder = 'pending';
+        let _currentPage = 1;
+
+        async function loadFilesModal() {
+            const r = await fetch('/api/files/folders');
+            const d = await r.json();
+            const folders = d.folders || [];
+            const proposed = d.proposed || {};
+
+            let sidebar = '<div style="width:200px;flex-shrink:0;border-right:1px solid #00ff00;padding-right:15px;margin-right:15px;">';
+            sidebar += '<h3 style="margin-bottom:10px;">Folders</h3>';
+            for (const f of folders) {
+                const active = f.name === _currentFolder ? 'color:#000;background:#00ff00;' : '';
+                sidebar += `<div onclick="loadFileList('${f.name}')" style="cursor:pointer;padding:4px 8px;margin:2px 0;${active}">${f.name} <span style="color:#666;font-size:11px;">(${f.count})</span></div>`;
+            }
+            if (Object.keys(proposed).length > 0) {
+                sidebar += '<h3 style="margin:15px 0 10px;">Proposed</h3>';
+                for (const [name, info] of Object.entries(proposed)) {
+                    sidebar += `<div style="padding:4px 8px;margin:2px 0;color:#ffaa00;">${name} <span style="font-size:11px;">(${info.count}x)</span>`;
+                    sidebar += `<button onclick="promoteFolder('${name}')" style="margin-left:5px;background:#003300;border:1px solid #00ff00;color:#00ff00;font-size:10px;cursor:pointer;padding:1px 4px;">+</button>`;
+                    sidebar += `<button onclick="rejectFolder('${name}')" style="margin-left:2px;background:#330000;border:1px solid #ff0000;color:#ff0000;font-size:10px;cursor:pointer;padding:1px 4px;">x</button>`;
+                    sidebar += `</div>`;
+                }
+            }
+            sidebar += '</div>';
+
+            let html = `<div style="display:flex;min-height:400px;">${sidebar}<div id="file-list-pane" style="flex:1;">Loading...</div></div>`;
+            document.getElementById('modal-body').innerHTML = html;
+            await loadFileList(_currentFolder);
+        }
+
+        async function loadFileList(folder, page) {
+            _currentFolder = folder;
+            _currentPage = page || 1;
+            const r = await fetch(`/api/files/list?folder=${encodeURIComponent(folder)}&page=${_currentPage}&per_page=30`);
+            const d = await r.json();
+            const files = d.files || [];
+            const total = d.total || 0;
+            const pages = Math.ceil(total / 30);
+
+            let html = `<div style="margin-bottom:10px;"><strong>${folder}/</strong> — ${total} files</div>`;
+
+            if (files.length === 0) {
+                html += '<p style="color:#666;">Empty folder.</p>';
+            } else {
+                html += '<table style="width:100%;font-size:12px;"><tr><th style="text-align:left;">Name</th><th>Size</th><th>Modified</th><th>Actions</th></tr>';
+                for (const f of files) {
+                    html += `<tr>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.name}">${f.name}</td>
+                        <td style="color:#888;">${f.size_human}</td>
+                        <td style="color:#888;">${f.modified}</td>
+                        <td>
+                            <button onclick="openFileTag('${escapeQ(f.name)}','${escapeQ(folder)}')" style="background:#001100;border:1px solid #00ff00;color:#00ff00;font-size:10px;cursor:pointer;padding:2px 6px;">Tag</button>
+                            <button onclick="openFileMove('${escapeQ(f.name)}','${escapeQ(folder)}')" style="background:#110011;border:1px solid #aa00ff;color:#aa00ff;font-size:10px;cursor:pointer;padding:2px 6px;">Move</button>
+                        </td>
+                    </tr>`;
+                }
+                html += '</table>';
+            }
+
+            if (pages > 1) {
+                html += '<div style="margin-top:10px;">';
+                for (let i = 1; i <= pages; i++) {
+                    const active = i === _currentPage ? 'background:#00ff00;color:#000;' : '';
+                    html += `<button onclick="loadFileList('${folder}',${i})" style="${active}border:1px solid #00ff00;color:#00ff00;background:#001100;cursor:pointer;padding:3px 8px;margin:2px;">${i}</button>`;
+                }
+                html += '</div>';
+            }
+
+            document.getElementById('file-list-pane').innerHTML = html;
+        }
+
+        function escapeQ(s) { return s.replace(/'/g, "\\'"); }
+
+        async function openFileTag(filename, folder) {
+            const r = await fetch('/api/routing/schema');
+            const schema = await r.json();
+            const canonical = (schema.canonical || []).join('", "');
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2000;display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML = `
+                <div style="background:#0a0a0a;border:2px solid #00ff00;padding:25px;width:500px;max-height:80vh;overflow-y:auto;">
+                    <h3 style="margin-bottom:15px;">Tag: ${filename}</h3>
+                    <p style="color:#888;margin-bottom:15px;">Currently in: ${folder}</p>
+
+                    <label>Ring</label>
+                    <select id="tag-ring" style="width:100%;background:#111;border:1px solid #00ff00;color:#00ff00;padding:6px;margin:5px 0 15px;">
+                        <option value="">-- no change --</option>
+                        <option value="source">source (governance)</option>
+                        <option value="bridge">bridge (processed file)</option>
+                        <option value="continuity">continuity (conversation/journal)</option>
+                    </select>
+
+                    <label>Category</label>
+                    <input id="tag-category" type="text" placeholder="e.g. governance, personal, work" style="width:100%;background:#111;border:1px solid #00ff00;color:#00ff00;padding:6px;margin:5px 0 15px;">
+
+                    <label>Tags (comma-separated)</label>
+                    <input id="tag-tags" type="text" placeholder="e.g. important, review-later" style="width:100%;background:#111;border:1px solid #00ff00;color:#00ff00;padding:6px;margin:5px 0 15px;">
+
+                    <label>Was this routing correct?</label>
+                    <div style="margin:5px 0 10px;">
+                        <label><input type="radio" name="tag-correct" value="true"> Yes</label>
+                        <label style="margin-left:15px;"><input type="radio" name="tag-correct" value="false"> No, should be:</label>
+                        <select id="tag-corrected" style="background:#111;border:1px solid #ff0000;color:#ff0000;padding:4px;margin-left:5px;">
+                            <option value="">-- select --</option>
+                            ${(schema.canonical || []).map(f => `<option value="${f}">${f}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div style="margin-top:20px;display:flex;gap:10px;">
+                        <button onclick="submitTag('${escapeQ(filename)}','${escapeQ(folder)}')" style="background:#003300;border:1px solid #00ff00;color:#00ff00;padding:8px 20px;cursor:pointer;flex:1;">Save Tag</button>
+                        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#330000;border:1px solid #ff0000;color:#ff0000;padding:8px 20px;cursor:pointer;">Cancel</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        async function submitTag(filename, folder) {
+            const ring = document.getElementById('tag-ring').value;
+            const category = document.getElementById('tag-category').value;
+            const tags = document.getElementById('tag-tags').value;
+            const correctRadio = document.querySelector('input[name="tag-correct"]:checked');
+            const correct = correctRadio ? correctRadio.value : null;
+            const corrected = document.getElementById('tag-corrected').value;
+
+            let url = `/api/files/tag?filename=${encodeURIComponent(filename)}&folder=${encodeURIComponent(folder)}`;
+            if (ring) url += `&ring=${ring}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+            if (tags) url += `&tags=${encodeURIComponent(tags)}`;
+            if (correct !== null) url += `&feedback_correct=${correct}`;
+            if (correct === 'false' && corrected) url += `&corrected_folder=${encodeURIComponent(corrected)}`;
+
+            const r = await fetch(url, {method: 'POST'});
+            const d = await r.json();
+            document.querySelector('div[style*=position\\:fixed]')?.remove();
+            if (d.error) alert(`Error: ${d.error}`);
+            else { alert(`Tagged: ${filename}`); await loadFileList(folder, _currentPage); }
+        }
+
+        async function openFileMove(filename, folder) {
+            const r = await fetch('/api/routing/schema');
+            const schema = await r.json();
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2000;display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML = `
+                <div style="background:#0a0a0a;border:2px solid #aa00ff;padding:25px;width:400px;">
+                    <h3 style="margin-bottom:15px;">Move: ${filename}</h3>
+                    <p style="color:#888;margin-bottom:15px;">From: ${folder}</p>
+                    <label>To Folder</label>
+                    <select id="move-to" style="width:100%;background:#111;border:1px solid #aa00ff;color:#aa00ff;padding:6px;margin:5px 0 20px;">
+                        ${(schema.canonical || []).map(f => `<option value="${f}">${f}</option>`).join('')}
+                    </select>
+                    <div style="display:flex;gap:10px;">
+                        <button onclick="submitMove('${escapeQ(filename)}','${escapeQ(folder)}')" style="background:#110011;border:1px solid #aa00ff;color:#aa00ff;padding:8px 20px;cursor:pointer;flex:1;">Move</button>
+                        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#330000;border:1px solid #ff0000;color:#ff0000;padding:8px 20px;cursor:pointer;">Cancel</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        async function submitMove(filename, fromFolder) {
+            const toFolder = document.getElementById('move-to').value;
+            const r = await fetch(`/api/files/move?filename=${encodeURIComponent(filename)}&from_folder=${encodeURIComponent(fromFolder)}&to_folder=${encodeURIComponent(toFolder)}`, {method: 'POST'});
+            const d = await r.json();
+            document.querySelector('div[style*=position\\:fixed]')?.remove();
+            if (d.error) alert(`Error: ${d.error}`);
+            else { alert(`Moved to ${toFolder}`); await loadFileList(fromFolder, _currentPage); }
+        }
+
+        async function promoteFolder(name) {
+            if (!confirm(`Promote "${name}" to canonical folder?`)) return;
+            const r = await fetch(`/api/routing/promote?folder=${encodeURIComponent(name)}`, {method: 'POST'});
+            const d = await r.json();
+            if (d.error) alert(`Error: ${d.error}`);
+            else { alert(`"${name}" is now canonical`); await loadFilesModal(); }
+        }
+
+        async function rejectFolder(name) {
+            if (!confirm(`Reject "${name}"? Files will move to archive.`)) return;
+            const r = await fetch(`/api/routing/reject?folder=${encodeURIComponent(name)}`, {method: 'POST'});
+            const d = await r.json();
+            if (d.error) alert(`Error: ${d.error}`);
+            else { alert(`"${name}" rejected`); await loadFilesModal(); }
+        }
+
         function closeModal() {
             document.getElementById('modal-overlay').classList.remove('show');
         }
@@ -895,7 +1099,8 @@
                 'learning': '🧠 Learned Routing Patterns',
                 'rules': '💡 Suggested Routing Rules',
                 'patterns': '📊 Pattern Recognition Stats',
-                'governance': '⚖️ Governance & Dual Commit'
+                'governance': '⚖️ Governance & Dual Commit',
+                'files': '📁 File Browser & Tagger'
             };
             return titles[type] || type;
         }
