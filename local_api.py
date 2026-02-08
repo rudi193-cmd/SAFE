@@ -1258,9 +1258,10 @@ Remember: You are being called via paid API because the user explicitly requeste
                 yield chunk
             return
 
-    # === TIER 4: FREE CLOUD MESH (round-robin across all free providers) ===
+    # === TIER 4: FREE CLOUD MESH (rate-limited, cached) ===
     if tier == 4:
         try:
+            from core import request_manager as _rm
             from core import llm_router as _lr
             _lr.load_keys_from_json()
 
@@ -1277,7 +1278,7 @@ Remember: You are being called via paid API because the user explicitly requeste
 
 User: {prompt}"""
 
-            response = _lr.ask(full_prompt, preferred_tier="free")
+            response = _rm.ask(full_prompt, preferred_tier="free", use_cache=True, cache_ttl=300)
             if response:
                 _log(f"TIER4_MESH | provider={response.provider}")
                 yield f"[Tier 4: {response.provider}]\n"

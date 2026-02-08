@@ -1467,6 +1467,29 @@ if UI_DIST.exists():
     app.mount("/", StaticFiles(directory=str(UI_DIST)), name="static")
 
 
+# --- Request Manager Endpoints ---
+
+@app.get("/api/request_manager/stats")
+def request_manager_stats():
+    """Rate limit status and cache stats for all providers."""
+    try:
+        from core import request_manager
+        return request_manager.get_stats()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/request_manager/clear_cache")
+def request_manager_clear_cache():
+    """Clear the LLM response cache."""
+    try:
+        from core import request_manager
+        request_manager.clear_cache()
+        return {"status": "cache cleared"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # --- Hot Reload Endpoint ---
 
 @app.post("/api/reload")
