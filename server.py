@@ -354,6 +354,158 @@ def coherence():
     return {**report, "needs_intervention": needs_intervention, "intervention_reason": reason}
 
 
+# --- TTS Endpoints ---
+
+@app.post("/api/tts/speak")
+async def tts_speak(request: Request):
+    """Convert text to speech. Returns audio/wav bytes."""
+    try:
+        from core import tts_router
+        body = await request.json()
+        text = body.get("text", "")
+        voice = body.get("voice", "default")
+        tier = body.get("tier", "local")
+        if not text:
+            return {"error": "text is required"}
+        audio = tts_router.speak(text, voice, preferred_tier=tier)
+        if audio:
+            from fastapi.responses import Response as FastAPIResponse
+            return FastAPIResponse(content=audio, media_type="audio/wav")
+        return {"error": "No TTS providers available"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/tts/voices")
+def tts_voices(provider: str = ""):
+    """List available TTS voices."""
+    try:
+        from core import tts_router
+        if provider:
+            return {"provider": provider, "voices": tts_router.get_voices(provider)}
+        avail = tts_router.get_available_providers()
+        all_voices = {}
+        for tier, providers in avail.items():
+            for p in providers:
+                all_voices[p.name] = tts_router.get_voices(p.name)
+        return {"voices": all_voices}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/tts/providers")
+def tts_providers():
+    """List available TTS providers by tier."""
+    try:
+        from core import tts_router
+        avail = tts_router.get_available_providers()
+        return {tier: [p.name for p in providers] for tier, providers in avail.items()}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- Skills Endpoints ---
+
+@app.get("/api/skills/status")
+def skills_status():
+    """System health check."""
+    import subprocess, requests as req
+    try:
+        daemons = {}
+        for name in ["WILLOW-GovernanceMonitor", "WILLOW-CoherenceScanner",
+                     "WILLOW-TopologyBuilder", "WILLOW-KnowledgeCompactor",
+                     "WILLOW-SAFESync", "WILLOW-PersonaScheduler", "WILLOW-InboxWatcher"]:
+            result = subprocess.run(["tasklist", "/FI", f"WINDOWTITLE eq {name}"],
+                                    capture_output=True, text=True, timeout=3)
+            daemons[name] = "python.exe" in result.stdout
+        return {
+            "server": True,
+            "daemons": daemons,
+            "ollama": _check_service("http://localhost:11434/api/tags")
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _check_service(url: str) -> bool:
+    try:
+        import requests as req
+        return req.get(url, timeout=2).status_code == 200
+    except:
+        return False
+
+
+@app.get("/api/skills/query")
+def skills_query(q: str, limit: int = 10):
+    """Query knowledge base."""
+    results = knowledge.search(USERNAME, q, limit)
+    return {"query": q, "results": results, "count": len(results)}
+
+
+@app.post("/api/skills/route")
+async def skills_route(request: Request):
+    """Route a file with content extraction."""
+    try:
+        from core import extraction
+        body = await request.json()
+        file_path = body.get("file")
+        if not file_path or not Path(file_path).exists():
+            return {"error": "file not found"}
+        result = extraction.extract_content(file_path)
+        analysis = {}
+        if result["success"] and result["text"]:
+            analysis = extraction.analyze_content_for_routing(
+                result["text"], Path(file_path).name, Path(file_path).suffix)
+        return {"file": file_path, "extraction": result, "routing": analysis}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/skills/journal")
+async def skills_journal(request: Request):
+    """Add journal entry."""
+    try:
+        body = await request.json()
+        content = body.get("content", "")
+        category = body.get("category", "note")
+        if not content:
+            return {"error": "content is required"}
+        journal_path = Path(__file__).parent / "data" / f"{USERNAME}_journal.md"
+        journal_path.parent.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(journal_path, "a", encoding="utf-8") as f:
+            f.write(f"\n## {ts} — {category}\n\n{content}\n")
+        return {"success": True, "timestamp": ts, "category": category}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/skills/persona")
+async def skills_persona(request: Request):
+    """Invoke a persona."""
+    try:
+        from core import llm_router
+        body = await request.json()
+        persona = body.get("persona", "PA")
+        prompt = body.get("prompt", "")
+        personas = {
+            "PA": "You are PA (Personal Assistant), helpful and proactive.",
+            "Analyst": "You are Analyst, data-driven. Find patterns and insights.",
+            "Archivist": "You are Archivist, organizing and preserving knowledge.",
+            "Poet": "You are Poet, a creative writing agent.",
+            "Debugger": "You are Debugger, finding and fixing bugs."
+        }
+        if persona not in personas:
+            return {"error": f"Unknown persona. Available: {list(personas.keys())}"}
+        full_prompt = f"{personas[persona]}\n\nUser: {prompt}"
+        response = llm_router.ask(full_prompt, preferred_tier="free")
+        if response:
+            return {"persona": persona, "response": response.content, "provider": response.provider}
+        return {"error": "No LLM response"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.post("/api/ingest")
 async def ingest(file: UploadFile = File(...)):
     """Ingest a dropped file into the knowledge DB."""
