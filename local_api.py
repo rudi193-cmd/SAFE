@@ -636,13 +636,17 @@ def route_prompt(prompt: str) -> int:
             _log(f"ROUTE | tier=4 | trigger=explicit '{phrase}'")
             return 4
 
-    # Everything goes to Gemini (free, fast) unless Gemini is down
-    if check_gemini_available():
-        _log(f"ROUTE | tier=4 | trigger=cloud_first_default")
-        return 4
+    # Short/simple prompts go local (saves cloud quota for complex tasks)
+    if len(prompt_lower) < 120 and not any(kw in prompt_lower for kw in TIER3_KEYWORDS):
+        _log(f"ROUTE | tier=2 | trigger=short_prompt_local")
+        return 2
 
-    # Gemini unavailable — fall back to local routing
-    _log(f"ROUTE | tier=2 | trigger=gemini_unavailable_fallback")
+    # Complex prompts go to cloud mesh (llm_router distributes across all free providers)
+    _log(f"ROUTE | tier=4 | trigger=cloud_mesh_default")
+    return 4
+
+    # Fallback (unreachable but kept for safety)
+    _log(f"ROUTE | tier=2 | trigger=fallback")
 
     # Check for Tier 3 keywords (heavy local tasks)
     for keyword in TIER3_KEYWORDS:
@@ -1254,21 +1258,16 @@ Remember: You are being called via paid API because the user explicitly requeste
                 yield chunk
             return
 
-    # === TIER 4: GEMINI 2.5 FLASH (FREE cloud) ===
+    # === TIER 4: FREE CLOUD MESH (round-robin across all free providers) ===
     if tier == 4:
-        if not check_gemini_available():
-            _log("TIER4_FALLBACK | Gemini not configured, falling back to Tier 3 (local)")
-            tier = 3
-            tier_info = MODEL_TIERS.get(tier, {})
-            yield f"[Tier 4 requested but Gemini not configured — falling back to Tier 3]\n"
-            # Fall through to local tiers below
-        else:
-            yield f"[Tier 4: {tier_info.get('desc', 'Gemini')}]\n"
+        try:
+            from core import llm_router as _lr
+            _lr.load_keys_from_json()
 
             persona_prompt = PERSONAS.get(persona, PERSONAS.get("Willow", "You are Willow, a helpful AI assistant."))
             user_context = load_user_profile(user)
 
-            full_system_prompt = f"""{build_system_context(persona)}
+            full_prompt = f"""{build_system_context(persona)}
 
 {user_context}
 
@@ -1276,11 +1275,23 @@ Remember: You are being called via paid API because the user explicitly requeste
 
 {retrieved}
 
-Remember: Keep responses thorough but efficient. You are Gemini 2.5 Flash handling a complex task that local models couldn't handle well."""
+User: {prompt}"""
 
-            for chunk in process_gemini_stream(prompt, full_system_prompt, persona=persona):
-                yield chunk
-            return
+            response = _lr.ask(full_prompt, preferred_tier="free")
+            if response:
+                _log(f"TIER4_MESH | provider={response.provider}")
+                yield f"[Tier 4: {response.provider}]\n"
+                yield response.content
+                return
+            else:
+                _log("TIER4_MESH_FAIL | all cloud providers exhausted, falling back to Tier 3")
+                yield f"[Tier 4 cloud unavailable — falling back to local]\n"
+                tier = 3
+                tier_info = MODEL_TIERS.get(tier, {})
+        except Exception as e:
+            _log(f"TIER4_ERROR | {e}, falling back to Tier 3")
+            tier = 3
+            tier_info = MODEL_TIERS.get(tier, {})
 
     # === TIERS 1-3: LOCAL OLLAMA ===
     model = get_model_for_tier(tier)
