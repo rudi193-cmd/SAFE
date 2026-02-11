@@ -1,3 +1,5 @@
+Still undergoing rewrites.
+
 # SAFE: Session-Authorized, Fully Explicit
 
 A consent framework for applications that handle personal data.
