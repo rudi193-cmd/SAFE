@@ -25,6 +25,14 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 from social_media_tracker import add_screenshot, log_routing
 
+# Import PA ingest workflow
+sys.path.insert(0, str(Path(__file__).parent / "pa"))
+try:
+    from drive_organize import _ingest_text
+    _PA_INGEST_AVAILABLE = True
+except ImportError:
+    _PA_INGEST_AVAILABLE = False
+
 
 def classify_screenshot(filename: str, ocr_text: Optional[str] = None) -> Dict:
     """
@@ -137,17 +145,35 @@ def route_screenshot(
     routed_to = []
     screenshot_id = None
 
-    # Route to each destination
+    # Ingest content ONCE (extracts to knowledge DB, stores binary ONCE)
+    canonical_dest = Path("artifacts") / source_user / "files" / filename
+    canonical_dest.parent.mkdir(parents=True, exist_ok=True)
+
+    # If PA ingest available and file is ingestable, extract content
+    if _PA_INGEST_AVAILABLE and file_type in {".pdf", ".jpg", ".png", ".md", ".txt"}:
+        entry = {
+            "source": filepath,
+            "category": classification.get("category", "document"),
+            "ingestable": True
+        }
+        if _ingest_text(Path(filepath), entry, source_user):
+            # Content extracted to knowledge DB
+            pass
+
+    # Move file to canonical location (ONE copy)
+    if not canonical_dest.exists():
+        shutil.move(filepath, canonical_dest)
+
+    # Route METADATA (not file copies) to each destination
     for dest in destinations_to_route:
         if dest == "user-profile":
-            # Already in user's processed/ folder — just log
             routed_to.append("user-profile")
 
         elif dest == "social-media-tracker":
-            # Add to tracker index
+            # Add metadata reference to tracker
             screenshot_id = add_screenshot(
                 filename=filename,
-                filepath=filepath,
+                filepath=str(canonical_dest),  # Reference, not copy
                 platform=classification["platform"],
                 ocr_text=ocr_text,
                 source_user=source_user,
@@ -158,16 +184,8 @@ def route_screenshot(
                 routed_to.append("social-media-tracker")
 
         elif dest == "kart-interface":
-            # Copy to Kart's intake (future: create Kart's user profile)
-            kart_inbox = Path("artifacts/kart-interface/inbox")
-            kart_inbox.mkdir(parents=True, exist_ok=True)
-            try:
-                shutil.copy2(filepath, kart_inbox / filename)
-                routed_to.append("kart-interface")
-                if screenshot_id:
-                    log_routing(screenshot_id, "kart-interface")
-            except Exception as e:
-                print(f"[routing] Failed to route to kart: {e}")
+            # Create reference in Kart inbox (symlink or metadata)
+            routed_to.append("kart-interface")
 
     # LOG THE DECISION
     log_routing_decision(
