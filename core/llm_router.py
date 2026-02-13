@@ -141,6 +141,8 @@ PROVIDERS = [
     # ProviderConfig("Cohere", "COHERE_API_KEY", "https://api.cohere.ai/v1/chat", "command-r", "free"),  # Disabled - 401 auth error
     ProviderConfig("HuggingFace Inference", "HUGGINGFACE_API_KEY", "https://api-inference.huggingface.co/models/", "meta-llama/Meta-Llama-3-8B-Instruct", "free"),
     ProviderConfig("Ollama", "PATH", "http://localhost:11434/api/generate", "llama3.2:latest", "free"),  # LOCAL FALLBACK
+    ProviderConfig("Ollama Minimax", "PATH", "http://localhost:11434/api/generate", "minimax-m2.5:cloud", "free"),  # CLOUD via Ollama
+    ProviderConfig("Ollama GLM-5", "PATH", "http://localhost:11434/api/generate", "glm-5:cloud", "free"),  # CLOUD via Ollama
 
     ProviderConfig("Baseten", "BASETEN_API_KEY", "https://inference.baseten.co/v1/chat/completions", "moonshotai/Kimi-K2.5", "free"),
     ProviderConfig("Baseten2", "BASETEN_API_KEY_2", "https://inference.baseten.co/v1/chat/completions", "moonshotai/Kimi-K2.5", "free"),
@@ -170,8 +172,8 @@ def get_available_providers() -> Dict[str, List[ProviderConfig]]:
     available = {"free": [], "cheap": [], "paid": []}
 
     for p in PROVIDERS:
-        # Check Ollama by testing local endpoint
-        if p.name == "Ollama":
+        # Check Ollama by testing local endpoint (includes cloud models)
+        if p.name.startswith("Ollama"):
             try:
                 if requests.get("http://localhost:11434/api/tags", timeout=1).status_code == 200:
                     available[p.tier].append(p)
@@ -291,14 +293,14 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
         key=lambda p: tier_rank.get(p.tier, 99) * 10 + (1 - provider_scores[p.name])
     )
 
-    # Separate Ollama (local) from cloud providers
+    # Separate Ollama (local fallback) from cloud providers
     ollama_provider = None
     cloud_providers = []
     for p in healthy_providers:
-        if p.name == "Ollama":
+        if p.name == "Ollama":  # Only the base local Ollama
             ollama_provider = p
         else:
-            cloud_providers.append(p)
+            cloud_providers.append(p)  # Includes Ollama cloud models
 
     # Prefer cloud providers; only use Ollama if no cloud providers available
     if cloud_providers:
@@ -364,8 +366,8 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                     logging.warning(f"OCI {provider.name} failed: {oci_err} — trying next")
                     continue
 
-            # --- OLLAMA ADAPTER ---
-            elif provider.name == "Ollama":
+            # --- OLLAMA ADAPTER (local + cloud) ---
+            elif provider.name.startswith("Ollama"):
                 resp = requests.post(provider.base_url, json={
                     "model": provider.model,
                     "prompt": enhanced_prompt,
