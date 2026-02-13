@@ -196,8 +196,8 @@ def _log_and_return(response_text: str, provider_name: str, provider_tier: str,
             tokens_out=tokens_out,
             prompt=prompt
         )
-    except Exception:
-        pass  # Don't fail request if cost logging fails
+    except Exception as e:
+        logging.warning(f"Cost tracking failed: {e}")
 
     return RouterResponse(response_text, provider_name, provider_tier)
 
