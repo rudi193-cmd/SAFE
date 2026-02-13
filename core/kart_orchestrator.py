@@ -282,18 +282,45 @@ ASSISTANT (respond with JSON):"""
             # Parse response
             content = response.content.strip()
 
+            # Extract JSON more robustly
+            json_str = content
+
             # Extract JSON (handle markdown code blocks)
             if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
+                try:
+                    json_str = content.split("```json")[1].split("```")[0].strip()
+                except IndexError:
+                    # Malformed code block, try to find JSON manually
+                    json_str = content
             elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
+                try:
+                    json_str = content.split("```")[1].split("```")[0].strip()
+                except IndexError:
+                    json_str = content
+
+            # Try to repair common JSON issues
+            if not json_str.endswith("}"):
+                # Find last complete JSON object
+                brace_count = 0
+                last_valid = -1
+                for i, char in enumerate(json_str):
+                    if char == "{":
+                        brace_count += 1
+                    elif char == "}":
+                        brace_count -= 1
+                        if brace_count == 0:
+                            last_valid = i + 1
+                            break
+
+                if last_valid > 0:
+                    json_str = json_str[:last_valid]
 
             # Parse JSON
             try:
-                action = json.loads(content)
+                action = json.loads(json_str)
             except json.JSONDecodeError:
-                # Retry: ask LLM to fix JSON
-                return {"type": "error", "message": f"Invalid JSON from LLM: {content[:200]}"}
+                # Last resort: return error but include full context for debugging
+                return {"type": "error", "message": f"Invalid JSON from LLM: {json_str[:300]}"}
 
             # Validate action
             if action.get("action") == "tool_call":
