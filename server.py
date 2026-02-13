@@ -30,8 +30,11 @@ import local_api
 from core import knowledge
 from core.coherence import get_coherence_report, check_intervention
 from core import topology
+from core import agent_registry
+from core import tool_engine, kart_orchestrator, kart_tasks
 from core.awareness import on_scan_complete, on_organize_complete, on_coherence_update, on_topology_update, say as willow_say
 from apps.pa import drive_scan, drive_organize
+from api import kart_routes, agent_routes
 
 app = FastAPI(title="Willow", docs_url=None, redoc_url=None)
 
@@ -47,6 +50,10 @@ app.add_middleware(
 )
 
 USERNAME = local_api.DEFAULT_USER
+
+# Mount API routes
+app.include_router(kart_routes.router)  # Task orchestration
+app.include_router(agent_routes.router)  # Conversational agents
 
 
 # --- API Endpoints ---
@@ -69,7 +76,8 @@ async def system_status():
         "governance": {"pending_commits": 0, "last_ratification": None},
         "intake": {"dump": 0, "hold": 0, "process": 0, "route": 0, "clear": 0},
         "engine": {"running": False},
-        "tunnel": {"url": None, "reachable": False}
+        "tunnel": {"url": None, "reachable": False},
+        "kart": {"available_tools": 0, "task_stats": {}, "trust_level": "UNKNOWN"}
     }
 
     # --- Ollama Check ---
@@ -138,6 +146,23 @@ async def system_status():
                         status["tunnel"]["reachable"] = r.is_success
                 except:
                     pass
+    except:
+        pass
+
+    # --- Kart Check ---
+    try:
+        # Get agent info
+        agent_info = agent_registry.get_agent("Sweet-Pea-Rudi19", "kart")
+        if agent_info:
+            status["kart"]["trust_level"] = agent_info.get("trust_level", "UNKNOWN")
+
+        # Get tool count
+        tools = tool_engine.list_tools("kart", "Sweet-Pea-Rudi19")
+        status["kart"]["available_tools"] = len(tools)
+
+        # Get task stats
+        task_stats = kart_tasks.get_stats("Sweet-Pea-Rudi19", "kart")
+        status["kart"]["task_stats"] = task_stats
     except:
         pass
 
@@ -813,6 +838,62 @@ def topology_cluster(n_clusters: int = 10):
     return {"clusters_created": len(cluster_ids), "cluster_ids": cluster_ids}
 
 
+# --- Agent Registry Endpoints ---
+
+@app.post("/api/agents/init")
+def agents_init():
+    """Initialize agent tables and register all default personas."""
+    results = agent_registry.register_default_agents(USERNAME)
+    return {"registered": results}
+
+
+@app.get("/api/agents")
+def agents_list():
+    """List all registered agents."""
+    return {"agents": agent_registry.list_agents(USERNAME)}
+
+
+@app.post("/api/agents/register")
+def agents_register(name: str, display_name: str = "", trust_level: str = "WORKER",
+                    agent_type: str = "llm", purpose: str = ""):
+    """Register a new agent/user."""
+    is_new = agent_registry.register_agent(USERNAME, name, display_name or name,
+                                           trust_level, agent_type, purpose)
+    agent = agent_registry.get_agent(USERNAME, name)
+    return {"registered": is_new, "agent": agent}
+
+
+@app.get("/api/agents/{name}")
+def agents_get(name: str):
+    """Get agent profile."""
+    agent = agent_registry.get_agent(USERNAME, name)
+    if not agent:
+        return {"error": f"Agent '{name}' not found"}
+    agent_registry.update_last_seen(USERNAME, name)
+    return agent
+
+
+@app.post("/api/agents/{name}/message")
+def agents_send_message(name: str, from_agent: str, subject: str = "", body: str = "", thread_id: str = ""):
+    """Send a message to an agent."""
+    msg_id = agent_registry.send_message(USERNAME, from_agent, name, subject, body, thread_id or None)
+    return {"message_id": msg_id}
+
+
+@app.get("/api/agents/{name}/mailbox")
+def agents_mailbox(name: str, unread_only: bool = False):
+    """Get messages for an agent."""
+    messages = agent_registry.get_mailbox(USERNAME, name, unread_only)
+    return {"agent": name, "messages": messages, "count": len(messages)}
+
+
+@app.post("/api/agents/messages/{message_id}/read")
+def agents_mark_read(message_id: int):
+    """Mark a message as read."""
+    agent_registry.mark_read(USERNAME, message_id)
+    return {"marked_read": message_id}
+
+
 # --- PA (Personal Assistant) Endpoints ---
 
 DRIVE_ROOT = str(Path.home() / "My Drive")
@@ -1039,6 +1120,80 @@ async def governance_reject(request: Request):
         pending_file.unlink()
 
         return {"success": True, "action": "rejected", "commit_id": commit_id}
+    except Exception as e:
+        return {"error": str(e), "success": False}
+
+
+# --- Governance Audit Chain ---
+
+@app.get("/api/governance/audit/head")
+def governance_audit_head():
+    """Current audit chain head: hash + sequence + entry count."""
+    try:
+        from core.storage import get_audit_head
+        return get_audit_head()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/governance/audit/verify")
+def governance_audit_verify():
+    """Verify audit chain integrity (tamper check)."""
+    try:
+        from core.storage import verify_audit_chain
+        return verify_audit_chain()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# --- SAFE Sync Status ---
+
+SAFE_LOG = Path(__file__).parent / "core" / "safe_sync.log"
+SAFE_REPO_PATH = Path(__file__).parent.parent / "SAFE"
+
+
+@app.get("/api/safe/status")
+def safe_status():
+    """SAFE repo sync status: last sync, last error, repo reachability."""
+    try:
+        reachable = SAFE_REPO_PATH.exists() and (SAFE_REPO_PATH / ".git").exists()
+        last_lines = []
+        last_sync = None
+        last_error = None
+        if SAFE_LOG.exists():
+            lines = SAFE_LOG.read_text(encoding="utf-8", errors="replace").splitlines()
+            last_lines = lines[-10:]
+            for line in reversed(lines):
+                if "sync" in line.lower() and last_sync is None:
+                    last_sync = line.strip()
+                if "error" in line.lower() and last_error is None:
+                    last_error = line.strip()
+        return {
+            "reachable": reachable,
+            "repo_path": str(SAFE_REPO_PATH),
+            "last_sync": last_sync,
+            "last_error": last_error,
+            "recent_log": last_lines,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/safe/sync")
+def safe_sync_now():
+    """Trigger a one-shot SAFE sync."""
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["python", str(Path(__file__).parent / "core" / "safe_sync.py")],
+            capture_output=True, text=True, timeout=30,
+            cwd=str(Path(__file__).parent)
+        )
+        return {
+            "success": result.returncode == 0,
+            "stdout": result.stdout[-1000:] if result.stdout else "",
+            "stderr": result.stderr[-500:] if result.stderr else "",
+        }
     except Exception as e:
         return {"error": str(e), "success": False}
 
@@ -1681,16 +1836,7 @@ def serve_system_dashboard():
     return FileResponse(SYSTEM_DASHBOARD, media_type="text/html")
 
 
-# --- Static file serving (production) ---
-
 UI_DIST = Path(__file__).parent / "ui" / "dist"
-
-if UI_DIST.exists():
-    @app.get("/")
-    def serve_index():
-        return FileResponse(UI_DIST / "index.html")
-
-    app.mount("/", StaticFiles(directory=str(UI_DIST)), name="static")
 
 
 # --- Request Manager Endpoints ---
@@ -1766,7 +1912,198 @@ def reload_all():
     return {"reloaded": results}
 
 
+# --- Bulk Learn ---
+
+_learn_status = {"running": False, "progress": "", "ingested": 0, "skipped": 0, "errors": 0}
+
+LEARN_SOURCES = [
+    # Repos
+    (Path("../die-namic-system/governance"),      "source",     "governance"),
+    (Path("../die-namic-system/source_ring"),      "source",     "code"),
+    (Path("../die-namic-system/docs"),             "source",     "narrative"),
+    (Path("../die-namic-system/continuity_ring"),  "continuity", "narrative"),
+    (Path("../die-namic-system/scripts"),          "source",     "code"),
+    (Path("../die-namic-system/tools"),            "source",     "code"),
+    (Path("../SAFE/governance"),                   "source",     "governance"),
+    (Path("../SAFE/schemas"),                      "source",     "specs"),
+    (Path("../SAFE/docs"),                         "source",     "narrative"),
+    (Path("core"),                                 "bridge",     "code"),
+    (Path("apps"),                                 "bridge",     "code"),
+    (Path("scripts"),                              "bridge",     "code"),
+    (Path("schema"),                               "bridge",     "specs"),
+    (Path("governance"),                           "bridge",     "governance"),
+    (Path("../vision-board/backend"),              "bridge",     "code"),
+    (Path("../vision-board/frontend/src"),         "bridge",     "code"),
+    # Google Drive
+    (Path("C:/Users/Sean/My Drive/die-namic-system/training_data"),    "source",     "data"),
+    (Path("C:/Users/Sean/My Drive/die-namic-system/origin_materials"),  "source",     "narrative"),
+    (Path("C:/Users/Sean/My Drive/die-namic-system/docs"),             "source",     "narrative"),
+    (Path("C:/Users/Sean/My Drive/die-namic-system/governance"),       "source",     "governance"),
+    (Path("C:/Users/Sean/My Drive/die-namic-system/continuity_ring"),  "continuity", "narrative"),
+    (Path("C:/Users/Sean/My Drive/Archive"),       "continuity", "documents"),
+    (Path("C:/Users/Sean/My Drive/Career"),        "continuity", "documents"),
+    (Path("C:/Users/Sean/My Drive/Creative"),      "source",     "narrative"),
+    (Path("C:/Users/Sean/My Drive/Data"),          "bridge",     "data"),
+    (Path("C:/Users/Sean/My Drive/Journal"),       "continuity", "narrative"),
+    (Path("C:/Users/Sean/My Drive/Personal"),      "continuity", "narrative"),
+    (Path("C:/Users/Sean/My Drive/Projects"),      "source",     "narrative"),
+    (Path("C:/Users/Sean/My Drive/System"),        "source",     "specs"),
+    (Path("C:/Users/Sean/My Drive/Transcripts"),   "continuity", "narrative"),
+    # Existing artifacts (already sorted)
+    (Path("artifacts/Sweet-Pea-Rudi19"),           "bridge",     "documents"),
+]
+
+LEARN_TEXT_EXTS = {".py",".js",".ts",".jsx",".tsx",".html",".css",".md",".txt",
+                   ".json",".yaml",".yml",".toml",".csv",".sh",".bat",".sql",".xml",".rst"}
+LEARN_SKIP_DIRS = {"node_modules","__pycache__",".git",".venv","venv","dist","build",
+                   ".next",".tmp.drivedownload",".tmp.driveupload","$RECYCLE.BIN",".pytest_cache"}
+LEARN_MAX_SIZE = 200_000
+
+
+def _learn_infer_cat(path: Path, default: str) -> str:
+    parts = {p.lower() for p in path.parts}
+    if "governance" in parts: return "governance"
+    if any(x in parts for x in ("continuity_ring","journal","transcripts")): return "narrative"
+    if any(x in parts for x in ("schemas","schema","specs","awa")): return "specs"
+    if any(x in parts for x in ("training_data",)): return "data"
+    if path.suffix in (".py",".js",".ts",".sh",".bat"): return "code"
+    if path.suffix in (".json",".csv",".yaml",".yml"): return "data"
+    if path.suffix == ".md": return "narrative"
+    return default
+
+
+def _learn_worker(username: str):
+    """Run bulk ingest inside the server process."""
+    import hashlib
+    from core.knowledge import init_db, _connect, _extract_entities_regex
+    _learn_status["running"] = True
+    _learn_status["ingested"] = 0
+    _learn_status["skipped"] = 0
+    _learn_status["errors"] = 0
+
+    init_db(username)
+    conn = _connect(username)
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    for base, ring, default_cat in LEARN_SOURCES:
+        if not base.exists():
+            continue
+        _learn_status["progress"] = f"scanning {base.name}"
+        for path in base.rglob("*"):
+            if not path.is_file():
+                continue
+            if any(s in path.parts for s in LEARN_SKIP_DIRS):
+                continue
+            if path.name in {"desktop.ini",".DS_Store","package-lock.json","yarn.lock"}:
+                continue
+            if path.suffix.lower() not in LEARN_TEXT_EXTS:
+                continue
+            try:
+                if path.stat().st_size > LEARN_MAX_SIZE:
+                    continue
+            except Exception:
+                continue
+
+            try:
+                content = path.read_text(encoding="utf-8", errors="replace")
+                if len(content.strip()) < 20:
+                    _learn_status["skipped"] += 1
+                    continue
+
+                fhash = hashlib.sha256(content.encode("utf-8", errors="replace")).hexdigest()[:32]
+                cat = _learn_infer_cat(path, default_cat)
+
+                existing = conn.execute(
+                    "SELECT id FROM knowledge WHERE source_type='file' AND source_id=?",
+                    (fhash,)
+                ).fetchone()
+                if existing:
+                    _learn_status["skipped"] += 1
+                    continue
+
+                entities = _extract_entities_regex(f"{path.name} {content[:500]}")
+                conn.execute(
+                    """INSERT OR IGNORE INTO knowledge
+                       (source_type, source_id, title, summary, content_snippet,
+                        category, ring, created_at)
+                       VALUES ('file', ?, ?, NULL, ?, ?, ?, ?)""",
+                    (fhash, str(path), content[:1000], cat, ring, now)
+                )
+                kid = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+                if kid and entities:
+                    for ent in entities:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO entities (name, entity_type) VALUES (?, ?)",
+                            (ent["name"], ent.get("type", "unknown"))
+                        )
+                        eid = conn.execute("SELECT id FROM entities WHERE name=?", (ent["name"],)).fetchone()
+                        if eid:
+                            conn.execute(
+                                "INSERT OR IGNORE INTO knowledge_entities (knowledge_id, entity_id) VALUES (?, ?)",
+                                (kid, eid[0])
+                            )
+                conn.commit()
+                _learn_status["ingested"] += 1
+            except Exception as e:
+                _learn_status["errors"] += 1
+
+    conn.close()
+    _learn_status["running"] = False
+    _learn_status["progress"] = f"done: {_learn_status['ingested']} ingested"
+
+
+@app.post("/api/learn")
+def learn_start():
+    """Start bulk ingest of all repos + Google Drive into knowledge DB."""
+    if _learn_status["running"]:
+        return {"error": "Already running", "status": _learn_status}
+    import threading
+    username = USERNAME
+    t = threading.Thread(target=_learn_worker, args=(username,), daemon=True)
+    t.start()
+    return {"started": True, "message": "Bulk learn started in background"}
+
+
+@app.get("/api/learn/status")
+def learn_status():
+    """Check bulk learn progress."""
+    return _learn_status
+
+
+# --- Static file serving (production) — must be last to avoid shadowing API routes ---
+if UI_DIST.exists():
+    @app.get("/")
+    def serve_index():
+        return FileResponse(UI_DIST / "index.html")
+
+    app.mount("/", StaticFiles(directory=str(UI_DIST)), name="static")
+
+
 if __name__ == "__main__":
     import uvicorn
     print("Willow UI: http://127.0.0.1:8420")
     uvicorn.run("server:app", host="0.0.0.0", port=8420, log_level="info")
+
+# BASE 17 Compact Communication Endpoint
+@app.route('/api/compact', methods=['POST'])
+def compact_request():
+    """Handle BASE 17 compact format: task_id|action|params"""
+    try:
+        data = request.get_json()
+        compact = data.get('compact', '')
+        
+        # Parse: task_id|action|params
+        parts = compact.split('|')
+        if len(parts) < 2:
+            return jsonify({'error': 'Invalid format'}), 400
+            
+        task_id = parts[0]
+        action = parts[1]
+        params = parts[2] if len(parts) > 2 else ''
+        
+        # Route to agent based on action
+        # TODO: Implement routing logic
+        
+        return jsonify({'task_id': task_id, 'result': 'acknowledged'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
