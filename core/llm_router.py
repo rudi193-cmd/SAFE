@@ -328,6 +328,19 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
         key=lambda p: tier_rank.get(p.tier, 99) * 10 + (1 - provider_scores[p.name])
     )
 
+    # Use learned patterns: Boost best provider for this task type to front
+    if task_type:
+        best_for_task = patterns_provider.get_best_provider_for(category=task_type, min_samples=5)
+        if best_for_task:
+            best_name = best_for_task["provider"]
+            # Find and move to front if it exists in healthy_providers
+            for i, p in enumerate(healthy_providers):
+                if p.name == best_name:
+                    # Move this provider to front of list
+                    healthy_providers.insert(0, healthy_providers.pop(i))
+                    logging.info(f"Boosting {best_name} to front (best for {task_type}: {best_for_task['success_rate']*100:.0f}% success)")
+                    break
+
     # Separate Ollama (local fallback) from cloud providers
     ollama_provider = None
     cloud_providers = []
