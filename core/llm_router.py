@@ -32,6 +32,12 @@ try:
 except ImportError:
     import patterns_provider
 
+# Import cost tracking
+try:
+    from . import cost_tracker
+except ImportError:
+    import cost_tracker
+
 # Import fleet feedback for prompt enhancement
 try:
     from . import fleet_feedback
@@ -166,6 +172,35 @@ class RouterResponse:
     content: str
     provider: str
     tier: str
+
+
+def _estimate_tokens(text: str) -> int:
+    """Rough token estimate (1 token ≈ 4 chars)."""
+    return max(1, len(text) // 4)
+
+
+def _log_and_return(response_text: str, provider_name: str, provider_tier: str,
+                   provider_model: str, prompt: str, task_type: str) -> RouterResponse:
+    """Log cost and return RouterResponse."""
+    # Estimate tokens
+    tokens_in = _estimate_tokens(prompt)
+    tokens_out = _estimate_tokens(response_text)
+
+    # Log to cost tracker
+    try:
+        cost_tracker.log_usage(
+            provider=provider_name,
+            model=provider_model,
+            task_type=task_type or "unknown",
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
+            prompt=prompt
+        )
+    except Exception:
+        pass  # Don't fail request if cost logging fails
+
+    return RouterResponse(response_text, provider_name, provider_tier)
+
 
 def get_available_providers() -> Dict[str, List[ProviderConfig]]:
     """Check environment for available API keys."""
@@ -360,7 +395,10 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                         provider=provider.name, file_type='text',
                         category=task_type, response_time_ms=response_time_ms, success=True
                     )
-                    return RouterResponse(response_text, provider.name, provider.tier)
+
+                    # Log cost
+                    return _log_and_return(response_text, provider.name, provider.tier,
+                                          provider.model, enhanced_prompt, task_type)
                 except Exception as oci_err:
                     provider_health.record_failure(provider.name, type(oci_err).__name__, str(oci_err)[:200])
                     logging.warning(f"OCI {provider.name} failed: {oci_err} — trying next")
@@ -388,7 +426,9 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                         success=True
                     )
 
-                    return RouterResponse(response_text, provider.name, provider.tier)
+                    # Log cost
+                    return _log_and_return(response_text, provider.name, provider.tier,
+                                          provider.model, enhanced_prompt, task_type)
                 else:
                     provider_health.record_failure(provider.name, str(resp.status_code), resp.text[:200])
                     logging.warning(f"Provider {provider.name} returned {resp.status_code} — trying next")
@@ -422,7 +462,9 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                         success=True
                     )
 
-                    return RouterResponse(response_text, provider.name, provider.tier)
+                    # Log cost
+                    return _log_and_return(response_text, provider.name, provider.tier,
+                                          provider.model, enhanced_prompt, task_type)
                 elif resp.status_code == 429:
                     provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
@@ -453,7 +495,9 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                         success=True
                     )
 
-                    return RouterResponse(response_text, provider.name, provider.tier)
+                    # Log cost
+                    return _log_and_return(response_text, provider.name, provider.tier,
+                                          provider.model, enhanced_prompt, task_type)
                 elif resp.status_code == 429:
                     provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
@@ -491,7 +535,9 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                         success=True
                     )
 
-                    return RouterResponse(response_text, provider.name, provider.tier)
+                    # Log cost
+                    return _log_and_return(response_text, provider.name, provider.tier,
+                                          provider.model, enhanced_prompt, task_type)
                 elif resp.status_code == 429:
                     provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
@@ -527,7 +573,9 @@ def ask(prompt: str, preferred_tier: str = "free", use_round_robin: bool = True)
                         success=True
                     )
 
-                    return RouterResponse(response_text, provider.name, provider.tier)
+                    # Log cost
+                    return _log_and_return(response_text, provider.name, provider.tier,
+                                          provider.model, enhanced_prompt, task_type)
                 elif resp.status_code == 429:
                     provider_health.record_failure(provider.name, "429", "Rate limit exceeded")
                     logging.warning(f"Provider {provider.name} quota exceeded (429) — trying next")
