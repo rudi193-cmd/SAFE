@@ -112,23 +112,33 @@ def route_screenshot(
     ocr_text: Optional[str] = None,
     source_user: str = "Sweet-Pea-Rudi19"
 ) -> Dict:
-    """
-    Route a screenshot to multiple destinations based on classification.
+    """Route a screenshot using learned preferences + heuristics."""
 
-    Returns:
-    {
-        "classification": {...},
-        "routed_to": ["user-profile", "social-media-tracker"],
-        "screenshot_id": 123  # from social-media-tracker
-    }
-    """
+    # Import learning system
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+    from patterns import suggest_destinations_for, log_routing_decision
+
     classification = classify_screenshot(filename, ocr_text)
+    file_type = Path(filename).suffix.lower() or ".jpg"
+
+    # Check learned preferences FIRST
+    suggestion = suggest_destinations_for(
+        file_type=file_type,
+        content_summary=f"Screenshot: {classification['platform']}",
+        default_destinations=classification["destinations"],
+        min_confidence=0.5
+    )
+
+    # Use learned or default
+    destinations_to_route = suggestion["destinations"] if suggestion["reason"] == "learned_preference" else classification["destinations"]
 
     routed_to = []
     screenshot_id = None
 
     # Route to each destination
-    for dest in classification["destinations"]:
+    for dest in destinations_to_route:
         if dest == "user-profile":
             # Already in user's processed/ folder — just log
             routed_to.append("user-profile")
@@ -158,6 +168,16 @@ def route_screenshot(
                     log_routing(screenshot_id, "kart-interface")
             except Exception as e:
                 print(f"[routing] Failed to route to kart: {e}")
+
+    # LOG THE DECISION
+    log_routing_decision(
+        filename=filename,
+        file_type=file_type,
+        content_summary=f"{classification['platform']} screenshot",
+        routed_to=routed_to,
+        reason=suggestion["reason"],
+        confidence=suggestion["confidence"]
+    )
 
     return {
         "classification": classification,

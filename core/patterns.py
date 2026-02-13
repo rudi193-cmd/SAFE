@@ -193,6 +193,38 @@ def _update_learned_preferences(file_type: str, destinations: List[str]):
     conn.close()
 
 
+def suggest_destinations_for(
+    file_type: str,
+    content_summary: Optional[str] = None,
+    default_destinations: Optional[List[str]] = None,
+    min_confidence: float = 0.5
+) -> Dict:
+    """
+    Suggest routing destinations based on learned preferences.
+
+    Returns dict with:
+        destinations: List[str] - where to route
+        reason: str - "learned_preference" or "default_heuristic"
+        confidence: float - 0.0-1.0
+    """
+    init_db()
+    preferences = get_learned_preferences(min_confidence=min_confidence)
+
+    for pref in preferences:
+        if pref["pattern_type"] == "file_type_routing" and pref["pattern_value"] == file_type:
+            return {
+                "destinations": [pref["destination"]],
+                "reason": "learned_preference",
+                "confidence": pref["confidence"]
+            }
+
+    return {
+        "destinations": default_destinations or ["user-profile"],
+        "reason": "default_heuristic",
+        "confidence": 0.3
+    }
+
+
 def detect_anomalies(lookback_days: int = 7) -> List[Dict]:
     """
     Detect anomalies in routing patterns, node activity, entity mentions.
