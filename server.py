@@ -1900,14 +1900,15 @@ def reload_module(module: str):
     """Hot-reload a core module without restarting the server.
 
     Works for: llm_router, extraction, tts_router, knowledge, coherence,
-               topology, provider_health, patterns_provider, fleet_feedback
+               topology, provider_health, patterns_provider, fleet_feedback,
+               tool_engine
     Does NOT affect route definitions (those need server restart).
     """
     import importlib
     allowed = {
         "llm_router", "extraction", "tts_router", "knowledge",
         "coherence", "topology", "provider_health", "patterns_provider",
-        "fleet_feedback", "embeddings"
+        "fleet_feedback", "embeddings", "tool_engine"
     }
     if module not in allowed:
         return {"error": f"Module '{module}' not reloadable. Allowed: {sorted(allowed)}"}
@@ -1930,7 +1931,7 @@ def reload_all():
     modules = [
         "llm_router", "extraction", "tts_router", "knowledge",
         "coherence", "topology", "provider_health", "patterns_provider",
-        "fleet_feedback"
+        "fleet_feedback", "tool_engine"
     ]
     results = {}
     for name in modules:
