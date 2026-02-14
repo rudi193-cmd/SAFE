@@ -619,6 +619,9 @@ def _tool_delegate_to_agent(target_agent: str, task: str, agent: str, username: 
     Returns:
         Response from target agent with tool call results
     """
+    # Normalize agent name to lowercase
+    target_agent = target_agent.lower()
+
     # Validate target agent exists
     target_info = agent_registry.get_agent(username, target_agent)
     if not target_info:
