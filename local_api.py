@@ -636,17 +636,13 @@ def route_prompt(prompt: str) -> int:
             _log(f"ROUTE | tier=4 | trigger=explicit '{phrase}'")
             return 4
 
-    # Short/simple prompts go local (saves cloud quota for complex tasks)
-    if len(prompt_lower) < 120 and not any(kw in prompt_lower for kw in TIER3_KEYWORDS):
-        _log(f"ROUTE | tier=2 | trigger=short_prompt_local")
-        return 2
+    # Everything goes to Gemini (free, fast) unless Gemini is down
+    if check_gemini_available():
+        _log(f"ROUTE | tier=4 | trigger=cloud_first_default")
+        return 4
 
-    # Complex prompts go to cloud mesh (llm_router distributes across all free providers)
-    _log(f"ROUTE | tier=4 | trigger=cloud_mesh_default")
-    return 4
-
-    # Fallback (unreachable but kept for safety)
-    _log(f"ROUTE | tier=2 | trigger=fallback")
+    # Gemini unavailable — fall back to local routing
+    _log(f"ROUTE | tier=2 | trigger=gemini_unavailable_fallback")
 
     # Check for Tier 3 keywords (heavy local tasks)
     for keyword in TIER3_KEYWORDS:
@@ -1093,87 +1089,6 @@ Remember: Keep responses concise. CPU inference is slow. No hallucination. If yo
         yield f"[ERROR] {e}"
 
 
-def _check_system_status_query(prompt: str) -> Optional[str]:
-    """
-    Check if prompt is asking for system status.
-    Returns formatted status report if matched, None otherwise.
-    """
-    prompt_lower = prompt.lower()
-    status_triggers = [
-        "system status", "how's the system", "how is the system",
-        "system health", "check system", "status report",
-        "willow status", "how are you doing", "are you running"
-    ]
-
-    if not any(trigger in prompt_lower for trigger in status_triggers):
-        return None
-
-    # Call the /api/system/status endpoint
-    try:
-        import httpx
-        import asyncio
-
-        async def fetch_status():
-            async with httpx.AsyncClient(timeout=5) as client:
-                r = await client.get("http://127.0.0.1:8420/api/system/status")
-                return r.json()
-
-        # Run async call
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        status = loop.run_until_complete(fetch_status())
-        loop.close()
-
-        # Format status report
-        report = "System Status Report:\n\n"
-
-        # Ollama
-        if status["ollama"]["running"]:
-            models = ", ".join(status["ollama"]["models"][:5])
-            report += f"✓ Ollama: Running ({len(status['ollama']['models'])} models: {models})\n"
-        else:
-            report += "✗ Ollama: Offline\n"
-
-        # Server
-        uptime_min = status["server"]["uptime_seconds"] // 60
-        report += f"✓ Server: Running for {uptime_min} minutes (port {status['server']['port']})\n"
-
-        # Governance
-        pending = status["governance"]["pending_commits"]
-        if pending > 0:
-            report += f"⚠ Governance: {pending} pending commit(s)\n"
-        else:
-            report += "✓ Governance: No pending commits\n"
-        if status["governance"]["last_ratification"]:
-            report += f"  Last ratification: {status['governance']['last_ratification']}\n"
-
-        # Intake
-        intake = status["intake"]
-        total = sum(intake.values())
-        if total > 0:
-            report += f"⚠ Intake: {total} files in pipeline (dump:{intake['dump']}, hold:{intake['hold']}, process:{intake['process']}, route:{intake['route']})\n"
-        else:
-            report += "✓ Intake: Pipeline clear\n"
-
-        # Engine
-        if status["engine"]["running"]:
-            report += "✓ Engine: Kart loop active\n"
-        else:
-            report += "✗ Engine: Not detected\n"
-
-        # Tunnel
-        if status["tunnel"]["url"]:
-            reachable = "reachable" if status["tunnel"]["reachable"] else "unreachable"
-            report += f"✓ Tunnel: {status['tunnel']['url']} ({reachable})\n"
-        else:
-            report += "✗ Tunnel: Not configured\n"
-
-        return report.strip()
-
-    except Exception as e:
-        return f"Error checking system status: {str(e)}"
-
-
 def process_smart_stream(prompt: str, persona: str = "Willow",
                           user: str = DEFAULT_USER, force_tier: int = None):
     """
@@ -1189,15 +1104,6 @@ def process_smart_stream(prompt: str, persona: str = "Willow",
 
     SAFE: Same constraints as other process functions.
     """
-    # Check for system status query first (only for Willow persona)
-    if persona == "Willow" and force_tier is None:
-        status_report = _check_system_status_query(prompt)
-        if status_report:
-            _log(f"SYSTEM_STATUS_QUERY | persona={persona}")
-            for line in status_report.split('\n'):
-                yield line + '\n'
-            return
-
     # Use forced tier if provided (e.g., from lounge continuation)
     if force_tier is not None:
         tier = force_tier
@@ -1258,17 +1164,21 @@ Remember: You are being called via paid API because the user explicitly requeste
                 yield chunk
             return
 
-    # === TIER 4: FREE CLOUD MESH (rate-limited, cached) ===
+    # === TIER 4: GEMINI 2.5 FLASH (FREE cloud) ===
     if tier == 4:
-        try:
-            from core import request_manager as _rm
-            from core import llm_router as _lr
-            _lr.load_keys_from_json()
+        if not check_gemini_available():
+            _log("TIER4_FALLBACK | Gemini not configured, falling back to Tier 3 (local)")
+            tier = 3
+            tier_info = MODEL_TIERS.get(tier, {})
+            yield f"[Tier 4 requested but Gemini not configured — falling back to Tier 3]\n"
+            # Fall through to local tiers below
+        else:
+            yield f"[Tier 4: {tier_info.get('desc', 'Gemini')}]\n"
 
             persona_prompt = PERSONAS.get(persona, PERSONAS.get("Willow", "You are Willow, a helpful AI assistant."))
             user_context = load_user_profile(user)
 
-            full_prompt = f"""{build_system_context(persona)}
+            full_system_prompt = f"""{build_system_context(persona)}
 
 {user_context}
 
@@ -1276,23 +1186,11 @@ Remember: You are being called via paid API because the user explicitly requeste
 
 {retrieved}
 
-User: {prompt}"""
+Remember: Keep responses thorough but efficient. You are Gemini 2.5 Flash handling a complex task that local models couldn't handle well."""
 
-            response = _rm.ask(full_prompt, preferred_tier="free", use_cache=True, cache_ttl=300)
-            if response:
-                _log(f"TIER4_MESH | provider={response.provider}")
-                yield f"[Tier 4: {response.provider}]\n"
-                yield response.content
-                return
-            else:
-                _log("TIER4_MESH_FAIL | all cloud providers exhausted, falling back to Tier 3")
-                yield f"[Tier 4 cloud unavailable — falling back to local]\n"
-                tier = 3
-                tier_info = MODEL_TIERS.get(tier, {})
-        except Exception as e:
-            _log(f"TIER4_ERROR | {e}, falling back to Tier 3")
-            tier = 3
-            tier_info = MODEL_TIERS.get(tier, {})
+            for chunk in process_gemini_stream(prompt, full_system_prompt, persona=persona):
+                yield chunk
+            return
 
     # === TIERS 1-3: LOCAL OLLAMA ===
     model = get_model_for_tier(tier)
