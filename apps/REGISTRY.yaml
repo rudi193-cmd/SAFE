@@ -9,7 +9,7 @@ last_updated: "2026-02-13"
 verified_apps:
   - app_id: dating-wellbeing
     name: Dating Wellbeing Analyzer
-    repository: https://github.com/seancampbell3161/safe-app-dating-wellbeing
+    repository: https://github.com/rudi193-cmd/safe-app-dating-wellbeing
     author: Sean Campbell
     status: reference_implementation
     privacy_tier: client_only
