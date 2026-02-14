@@ -26,6 +26,25 @@ verified_apps:
       - privacy
       - reference-implementation
 
+  - app_id: utety-chat
+    name: UTETY Chat
+    repository: https://github.com/rudi193-cmd/safe-app-utety-chat
+    author: Sean Campbell
+    status: verified
+    privacy_tier: client_only
+    local_processing: 0.96
+    privacy_audit_date: "2026-02-14"
+    privacy_audit_status: passed
+    description: Chat with 14 UTETY professors in privacy-first conversational interface
+    install: pip install safe-app-utety-chat
+    verified_by: seancampbell3161
+    verified_date: "2026-02-14"
+    tags:
+      - conversational-ai
+      - education
+      - utety
+      - privacy
+
 # Community Apps (not yet audited, use at own risk)
 community_apps: []
 
