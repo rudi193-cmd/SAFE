@@ -1,0 +1,58 @@
+# SAFE App Registry
+# ===================
+# Official and community-verified SAFE framework apps
+
+version: "1.0.0"
+last_updated: "2026-02-13"
+
+# Verified Apps (audited by SAFE maintainers)
+verified_apps:
+  - app_id: dating-wellbeing
+    name: Dating Wellbeing Analyzer
+    repository: https://github.com/seancampbell3161/safe-app-dating-wellbeing
+    author: Sean Campbell
+    status: reference_implementation
+    privacy_tier: client_only
+    local_processing: 0.96
+    privacy_audit_date: "2026-02-13"
+    privacy_audit_status: passed
+    description: Privacy-first dating profile analysis with red flag detection
+    install: pip install safe-app-dating-wellbeing
+    verified_by: seancampbell3161
+    verified_date: "2026-02-13"
+    tags:
+      - dating
+      - wellbeing
+      - privacy
+      - reference-implementation
+
+# Community Apps (not yet audited, use at own risk)
+community_apps: []
+
+# Deprecated Apps (no longer maintained)
+deprecated_apps: []
+
+# Privacy Audit Requirements
+# ===========================
+# To be listed as "verified":
+# 1. Manifest file present and valid
+# 2. All session hooks implemented
+# 3. Local processing ≥95% OR explicit cloud disclosure
+# 4. Consent checked before data access
+# 5. Session data deleted on close
+# 6. Revoke function tested
+# 7. Source code publicly available
+# 8. License: MIT or compatible
+
+# Submission Process
+# ==================
+# 1. Create SAFE app following APP_INTEGRATION_SPEC.md
+# 2. Open PR to add to community_apps section
+# 3. SAFE maintainers review and audit
+# 4. On approval, moved to verified_apps
+# 5. Receive privacy audit badge
+
+# Contact
+# =======
+# Submit apps: https://github.com/seancampbell3161/SAFE/issues
+# Audit requests: safe@die-namic.system (when available)
