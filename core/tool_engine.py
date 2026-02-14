@@ -28,6 +28,33 @@ from core import agent_registry, gate, knowledge
 # Trust hierarchy
 TRUST_HIERARCHY = ["WORKER", "OPERATOR", "ENGINEER"]
 
+# Agent file path resolution
+USER_PROFILE_BASE = Path(r"C:\Users\Sean\My Drive\Willow\Auth Users")
+
+def resolve_agent_path(file_path: str, agent: str, username: str) -> Path:
+    """
+    Resolve file path relative to agent's Pickup folder if relative.
+
+    Args:
+        file_path: Path provided by agent (relative or absolute)
+        agent: Agent name (kart, willow, etc.)
+        username: Username
+
+    Returns:
+        Resolved absolute Path
+    """
+    path = Path(file_path)
+
+    # If already absolute, use as-is
+    if path.is_absolute():
+        return path
+
+    # If relative, resolve to agent's Pickup folder
+    agent_pickup = USER_PROFILE_BASE / agent / "Pickup"
+    resolved = agent_pickup / file_path
+
+    return resolved
+
 
 @dataclass
 class ToolDefinition:
@@ -159,15 +186,15 @@ def _tool_read_file(file_path: str, agent: str, username: str) -> Dict[str, Any]
 
     # Execute
     try:
-        path = Path(file_path)
+        path = resolve_agent_path(file_path, agent, username)
         if not path.exists():
-            return {"success": False, "error": "File not found"}
+            return {"success": False, "error": f"File not found: {path}"}
 
         content = path.read_text(encoding="utf-8")
 
         # Log access
         try:
-            knowledge.log_file_access(username, agent, file_path, "read")
+            knowledge.log_file_access(username, agent, str(path), "read")
         except:
             pass  # Non-fatal if logging fails
 
@@ -209,7 +236,7 @@ def _tool_write_file(file_path: str, content: str, agent: str, username: str) ->
 
     # Execute
     try:
-        path = Path(file_path)
+        path = resolve_agent_path(file_path, agent, username)
 
         # Backup existing file
         if path.exists():
@@ -261,9 +288,9 @@ def _tool_edit_file(file_path: str, old_text: str, new_text: str, agent: str, us
 
     # Execute
     try:
-        path = Path(file_path)
+        path = resolve_agent_path(file_path, agent, username)
         if not path.exists():
-            return {"success": False, "error": "File not found"}
+            return {"success": False, "error": f"File not found: {path}"}
 
         content = path.read_text(encoding="utf-8")
 
