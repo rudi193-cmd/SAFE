@@ -40,6 +40,7 @@ import io
 from core import state, gate, storage
 from core import llm_router
 from core import knowledge
+from core.filename_sanitizer import sanitize_filename
 
 # --- CONFIG ---
 EARTH_PATH = os.getcwd()
@@ -1206,7 +1207,8 @@ FOLDER:"""
                 storage.apply_events(events, runtime_state)
                 target_dir = os.path.join(user_artifacts_path(username), destination_folder)
                 os.makedirs(target_dir, exist_ok=True)
-                dest_filepath = os.path.join(target_dir, filename)
+                safe_filename = sanitize_filename(filename)
+                dest_filepath = os.path.join(target_dir, safe_filename)
                 try:
                     shutil.move(filepath, dest_filepath)
                     prov = response.provider if response else "unknown"
