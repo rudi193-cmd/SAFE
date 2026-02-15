@@ -18,6 +18,7 @@ from typing import List, Dict, Optional, Any
 # Core imports
 from core import llm_router, tool_engine, agent_registry, kart_tasks
 from core.delta_tracker import DeltaTracker
+from cli import base17
 from core.seed_packet import save_packet, load_packet, validate_packet
 
 
@@ -44,7 +45,7 @@ class KartOrchestrator:
         self.tools = tool_engine.list_tools(agent_name, username)
 
         # Session tracking
-        self.session_id = f"kart-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
+        self.session_id = f"{agent_name}-{base17.base17_id()}"
         self.session_path = Path.cwd() / "artifacts" / agent_name / "sessions"
         self.session_path.mkdir(parents=True, exist_ok=True)
 
@@ -299,29 +300,36 @@ ASSISTANT (respond with JSON):"""
                 except IndexError:
                     json_str = content
 
-            # Try to repair common JSON issues
-            if not json_str.endswith("}"):
-                # Find last complete JSON object
-                brace_count = 0
-                last_valid = -1
-                for i, char in enumerate(json_str):
-                    if char == "{":
-                        brace_count += 1
-                    elif char == "}":
-                        brace_count -= 1
-                        if brace_count == 0:
-                            last_valid = i + 1
-                            break
+            # Find first complete JSON object (handles trailing text)
+            # This is more robust than checking if it ends with }
+            brace_count = 0
+            start_index = json_str.find("{")
+            if start_index == -1:
+                return {"type": "error", "message": f"No JSON object found in LLM response: {content[:300]}"}
 
-                if last_valid > 0:
-                    json_str = json_str[:last_valid]
+            last_valid = -1
+            for i in range(start_index, len(json_str)):
+                char = json_str[i]
+                if char == "{":
+                    brace_count += 1
+                elif char == "}":
+                    brace_count -= 1
+                    if brace_count == 0:
+                        last_valid = i + 1
+                        break
+
+            if last_valid > 0:
+                json_str = json_str[start_index:last_valid]
+            else:
+                # Couldn't find closing brace - try anyway
+                json_str = json_str[start_index:]
 
             # Parse JSON
             try:
                 action = json.loads(json_str)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 # Last resort: return error but include full context for debugging
-                return {"type": "error", "message": f"Invalid JSON from LLM: {json_str[:300]}"}
+                return {"type": "error", "message": f"Invalid JSON from LLM: {json_str[:300]}\nError: {str(e)}"}
 
             # Validate action
             if action.get("action") == "tool_call":
