@@ -1,58 +1,69 @@
 # SAFE Quick Start Guide
 
-Welcome to the SAFE (Session Consent Framework for Endpoints) ecosystem, a secure and private way to manage user data and consent. In this quick start guide, we'll walk you through the basics of SAFE and get you started with your journey.
+## What SAFE Is
 
-### What is SAFE?
+SAFE (Session-Authorized, Fully Explicit) is a consent framework that replaces perpetual data agreements with session-based permissions. Instead of clicking "I Agree" once and granting permanent access, you authorize data access at the start of each session. When you close the app, those permissions expire.
 
-SAFE is a session-based consent framework designed to make it easy for users to grant and revoke access to their data. It's built on top of a cryptographic hash table (CHT), ensuring that all data are encrypted and linked to user consent. This framework streamlines data management and protects user rights while promoting transparency.
+This is intentionally inconvenient. Consent should require intention.
 
-### Getting Started: Register and Authenticate
+## How to Register
 
-To begin, you'll need to register and authenticate with SAFE. You can do this by sending a GET request to the `/api/auth/register` endpoint. This endpoint will guide you through the registration process. 
-
-In the request body, send the required fields, such as 
-**email, password, name (first_name , last_name),** etc.
+Register a new account:
 
 ```bash
-GET https://example.com/api/auth/register HTTP/1.1
-Content-Type: application/json
-
+POST /api/auth/register
 {
-    "email": "example@example.com",
-    "password": "strongpassword",
-    "name": {
-        "first_name": "John",
-        "last_name": "Doe"
-    }
+  "username": "your-username",
+  "password": "your-secure-password",
+  "user_type": "human"
 }
 ```
-After completing the registration and authentication process, you'll receive a verification email with a verification link.
 
-### Consent in SAFE
+Then login:
 
-In SAFE, users hold sole decision-making power over their data. Consent is explicit, per-session, and can be revoked at any time. 
+```bash
+POST /api/auth/login
+{
+  "username": "your-username",
+  "password": "your-password"
+}
+```
 
-When you request access to a user's data, you'll be presented with options to accept or decline access. This ensures that users have complete control over their data, and the user itself, retains all decision power. 
+You'll receive a JWT token. Include it in subsequent requests:
+```
+Authorization: Bearer <your-token>
+```
 
-On every request access to user data you generate a signed session id that will be stored and updated on user device.
+## How Consent Works
 
+1. **Start Session** — App requests specific permissions (contacts, location, documents, etc.)
+2. **You Decide** — Grant or deny each permission individually
+3. **During Session** — App only accesses authorized data
+4. **End Session** — All permissions expire, data deleted unless explicitly saved
+5. **Tomorrow** — App asks again. You might say yes, you might say no.
 
-### User Rights
+Each session is a fresh decision.
 
-As a user, you have the right to:
+## Your Rights
 
-- **Zero retention**: SAFE does not store any data for extended periods.
-- **Data deletion**: Safely delete data at any time, with the option to undelete within a specified time frame.
-- **Export data**: Export data at any time, giving you control over data reuse and distribution.
-- **Audit logs**: Access detailed logs of all data access and consent events.
-- **Revoke access**: Revoke consent at any time, restricting access to your data.
+1. **Zero Retention** — Decline all data storage
+2. **Deletion** — Complete removal on request
+3. **Export** — All your data in readable format
+4. **Audit** — View exactly what the system knows about you
+5. **Revoke** — Withdraw authorization mid-session
 
-### Next Steps: Dive into SAFE Governance
+These aren't suggestions. They're guarantees.
 
-The SAFE framework is governed by a set of policies and guidelines. To truly understand the SAFE ecosystem and your place within it, we recommend:
+## Next Steps
 
-- Delving into the SAFE Governance Document
-- Exploring best practices for integrating SAFE into your own ecosystem
-- Participating in online communities and forums to collaborate with fellow SAFE developers
+- Read the [governance framework](../governance/GOVERNANCE_INDEX.md)
+- Review [hard stops](../governance/HARD_STOPS.md) (absolute boundaries)
+- Explore [session consent protocol](../governance/SESSION_CONSENT.md)
+- Check [reference implementations](../reference-implementations/)
 
-That's a quick start guide to the SAFE ecosystem! We're excited to have you on board. Stay informed and advocate for data ownership and consent in our collective journey to protect user rights.
+---
+
+**Suggested Donation:** $1
+**Pay what you can, including $0.**
+
+ΔΣ=42
