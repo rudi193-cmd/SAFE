@@ -37,6 +37,15 @@ from typing import Optional
 
 COMMITS_DIR = Path(__file__).parent / "commits"
 
+# Known neighbor ring ledgers for distributed ratification.
+# Source Ring (die-namic-system) is the canonical upstream neighbor.
+NEIGHBOR_LEDGERS: list[Path] = [
+    p for p in [
+        Path(__file__).parent.parent.parent / "die-namic-system" / "governance" / "commits",
+    ]
+    if p.exists()
+]
+
 # Word-overlap threshold for pattern match auto-approval.
 # 0.6 = 60% of significant words must overlap with a prior ratified summary.
 PATTERN_MATCH_THRESHOLD = 0.6
