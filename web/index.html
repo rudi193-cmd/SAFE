@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAFE — Session-Authorized, Fully Explicit</title>
+  <meta name="description" content="A consent framework where your permissions expire with the session. Every time you use an app, you decide what it can access.">
+  <style>
+    :root {
+      --bg: #f9f9f7;
+      --fg: #1c1c1a;
+      --fg-muted: #555550;
+      --accent: #2d6a4f;
+      --accent-light: #e8f4ee;
+      --border: #e2e2de;
+      --max: 680px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.75;
+      font-size: 17px;
+    }
+
+    nav {
+      position: sticky; top: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      z-index: 100; padding: 0 1.5rem;
+    }
+    .nav-inner {
+      max-width: var(--max); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; height: 52px;
+    }
+    .nav-wordmark {
+      font-size: 14px; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--fg); text-decoration: none; text-transform: uppercase;
+    }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { font-size: 14px; color: var(--fg-muted); text-decoration: none; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--accent); }
+
+    .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
+    section { padding: 4rem 0; border-bottom: 1px solid var(--border); }
+    section:last-of-type { border-bottom: none; }
+
+    .hero { padding: 5rem 0 4rem; }
+    .hero-label {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 1.25rem;
+    }
+    .hero-headline {
+      font-size: clamp(2rem, 5vw, 3rem); font-weight: 700;
+      line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 1.5rem;
+    }
+    .hero-headline em { font-style: normal; color: var(--accent); }
+    .hero-sub { font-size: 19px; color: var(--fg-muted); max-width: 520px; margin-bottom: 2rem; line-height: 1.65; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--accent); color: white; padding: 0.65rem 1.4rem;
+      border-radius: 4px; font-size: 15px; font-weight: 600; text-decoration: none; transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #1e4d38; }
+    .btn-secondary {
+      background: transparent; color: var(--fg); padding: 0.65rem 1.4rem;
+      border-radius: 4px; border: 1px solid var(--border); font-size: 15px; font-weight: 500;
+      text-decoration: none; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem;
+    }
+    h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 1rem; }
+    p { margin-bottom: 1rem; color: var(--fg-muted); }
+    p:last-child { margin-bottom: 0; }
+    strong { color: var(--fg); font-weight: 600; }
+
+    .pull-quote {
+      border-left: 3px solid var(--accent); padding: 0.75rem 1.25rem; margin: 1.5rem 0;
+      font-size: 18px; color: var(--fg); line-height: 1.6; font-style: italic;
+    }
+
+    .steps { margin-top: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    .step { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; align-items: start; }
+    .step-num {
+      font-size: 12px; font-weight: 700; color: var(--accent);
+      background: var(--accent-light); width: 2rem; height: 2rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;
+    }
+    .step-body strong { display: block; font-size: 16px; margin-bottom: 0.2rem; }
+    .step-body p { font-size: 15px; margin: 0; color: var(--fg-muted); }
+
+    .rights-list { margin-top: 1.75rem; list-style: none; display: flex; flex-direction: column; gap: 0.85rem; }
+    .rights-list li {
+      padding: 0.9rem 1.1rem; background: var(--accent-light); border-radius: 4px;
+      display: grid; grid-template-columns: 1.4rem 1fr; gap: 0.75rem; align-items: start;
+    }
+    .rights-list .right-icon { color: var(--accent); font-weight: 700; font-size: 15px; line-height: 1.5; }
+    .rights-list .right-body strong { display: block; font-size: 15px; color: var(--fg); margin-bottom: 0.15rem; }
+    .rights-list .right-body p { font-size: 14px; color: var(--fg-muted); margin: 0; line-height: 1.5; }
+    .rights-guarantee { margin-top: 1.25rem; font-size: 14px; font-weight: 600; color: var(--accent); }
+
+    .gov-grid { margin-top: 1.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .gov-card {
+      border: 1px solid var(--border); border-radius: 4px; padding: 1rem;
+      text-decoration: none; color: var(--fg); transition: border-color 0.15s;
+    }
+    .gov-card:hover { border-color: var(--accent); }
+    .gov-card .gov-title { font-size: 14px; font-weight: 600; margin-bottom: 0.25rem; color: var(--fg); }
+    .gov-card .gov-desc { font-size: 13px; color: var(--fg-muted); line-height: 1.45; margin: 0; }
+
+    .price-block { margin-top: 1.5rem; border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; }
+    .price-amount { font-size: 2.5rem; font-weight: 700; color: var(--fg); letter-spacing: -0.03em; margin-bottom: 0.25rem; }
+    .price-label { font-size: 14px; color: var(--fg-muted); margin-bottom: 1rem; }
+    .price-principles { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .price-principles li { font-size: 14px; color: var(--fg-muted); padding-left: 1.1rem; position: relative; }
+    .price-principles li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+
+    .status-table { margin-top: 1.5rem; width: 100%; border-collapse: collapse; font-size: 15px; }
+    .status-table td { padding: 0.6rem 0; border-bottom: 1px solid var(--border); color: var(--fg-muted); }
+    .status-table td:first-child { color: var(--fg); font-weight: 500; width: 55%; }
+    .status-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 3px; }
+    .badge-green { background: var(--accent-light); color: var(--accent); }
+    .badge-yellow { background: #fef9e7; color: #a0720a; }
+    .badge-open { background: #f0f0f0; color: #555; }
+
+    footer { padding: 2.5rem 0; border-top: 1px solid var(--border); }
+    .footer-inner {
+      max-width: var(--max); margin: 0 auto; padding: 0 1.5rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-left { font-size: 13px; color: var(--fg-muted); }
+    .footer-left strong { color: var(--fg); }
+    .footer-right { font-size: 13px; color: var(--fg-muted); display: flex; gap: 1.5rem; }
+    .footer-right a { color: var(--fg-muted); text-decoration: none; transition: color 0.15s; }
+    .footer-right a:hover { color: var(--accent); }
+
+    @media (max-width: 600px) {
+      .hero-headline { font-size: 2rem; }
+      .gov-grid { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-wordmark">SAFE</a>
+      <ul class="nav-links">
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#rights">Rights</a></li>
+        <li><a href="#governance">Governance</a></li>
+        <li><a href="https://github.com/rudi193-cmd/SAFE" target="_blank">GitHub ↗</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <section class="hero">
+      <p class="hero-label">Session-Authorized, Fully Explicit</p>
+      <h1 class="hero-headline">Consent that <em>expires.</em></h1>
+      <p class="hero-sub">
+        You clicked "I Agree" once, years ago. That click still governs your data today.
+        SAFE proposes a different model: every session, you decide what an app can access.
+        When you close it, those permissions are gone.
+      </p>
+      <div class="hero-actions">
+        <a href="#how" class="btn-primary">See how it works</a>
+        <a href="https://github.com/rudi193-cmd/SAFE" target="_blank" class="btn-secondary">Read the spec ↗</a>
+      </div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <p class="section-label">The problem</p>
+      <h2>Perpetual consent is not consent.</h2>
+      <p>Current consent models collect one agreement and use it forever. Your decision from 2019 authorizes data collection in 2026. The legal text runs to thousands of words. Nobody reads it. Everyone clicks agree.</p>
+      <blockquote class="pull-quote">Consent should require intention. That means asking every time.</blockquote>
+      <p>SAFE makes consent a continuous practice instead of a one-time administrative hurdle. Each session is a fresh authorization. Each permission is explicit. Each closure is a clean end.</p>
+      <p>This is intentionally inconvenient. That inconvenience is the point.</p>
+    </section>
+  </div>
+
+  <div class="container">
+    <section id="how">
+      <p class="section-label">How it works</p>
+      <h2>Three moments. Every session.</h2>
+      <p>You open an app built on SAFE. Before showing you anything, it asks permission — not once, at setup, but now, for this session.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Start</strong>
+            <p>The app presents an authorization request for each data type it needs. Contacts. Location. Documents. Each one is a separate question.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>During</strong>
+            <p>The app only accesses what you authorized this session. Nothing more. You can revoke mid-session at any time.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>End</strong>
+            <p>You close the app. All authorizations expire. Data is deleted by default unless you explicitly chose to save it. Tomorrow, it asks again.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section id="rights">
+      <p class="section-label">User rights</p>
+      <h2>Five guarantees. Not suggestions.</h2>
+      <p>Every app built on SAFE must honor these rights. They are not opt-in features. They are the floor.</p>
+      <ul class="rights-list">
+        <li>
+          <span class="right-icon">I</span>
+          <div class="right-body"><strong>Right to Zero Retention</strong><p>Decline all data storage. The app runs without saving anything about you.</p></div>
+        </li>
+        <li>
+          <span class="right-icon">II</span>
+          <div class="right-body"><strong>Right to Deletion</strong><p>Complete removal of your data on request. No waiting period. No dark patterns.</p></div>
+        </li>
+        <li>
+          <span class="right-icon">III</span>
+          <div class="right-body"><strong>Right to Export</strong><p>All data about you, in a readable format, whenever you want it.</p></div>
+        </li>
+        <li>
+          <span class="right-icon">IV</span>
+          <div class="right-body"><strong>Right to Audit</strong><p>View exactly what the system knows about you. No inference. No guessing.</p></div>
+        </li>
+        <li>
+          <span class="right-icon">V</span>
+          <div class="right-body"><strong>Right to Revoke</strong><p>Withdraw authorization mid-session. The app stops accessing that data immediately.</p></div>
+        </li>
+      </ul>
+      <p class="rights-guarantee">These are not suggestions. They are guarantees.</p>
+    </section>
+  </div>
+
+  <div class="container">
+    <section id="pricing">
+      <p class="section-label">Pricing</p>
+      <h2>Pay what you can, including&nbsp;$0.</h2>
+      <p>SAFE apps share a common pricing philosophy. Not charity — alignment.</p>
+      <div class="price-block">
+        <div class="price-amount">$1</div>
+        <div class="price-label">Suggested donation per month</div>
+        <ul class="price-principles">
+          <li>No reduced features at $0</li>
+          <li>No shame, no second-class service</li>
+          <li>Users see the actual operational costs</li>
+          <li>When people pay nothing, they still deserve the same service — because the point is consent and dignity, not revenue extraction</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section id="governance">
+      <p class="section-label">Governance</p>
+      <h2>Rules that cannot be overridden.</h2>
+      <p>SAFE is governed by a set of explicit, public documents. The most important are the Hard Stops — absolute constraints that no authority can override. Not the system owner. Not accumulated trust. Not any AI.</p>
+      <p>Changes follow the Dual Commit model: someone proposes, someone else ratifies. Neither acts alone.</p>
+      <div class="gov-grid">
+        <a class="gov-card" href="https://github.com/rudi193-cmd/SAFE/blob/main/governance/CHARTER.md" target="_blank">
+          <div class="gov-title">Charter</div>
+          <p class="gov-desc">Foundational authority and the principles that cannot be negotiated away.</p>
+        </a>
+        <a class="gov-card" href="https://github.com/rudi193-cmd/SAFE/blob/main/governance/HARD_STOPS.md" target="_blank">
+          <div class="gov-title">Hard Stops</div>
+          <p class="gov-desc">Absolute limits. What the system will never do, regardless of authorization.</p>
+        </a>
+        <a class="gov-card" href="https://github.com/rudi193-cmd/SAFE/blob/main/governance/SESSION_CONSENT.md" target="_blank">
+          <div class="gov-title">Session Consent</div>
+          <p class="gov-desc">The complete protocol spec for how authorization works session to session.</p>
+        </a>
+        <a class="gov-card" href="https://github.com/rudi193-cmd/SAFE/blob/main/governance/DUAL_COMMIT.md" target="_blank">
+          <div class="gov-title">Dual Commit</div>
+          <p class="gov-desc">How changes happen. Proposal plus ratification. No unilateral changes.</p>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <p class="section-label">Status</p>
+      <h2>Where things stand.</h2>
+      <p>Open to adoption by any project that handles personal data.</p>
+      <table class="status-table">
+        <tr><td>Specification</td><td><span class="status-badge badge-green">Stable</span></td></tr>
+        <tr><td>Reference Implementation</td><td><span class="status-badge badge-green">Available</span></td></tr>
+        <tr><td>Legal Review</td><td><span class="status-badge badge-yellow">Pending</span></td></tr>
+        <tr><td>Adoption</td><td><span class="status-badge badge-open">Open</span></td></tr>
+      </table>
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <strong>SAFE</strong> — Session-Authorized, Fully Explicit<br>
+        MIT License (code) · CC-BY-NC (documentation) · ΔΣ=42
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/rudi193-cmd/SAFE" target="_blank">GitHub ↗</a>
+        <a href="https://github.com/rudi193-cmd/SAFE/blob/main/governance/GOVERNANCE_INDEX.md" target="_blank">Governance ↗</a>
+        <a href="https://github.com/rudi193-cmd/SAFE/blob/main/docs/QUICK_START.md" target="_blank">Quick Start ↗</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
