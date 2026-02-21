@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { storeEntry, getAllEntries, deleteEntry } from './continuity/rings.js'
-import { calculateCoherence } from './continuity/coherence.js'
-import { computeDeltaE, classifyState } from './continuity/deltaE.js'
+import { useBreathCycle } from './hooks/useBreathCycle'
+import { getBellMessage, getMode } from './core/bell'
+import { BreathRing } from './ui/BreathRing'
 
 const STREAMS = [
   { id: 'entries', label: 'Journal entries', description: 'Read and write your entries this session' },
@@ -34,11 +35,6 @@ function ConsentScreen({ onConsent, onDecline }) {
   )
 }
 
-function DeltaBadge({ state }) {
-  const labels = { regenerative: 'delta-E+', stable: 'delta-E=', decaying: 'delta-E-' }
-  return <span className={`delta-badge delta-${state}`}>{labels[state] || 'delta-E='}</span>
-}
-
 function EntryCard({ entry, onDelete }) {
   const [expanded, setExpanded] = useState(false)
   const date = new Date(entry.created_at).toLocaleDateString('en-US', {
@@ -66,21 +62,25 @@ function JournalApp({ consented }) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [tone, setTone] = useState('reflective')
-  const [deltaState, setDeltaState] = useState('stable')
-  const [prevCI, setPrevCI] = useState({ C: 0.6, t: Date.now() })
+  const [deltaE, setDeltaE] = useState(-0.25) // starts calm
+
+  const { breathData } = useBreathCycle()
+  const mode = getMode(deltaE)
+  const bellMsg = getBellMessage(deltaE)
 
   const refresh = () => setEntries(getAllEntries())
   useEffect(() => { refresh() }, [])
 
+  // Live ΔE: recomputes as user types or breath coherence rises
+  useEffect(() => {
+    const lengthFactor = Math.min(body.length / 500, 1)
+    const breathFactor = breathData?.coherence ?? 0.5
+    setDeltaE((lengthFactor + breathFactor) / 2 - 0.5)
+  }, [body, breathData?.coherence])
+
   const save = () => {
     if (!body.trim()) return
-    const recent = getAllEntries().slice(0, 5)
-    const ci = calculateCoherence({ title, body, tone }, recent)
-    const now = { C: ci, t: Date.now() }
-    const dE = computeDeltaE({ Cprev: prevCI.C, tPrev: prevCI.t, Cnow: now.C, tNow: now.t })
-    setPrevCI(now)
-    setDeltaState(classifyState(dE))
-    storeEntry({ title, body, tone, ci })
+    storeEntry({ title, body, tone, deltaE })
     setTitle('')
     setBody('')
     refresh()
@@ -89,10 +89,11 @@ function JournalApp({ consented }) {
   const remove = (id) => { deleteEntry(id); refresh() }
 
   return (
-    <div className="journal-app">
+    <div className={`journal-app mode-${mode}`}>
       <header className="app-header">
         <span className="app-wordmark">Jane</span>
-        <DeltaBadge state={deltaState} />
+        <BreathRing breathData={breathData} mode={mode} />
+        <span className="bell-message">{bellMsg}</span>
         {!consented && <span className="session-notice">local only</span>}
       </header>
       <div className="journal-layout">
