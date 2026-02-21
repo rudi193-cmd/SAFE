@@ -1,8 +1,8 @@
 # SAFE App Integration Specification
 
 Version: 1.0.0
-Status: Draft
-Last Updated: 2026-02-13
+Status: Stable
+Last Updated: 2026-02-21
 
 ---
 
