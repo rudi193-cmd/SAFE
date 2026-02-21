@@ -35,8 +35,8 @@ function ConsentScreen({ onConsent, onDecline }) {
 }
 
 function DeltaBadge({ state }) {
-  const labels = { regenerative: '↑ ΔE+', stable: '· ΔE=', decaying: '↓ ΔE−' }
-  return <span className={`delta-badge delta-${state}`}>{labels[state] || '· ΔE='}</span>
+  const labels = { regenerative: 'delta-E+', stable: 'delta-E=', decaying: 'delta-E-' }
+  return <span className={`delta-badge delta-${state}`}>{labels[state] || 'delta-E='}</span>
 }
 
 function EntryCard({ entry, onDelete }) {
@@ -93,7 +93,7 @@ function JournalApp({ consented }) {
       <header className="app-header">
         <span className="app-wordmark">Jane</span>
         <DeltaBadge state={deltaState} />
-        {!consented && <span className="session-notice">local only · no persistence</span>}
+        {!consented && <span className="session-notice">local only</span>}
       </header>
       <div className="journal-layout">
         <aside className="entry-sidebar">
@@ -110,7 +110,7 @@ function JournalApp({ consented }) {
           />
           <textarea
             className="editor-body"
-            placeholder="What happened. What you noticed. What you're carrying."
+            placeholder="What happened. What you noticed. What you are carrying."
             value={body}
             onChange={e => setBody(e.target.value)}
             rows={10}

@@ -8,7 +8,6 @@
   --accent-dim: #2a2214;
   --danger: #c45b4a;
 }
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body, #root { height: 100%; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--fg); font-size: 15px; line-height: 1.6; }
@@ -41,7 +40,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sa
 .delta-decaying { background: #2e1a1a; color: #c45b4a; }
 
 .journal-layout { display: grid; grid-template-columns: 280px 1fr; flex: 1; overflow: hidden; }
-
 .entry-sidebar { border-right: 1px solid var(--border); overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .sidebar-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-muted); padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 0.25rem; }
 .empty-state { font-size: 13px; color: var(--fg-muted); padding: 0.5rem 0; }

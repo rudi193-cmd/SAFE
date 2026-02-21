@@ -15,7 +15,7 @@ Open http://localhost:5173
 
 1. **Session consent** — SAFE screen on every session start, lists data streams
 2. **Permission granularity** — each stream authorized separately
-3. **Expiry** — all permissions gone when tab closes; next session asks again
+3. **Expiry** — permissions gone when tab closes; next session asks again
 4. **Zero retention default** — "No, local only" keeps the app fully functional
 
 ## Architecture
@@ -35,21 +35,21 @@ src/
 
 | Stream | Required | Notes |
 |--------|----------|-------|
-| Journal entries | No | App works without consent — no persistence |
+| Journal entries | No | App works without consent |
 | Export to file | No | Download entries as JSON |
 
 ## ΔE Tracking
 
 Every save computes a coherence index (CI) against recent entries.
-ΔE = rate of change in CI over time. Badge in header shows state:
+ΔE = rate of change in CI over time. Badge in header shows:
 
-- `↑ ΔE+` regenerative — coherence increasing
-- `· ΔE=` stable — no significant change
-- `↓ ΔE−` decaying — coherence drifting
+- regenerative — coherence increasing
+- stable — no significant change
+- decaying — coherence drifting
 
 ## Notes
 
-In-memory storage only — data lost on refresh. Intentional for a reference implementation.
-Production use: replace `Map()` in rings.js with Dexie IndexedDB calls.
+In-memory only — data lost on refresh. Intentional for a reference implementation.
+Production: replace Map() in rings.js with Dexie IndexedDB calls.
 
 ΔΣ=42
