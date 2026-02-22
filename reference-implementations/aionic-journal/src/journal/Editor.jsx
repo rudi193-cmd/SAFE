@@ -1,8 +1,4 @@
-/**
- * Editor — text input pane.
- * Title, body textarea, tone selector, Save button.
- */
-export function Editor({ title, setTitle, body, setBody, tone, setTone, onSave }) {
+export function Editor({ title, setTitle, body, setBody, tone, setTone, onSave, onKeyDown }) {
   return (
     <main className="editor-pane">
       <input
@@ -16,6 +12,7 @@ export function Editor({ title, setTitle, body, setBody, tone, setTone, onSave }
         placeholder="What happened. What you noticed. What you are carrying."
         value={body}
         onChange={e => setBody(e.target.value)}
+        onKeyDown={onKeyDown}
         rows={10}
       />
       <div className="editor-footer">
@@ -23,7 +20,7 @@ export function Editor({ title, setTitle, body, setBody, tone, setTone, onSave }
           {['reflective', 'grateful', 'processing', 'raw'].map(t => (
             <button
               key={t}
-              className={`tone-btn ${tone === t ? 'active' : ''}`}
+              className={'tone-btn ' + (tone === t ? 'active' : '')}
               onClick={() => setTone(t)}
             >
               {t}
