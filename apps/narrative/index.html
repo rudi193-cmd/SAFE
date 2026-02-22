@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Narrative Agent — UTETY</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0e0e0e;
+    color: #d4d0c8;
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  header {
+    padding: 16px 0 24px;
+    border-bottom: 1px solid #2a2a2a;
+    margin-bottom: 24px;
+  }
+
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: normal;
+    color: #888;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  header p {
+    font-size: 0.75rem;
+    color: #444;
+    margin-top: 4px;
+  }
+
+  .modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .mode-btn {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #888;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    transition: all 0.15s;
+  }
+
+  .mode-btn:hover { border-color: #555; color: #bbb; }
+
+  .mode-btn.active {
+    background: #1e2a1e;
+    border-color: #4a7a4a;
+    color: #8bc88b;
+  }
+
+  textarea {
+    width: 100%;
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    color: #d4d0c8;
+    font-family: 'Georgia', serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    padding: 14px;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    margin-bottom: 16px;
+  }
+
+  textarea:focus { border-color: #444; }
+  textarea::placeholder { color: #444; }
+
+  .generate-btn {
+    width: 100%;
+    background: #1e2a1e;
+    border: 1px solid #4a7a4a;
+    color: #8bc88b;
+    padding: 14px;
+    border-radius: 4px;
+    font-family: 'Georgia', serif;
+    font-size: 1rem;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+    margin-bottom: 24px;
+  }
+
+  .generate-btn:hover { background: #253025; }
+  .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .status {
+    font-size: 0.75rem;
+    color: #555;
+    margin-bottom: 16px;
+    min-height: 1rem;
+  }
+
+  .status.loading { color: #4a7a4a; }
+  .status.error { color: #7a4a4a; }
+
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .output-label {
+    font-size: 0.7rem;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid #333;
+    color: #555;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+  }
+
+  .copy-btn:hover { border-color: #555; color: #888; }
+  .copy-btn.copied { border-color: #4a7a4a; color: #8bc88b; }
+
+  .draft {
+    background: #0a0a0a;
+    border: 1px solid #1e1e1e;
+    border-radius: 4px;
+    padding: 20px;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: #c8c4bc;
+    display: none;
+  }
+
+  .draft.visible { display: block; }
+
+  .provider-tag {
+    font-size: 0.65rem;
+    color: #333;
+    margin-top: 12px;
+    text-align: right;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #333;
+    border-top-color: #4a7a4a;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Narrative Agent</h1>
+  <p>University of Technical Entropy, Thank You &mdash; Canon Draft Tool &mdash; &#916;&Sigma;=42</p>
+</header>
+
+<div class="modes" id="modes">
+  <!-- populated by JS -->
+</div>
+
+<textarea id="seed" placeholder="Seed idea. One sentence is enough. The fleet handles the rest." rows="4"></textarea>
+
+<button class="generate-btn" id="generateBtn" onclick="generate()">Generate Draft</button>
+
+<div class="status" id="status"></div>
+
+<div id="outputWrap" style="display:none">
+  <div class="output-header">
+    <span class="output-label" id="outputLabel">Draft</span>
+    <button class="copy-btn" id="copyBtn" onclick="copyDraft()">Copy</button>
+  </div>
+  <div class="draft" id="draft"></div>
+  <div class="provider-tag" id="providerTag"></div>
+</div>
+
+<script>
+let currentMode = 'dispatch';
+let modes = {};
+
+async function loadModes() {
+  try {
+    const r = await fetch('/modes');
+    modes = await r.json();
+    const container = document.getElementById('modes');
+    container.innerHTML = '';
+    for (const [key, label] of Object.entries(modes)) {
+      const btn = document.createElement('button');
+      btn.className = 'mode-btn' + (key === currentMode ? ' active' : '');
+      btn.textContent = label;
+      btn.onclick = () => setMode(key);
+      btn.id = 'mode-' + key;
+      container.appendChild(btn);
+    }
+  } catch(e) {
+    console.error('Failed to load modes', e);
+  }
+}
+
+function setMode(key) {
+  currentMode = key;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('mode-' + key);
+  if (btn) btn.classList.add('active');
+}
+
+async function generate() {
+  const seed = document.getElementById('seed').value.trim();
+  if (!seed) {
+    setStatus('Seed required.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('generateBtn');
+  const status = document.getElementById('status');
+
+  btn.disabled = true;
+  setStatus('<span class="spinner"></span>Fleet routing...', 'loading');
+
+  document.getElementById('outputWrap').style.display = 'none';
+  document.getElementById('draft').classList.remove('visible');
+
+  try {
+    const r = await fetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seed, mode: currentMode }),
+    });
+
+    const data = await r.json();
+
+    if (data.error) {
+      setStatus(data.error, 'error');
+      return;
+    }
+
+    document.getElementById('outputLabel').textContent = data.mode + ' — Draft';
+    document.getElementById('draft').textContent = data.draft;
+    document.getElementById('draft').classList.add('visible');
+    document.getElementById('providerTag').textContent = 'via ' + data.provider;
+    document.getElementById('outputWrap').style.display = 'block';
+    document.getElementById('copyBtn').textContent = 'Copy';
+    document.getElementById('copyBtn').classList.remove('copied');
+    setStatus('');
+
+  } catch(e) {
+    setStatus('Request failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('status');
+  el.innerHTML = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function copyDraft() {
+  const text = document.getElementById('draft').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+document.getElementById('seed').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+});
+
+loadModes();
+</script>
+</body>
+</html>
