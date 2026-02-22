@@ -1,58 +1,43 @@
+import Dexie from 'dexie'
+
 /**
- * storage.js — Local persistence for Aionic Journal
- * Wraps localStorage with the same API as continuity/rings.js.
- * Entries survive page refresh. Nothing leaves the device.
- *
- * Key: 'aionic:entries' → JSON array, newest first
+ * storage.js — IndexedDB persistence via Dexie.
+ * Replaces localStorage. Async API, 50MB+ cap, survives browser data cleans.
+ * Schema: entries keyed by id, indexed on created_at for sort.
  */
 
-const KEY = 'aionic:entries'
+const db = new Dexie('AionicJournal')
+db.version(1).stores({
+  entries: 'id, created_at',
+})
 
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
+function newId() {
+  return `entry:${Date.now()}:${Math.random().toString(36).substr(2, 9)}`
 }
 
-function save(entries) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(entries))
-  } catch {
-    // Storage full or disabled — silently degrade to in-session only
-  }
-}
-
-export function storeEntry(entry) {
-  const entries = load()
+export async function storeEntry(entry) {
   const newEntry = {
     ...entry,
-    id: entry.id || `entry:${Date.now()}:${Math.random().toString(36).substr(2, 9)}`,
+    id: entry.id || newId(),
     created_at: entry.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
-  save([newEntry, ...entries])
+  await db.entries.put(newEntry)
   return newEntry
 }
 
-export function getAllEntries() {
-  return load()
-    .filter(e => !e.deleted)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+export async function getAllEntries() {
+  const all = await db.entries.orderBy('created_at').reverse().toArray()
+  return all.filter(e => !e.deleted)
 }
 
-export function deleteEntry(id) {
-  const entries = load()
-  const updated = entries.map(e =>
-    e.id === id
-      ? { ...e, deleted: true, deleted_at: new Date().toISOString() }
-      : e
-  )
-  save(updated)
+export async function deleteEntry(id) {
+  await db.entries.update(id, {
+    deleted: true,
+    deleted_at: new Date().toISOString(),
+  })
 }
 
-export function clearAll() {
-  localStorage.removeItem(KEY)
+export async function clearAll() {
+  await db.entries.clear()
 }

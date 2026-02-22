@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-
-const CYCLE_MS = 4000 // 4s full cycle: 2s inhale, 2s exhale
+import { CYCLE_MS, getPhase, getPhaseProgress } from '../core/rings'
 
 /**
  * useBreathCycle
@@ -10,7 +9,6 @@ const CYCLE_MS = 4000 // 4s full cycle: 2s inhale, 2s exhale
  *   phase:     'inhale' | 'exhale'
  *   progress:  0–1 within current phase
  *   coherence: 0–1, rises gently as cycles accumulate (starts 0.5, caps 0.9)
- *   breathData: object passable to ΔE computation
  */
 export function useBreathCycle() {
   const [phase, setPhase] = useState('inhale')
@@ -26,11 +24,8 @@ export function useBreathCycle() {
       const elapsed = Date.now() - startRef.current
       const cyclePos = (elapsed % CYCLE_MS) / CYCLE_MS
 
-      const isInhale = cyclePos < 0.5
-      const phaseProgress = isInhale ? cyclePos * 2 : (cyclePos - 0.5) * 2
-
-      setPhase(isInhale ? 'inhale' : 'exhale')
-      setProgress(phaseProgress)
+      setPhase(getPhase(cyclePos))
+      setProgress(getPhaseProgress(cyclePos))
 
       const completedCycles = Math.floor(elapsed / CYCLE_MS)
       if (completedCycles > cycleCountRef.current) {

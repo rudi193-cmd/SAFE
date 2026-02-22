@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { storeEntry, getAllEntries, deleteEntry } from '../services/storage'
 import { useBreathCycle } from './useBreathCycle'
 import { getBellMessage, getMode } from '../core/bell'
+import { computeDeltaE } from '../core/deltaE'
 
 /**
  * useJournalState — all entry state and side effects.
- * Composes useBreathCycle and storage. Page3Journal assembles from this.
+ * Async throughout (Dexie storage). Page3Journal assembles from this.
  */
 export function useJournalState() {
   const [entries, setEntries] = useState([])
@@ -18,25 +19,28 @@ export function useJournalState() {
   const mode = getMode(deltaE)
   const bellMsg = getBellMessage(deltaE)
 
-  const refresh = () => setEntries(getAllEntries())
+  const refresh = async () => {
+    const all = await getAllEntries()
+    setEntries(all)
+  }
   useEffect(() => { refresh() }, [])
 
-  // Live ΔE: text length + breath coherence, centered at 0
   useEffect(() => {
-    const lengthFactor = Math.min(body.length / 500, 1)
-    const breathFactor = breathData?.coherence ?? 0.5
-    setDeltaE((lengthFactor + breathFactor) / 2 - 0.5)
+    setDeltaE(computeDeltaE(body, breathData))
   }, [body, breathData?.coherence])
 
-  const save = () => {
+  const save = async () => {
     if (!body.trim()) return
-    storeEntry({ title, body, tone, deltaE })
+    await storeEntry({ title, body, tone, deltaE })
     setTitle('')
     setBody('')
-    refresh()
+    await refresh()
   }
 
-  const remove = (id) => { deleteEntry(id); refresh() }
+  const remove = async (id) => {
+    await deleteEntry(id)
+    await refresh()
+  }
 
   return {
     entries,
