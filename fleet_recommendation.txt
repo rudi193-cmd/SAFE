@@ -1,0 +1,13 @@
+Provider: Cerebras
+Tier: free
+
+Based on the provided connection audit, the next priority from the HIGH PRIORITY section should be:
+
+**# 8. cost_tracker.py → awareness.py (ntfy alerts)**
+
+This fix is crucial as it involves sending alerts when approaching the weekly budget, thereby preventing token burn. It helps in identifying potential issues on time, reducing the risk of running out of tokens, which is the highest priority concern stated earlier. 
+
+Here's a specific fix with a 2-sentence explanation:
+`# 8. cost_tracker.py → awareness.py (ntfy alerts)` 
+- **Current:** cost_tracker has data, no alerts.
+- **Fix:** Daily summary + alert when approaching weekly budget.

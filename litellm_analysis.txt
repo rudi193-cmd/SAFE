@@ -1,0 +1,3 @@
+Provider: Cerebras
+
+I recommend integrating LiteLLM into llm_router.py as an adapter layer (option B), preserving the custom features and logic of llm_router.py, such as fleet feedback integration, governance integration, and pattern-based routing, while incorporating the standardization, reliability, and scalability of LiteLLM. By doing so, we can leverage LiteLLM's unified interface, built-in cost tracking, and automatic retry/fallback logic to improve the robustness and efficiency of llm_router.py, without sacrificing its unique value-added features and customizations.

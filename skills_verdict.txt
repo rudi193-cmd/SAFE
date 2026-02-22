@@ -1,0 +1,11 @@
+Fleet Provider: Cerebras
+
+Here are the evaluations for each skill:
+
+SKILL 1: LiteLLM - REPLACE, INTEGRATE AS ADAPTER - Replace with unified API, use built-in features.
+
+SKILL 2: Multi-agent commands - INTEGRATE - Integrate CLI commands for parallel execution.
+
+SKILL 3: Cloudflare agents-sdk - REPLACE DAEMONS - Upgrade dormant daemons with stateful agents.
+
+SKILL 4: Trail of Bits security skills - ENHANCE GATE.PY - Enhance governance approval and audit trail.

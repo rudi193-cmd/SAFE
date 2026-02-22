@@ -1,0 +1,1468 @@
+Building system map from RAG...
+
+======================================================================
+SYSTEM STATISTICS
+======================================================================
+
+die-namic:
+  Files: 62
+  Classes: 55
+  Functions: 408
+
+willow:
+  Files: 342
+  Classes: 233
+  Functions: 2658
+
+TOTAL:
+  Files: 404
+  Classes: 288
+  Functions: 3066
+
+======================================================================
+REPO: DIE-NAMIC
+======================================================================
+
+  [F] clean_formatting.py
+     Functions: clean_file, scan_and_clean
+
+  [F] fleet.py
+     Functions: extract_code
+
+  [F] generate_tests.py
+     Functions: generate_test
+
+  [F] indexer.py
+     Functions: build_index, clear_db, cli, extract_headers, extract_headers_md (+15 more)
+
+  [F] kart.py
+     Functions: check_mail, consult_kart_mind, delegate_to_willow, escalate_to_llm, format_capabilities (+10 more)
+
+  [F] orchestrator.py
+     Classes: ArchitecturalGap, KartInterface, KartTask, Orchestrator, RepoScanner (+1 more)
+     Functions: _build_config_prompt, _build_init_prompt, _execute_tasks, _generate_content, _report_gaps (+9 more)
+
+  [F] self_improve.py
+     Functions: apply_via_willow, generate_solution, get_pending_tasks, list_tasks, run_cycle
+
+  [F] task_status.py
+     Functions: check_recent_commits, estimate_task, get_tasks
+
+  [F] willow_cli.py
+     Functions: background_listener, edit_file, execute_command, format_capabilities, get_capabilities (+5 more)
+
+[D] apps\_future/
+
+  [F] senses_tactile.py
+     Classes: NervousSystem
+     Functions: disconnect, move_finger, read_sensor
+
+[D] apps\aios_services/
+
+  [F] unified_watcher.py
+     Functions: check_queue
+
+[D] apps\eyes/
+
+  [F] content_scan.py
+     Functions: extract_notes, extract_text, log_scan, scan_for_purge, scan_screenshot (+3 more)
+
+  [F] eyes_events.py
+     Functions: on_key_press, on_mouse_click, on_mouse_move, start_activity_listeners
+
+  [F] purge.py
+     Functions: get_folder_size_mb, get_routed_files, quick_purge, smart_purge
+
+  [F] triggers.py
+     Functions: check_triggers, classify, execute_triggers, load_state, log_trigger (+6 more)
+
+[D] apps\opauth\cli/
+
+  [F] read_inbox_gdocs.py
+     Functions: extract_doc_id_from_gdoc, get_provider, list_gdocs, load_config, read_and_export
+
+  [F] setup_google.py
+     Functions: step_1_console, step_2_credentials, step_3_collect, step_4_authorize, step_5_test
+
+  [F] willow_gdoc_reader.py
+     Functions: export_inbox_docs, find_folder_by_name, get_access_token, list_drive_files, load_config (+1 more)
+
+[D] apps\opauth\core/
+
+  [F] audit.py
+     Classes: AuditLog
+     Functions: get_access_history, get_logs, log
+
+  [F] consent.py
+     Classes: ConsentFlow
+     Functions: check_consent, deny_consent, grant_consent, list_consents, request_consent (+1 more)
+
+  [F] revocation.py
+     Classes: RevocationManager
+     Functions: check_authorization_status, list_active_authorizations, revoke_all, revoke_service
+
+  [F] scope_registry.py
+     Classes: ScopeRegistry
+     Functions: check, get_scope, grant, list_services, revoke
+
+[D] apps\opauth\providers/
+
+  [F] base.py
+     Classes: OAuthProvider
+     Functions: _make_request, api_call, check_scope, complete_authorization, get_access_token (+5 more)
+
+  [F] fitbit.py
+     Classes: FitbitProvider
+     Functions: _get_basic_auth, _make_request, get_auth_url, get_daily_activity, get_heart_rate (+4 more)
+
+  [F] google.py
+     Classes: GoogleProvider
+     Functions: _make_request, _map_scopes, get_auth_url, handle_callback, list_calendar_events (+3 more)
+
+  [F] google_docs.py
+     Classes: GoogleDocsProvider
+     Functions: _extract_doc_id, _extract_text, read_doc, read_doc_text, read_gdoc_file (+1 more)
+
+  [F] smarthome.py
+     Classes: SmartHomeProvider
+     Functions: control_lock, get_auth_url, get_camera_status, get_camera_stream, get_lights_status (+5 more)
+
+[D] apps\vision_board/
+
+  [F] categorize.py
+     Functions: analyze_image, categorize_folder, generate_thumbnail
+
+[D] apps\willow_watcher/
+
+  [F] watcher.py
+     Functions: classify_file, ensure_dirs, get_file_hash, load_state, log_event (+4 more)
+
+[D] bridge_ring/
+
+  [F] claude_api.py
+     Classes: ClaudeClient, ClaudeResponse
+     Functions: analyze_code, ask, ask_claude, ask_stream, generate_code (+5 more)
+
+  [F] instance_registry.py
+     Classes: Instance, RoutingRule, TrustLevel
+     Functions: add_routing_rule, bootstrap_defaults, can_do, get_connection, get_escalation_target (+8 more)
+
+  [F] llm_router.py
+     Classes: LLMResponse, Provider
+     Functions: _log_and_return, ask, ask_code, ask_reason, call_provider (+7 more)
+
+  [F] seed_registry.py
+     Functions: main, seed_instances, seed_routing_rules, show_summary
+
+  [F] signal_bus.py
+     Classes: Signal, SignalBus
+     Functions: _ensure_local_queue_header, _get_merged_signals, _parse_file, check_inbox, check_inbox_routed (+6 more)
+
+  [F] signal_router.py
+     Classes: RoutingResult, SignalRouter
+     Functions: _suggest_action, add_routing_rule, add_rule, format_notification, get_router (+6 more)
+
+[D] continuity_ring/
+
+  [F] session_index.py
+     Classes: Session, SessionNote
+     Functions: build_index, clear_db, get_accomplishments, get_pending_tasks, get_recent_notes (+8 more)
+
+[D] docs\ops\reddit_analytics\Image Input/
+
+  [F] analyze_countries.py
+     Functions: parse_filename_timestamp
+
+  [F] analyze_socials.py
+     Functions: parse_metric
+
+  [F] fuse_analytics.py
+     Functions: find_file_paths
+
+[D] governance/
+
+  [F] api.py
+     Classes: AuditHeadResponse, AuditVerifyResponse, HealthResponse, HumanActionRequest, HumanActionResponse (+5 more)
+     Functions: check_api_surface_authorized
+
+  [F] base17_gen.py
+     Functions: base17_id, generate_branch_name, main, validate_base17
+
+  [F] gate.py
+     Classes: Gatekeeper
+     Functions: _audit_event, _get_decision_type, _halt, _idempotency_delta_event, _is_protected (+15 more)
+
+  [F] state.py
+     Classes: AuditEntry, Authority, DecisionCode, DecisionType, GateDecision (+5 more)
+     Functions: _extract_canonical_fields, _generate_id, compute_hash, create_genesis_hash, recompute_entry_hash (+3 more)
+
+  [F] storage.py
+     Functions: append_audit_entry, append_pending, apply_events, create_default_state, ensure_storage_dir (+12 more)
+
+[D] scripts/
+
+  [F] backfill_frontmatter.py
+     Functions: add_topics_to_entry, extract_date_from_filename, extract_persona_from_header, extract_topics, has_frontmatter (+1 more)
+
+  [F] import_chatgpt_history.py
+     Functions: extract_messages, format_conversation_to_markdown, import_conversations
+
+  [F] import_claude_history.py
+     Functions: format_conversation_to_markdown, import_conversations, parse_claude_export
+
+[D] source_ring/
+
+  [F] build_runner.py
+     Classes: AppInfo, BuildResult
+     Functions: build_all, build_app, check_all, discover_apps, get_app (+8 more)
+
+[D] source_ring\willow\core/
+
+  [F] librarian.py
+     Functions: get_file_title, process_and_rebuild, rebuild_index
+
+[D] tools/
+
+  [F] auto_docstrings.py
+     Functions: extract_definition, find_undocumented, generate_docstring, insert_docstring, process_file
+
+  [F] changelog_gen.py
+     Functions: append_to_changelog, generate_changelog, get_commits_since_days, get_commits_since_tag, get_detailed_commits (+1 more)
+
+  [F] commit_msg.py
+     Functions: copy_to_clipboard, generate_commit_message, get_git_diff, get_staged_files
+
+  [F] cost_tracker.py
+     Classes: UsageRecord
+     Functions: format_cost, get_daily_summary, get_summary_by_provider, get_summary_by_task, get_usage (+2 more)
+
+  [F] dead_code.py
+     Classes: CodeAnalyzer
+     Functions: analyze_file, analyze_with_llm, extract_code, find_all_references, find_dead_code
+
+  [F] dep_audit.py
+     Functions: analyze_deps, check_outdated, find_imports, get_installed_version, parse_pyproject (+1 more)
+
+  [F] error_explain.py
+     Functions: explain_error
+
+  [F] generate_tool.py
+     Functions: generate_tool, test_tool, validate_code
+
+  [F] health_check.py
+     Functions: check_provider
+
+  [F] id_generator.py
+     Functions: base17_decode, base17_encode, collision_space, generate_artifact_id, generate_branch_id (+3 more)
+
+  [F] pr_describe.py
+     Functions: copy_to_clipboard, generate_pr_description, get_commits_since, get_current_branch, get_diff_stat (+1 more)
+
+  [F] seed_gen.py
+     Functions: generate_seed, get_branch, get_commits, get_diff_stat, get_files_changed
+
+  [F] type_hints.py
+     Classes: FunctionFinder
+     Functions: apply_type_hints, extract_function_def, find_untyped_functions, process_file, suggest_type_hints
+
+======================================================================
+REPO: WILLOW
+======================================================================
+
+  [F] agent_minimal.py
+     Classes: WillowAgent
+     Functions: chat
+
+  [F] aios_loop.py
+     Functions: _catalog_db, _file_hash, _filename_context, _get_or_create_drive_folder, _is_valid_slug (+31 more)
+
+  [F] aios_minimal.py
+     Functions: classify_file, extract_text, init_dirs, main_loop, process_file
+
+  [F] local_api.py
+     Functions: _extract_topics, _load_claude_api_key, _log, _rate_limit, _search_knowledge_markdown (+21 more)
+
+  [F] server.py
+     Functions: _find_similar_canonical, _learn_worker, _load_routing_schema, _migrate_proposed_folder, _save_routing_schema (+64 more)
+
+  [F] server_minimal.py
+     Functions: approve_proposal, chat, health, reject_proposal, validate_proposal
+
+[D] api/
+
+  [F] agent_routes.py
+     Classes: ChatRequest, ChatResponse
+
+  [F] governance_routes.py
+     Classes: ApprovalRequest, ProposalCreate, ProposalResponse
+
+  [F] kart_routes.py
+     Classes: ExecuteRequest, TaskUpdateRequest, ToolExecuteRequest
+
+[D] apps/
+
+  [F] neocities.py
+     Functions: deploy_pocket_willow, info, list_files, upload, upload_text
+
+  [F] smart_routing.py
+     Functions: classify_screenshot, route_screenshot
+
+  [F] social_media_tracker.py
+     Functions: add_screenshot, get_routing_destinations, get_stats, init_db, log_routing (+1 more)
+
+  [F] tunnel.py
+     Functions: _drain_pipe, deploy_with_url, get_saved_url, save_url, start_tunnel (+3 more)
+
+  [F] utety_personas.py
+     Functions: get_persona, is_utety_persona
+
+  [F] watcher.py
+     Functions: classify_file, ensure_dirs, get_file_hash, load_state, log_event (+4 more)
+
+[D] apps\observer/
+
+  [F] capture.py
+     Classes: ScreenCapture
+     Functions: __init__, capture_active, capture_active_window, capture_full_screen, capture_region (+4 more)
+
+  [F] overlay.py
+     Classes: RaOverlay
+     Functions: add_message, init_ui, launch_overlay, mouseMoveEvent, mousePressEvent (+3 more)
+
+  [F] window_picker.py
+     Classes: WindowPicker
+     Functions: __init__, clear_focus, find_browsers, find_by_title, find_code_editors (+8 more)
+
+[D] apps\opauth\cli/
+
+  [F] read_inbox_gdocs.py
+     Functions: extract_doc_id_from_gdoc, get_provider, list_gdocs, load_config, read_and_export
+
+  [F] setup_google.py
+     Functions: step_1_console, step_2_credentials, step_3_collect, step_4_authorize, step_5_test
+
+  [F] willow_gdoc_reader.py
+     Functions: export_inbox_docs, find_folder_by_name, get_access_token, list_drive_files, load_config (+1 more)
+
+[D] apps\opauth\core/
+
+  [F] audit.py
+     Classes: AuditLog
+     Functions: get_access_history, get_logs, log
+
+  [F] consent.py
+     Classes: ConsentFlow
+     Functions: check_consent, deny_consent, grant_consent, list_consents, request_consent (+1 more)
+
+  [F] revocation.py
+     Classes: RevocationManager
+     Functions: check_authorization_status, list_active_authorizations, revoke_all, revoke_service
+
+  [F] scope_registry.py
+     Classes: ScopeRegistry
+     Functions: check, get_scope, grant, list_services, revoke
+
+[D] apps\opauth\providers/
+
+  [F] base.py
+     Classes: OAuthProvider
+     Functions: _make_request, api_call, check_scope, complete_authorization, get_access_token (+5 more)
+
+  [F] fitbit.py
+     Classes: FitbitProvider
+     Functions: _get_basic_auth, _make_request, get_auth_url, get_daily_activity, get_heart_rate (+4 more)
+
+  [F] google.py
+     Classes: GoogleProvider
+     Functions: _make_request, _map_scopes, get_auth_url, handle_callback, list_calendar_events (+3 more)
+
+  [F] google_docs.py
+     Classes: GoogleDocsProvider
+     Functions: _extract_doc_id, _extract_text, read_doc, read_doc_text, read_gdoc_file (+1 more)
+
+  [F] smarthome.py
+     Classes: SmartHomeProvider
+     Functions: control_lock, get_auth_url, get_camera_status, get_camera_stream, get_lights_status (+5 more)
+
+[D] apps\opauth\storage/
+
+  [F] token_store.py
+     Classes: TokenStore
+     Functions: delete_token, get_token, list_services, lock, store_token (+1 more)
+
+[D] apps\pa/
+
+  [F] drive_organize.py
+     Functions: _chunk_text, _extract_structured_metadata, _extract_text, _ingest_text, _log_action (+9 more)
+
+  [F] drive_scan.py
+     Functions: _classify_file, _detect_project, _file_hash, catalog_summary, find_duplicates (+2 more)
+
+[D] apps\vision_board/
+
+  [F] categorize.py
+     Functions: analyze_image, categorize_folder, generate_thumbnail
+
+[D] archive/
+
+  [F] instance_registry.py
+     Classes: Instance, RoutingRule, TrustLevel
+     Functions: add_routing_rule, bootstrap_defaults, can_do, get_connection, get_escalation_target (+8 more)
+
+  [F] willow.py
+     Functions: get_drive_service, init_nervous_system, sanitize_filename, transmute_ghost
+
+[D] artifacts\Sweet-Pea-Rudi19\_proposed\authentication/
+
+  [F] auth (1).py
+     Functions: _check_device_remembered, _check_lockout, _clear_failed_attempts, _generate_api_key, _get_client_context (+33 more)
+
+[D] artifacts\Sweet-Pea-Rudi19\_proposed\mobile-auth/
+
+  [F] auth_192939.py
+     Functions: _check_device_remembered, _check_lockout, _clear_failed_attempts, _generate_api_key, _get_client_context (+33 more)
+
+[D] artifacts\Sweet-Pea-Rudi19\_proposed\tools/
+
+  [F] pr_describe_193003.py
+     Functions: copy_to_clipboard, generate_pr_description, get_commits_since, get_current_branch, get_diff_stat (+1 more)
+
+[D] artifacts\Sweet-Pea-Rudi19\code/
+
+  [F] analyze_countries.py
+     Functions: parse_filename_timestamp
+
+  [F] api.py
+     Classes: AuditHeadResponse, AuditVerifyResponse, HealthResponse, HumanActionRequest, HumanActionResponse (+5 more)
+     Functions: check_api_surface_authorized
+
+  [F] audit_192939.py
+     Classes: AuditLog
+     Functions: get_access_history, get_logs, log
+
+  [F] auth.py
+     Functions: _check_device_remembered, _check_lockout, _clear_failed_attempts, _generate_api_key, _get_client_context (+33 more)
+
+  [F] auto_docstrings.py
+     Functions: extract_definition, find_undocumented, generate_docstring, insert_docstring, process_file
+
+  [F] backfill_frontmatter.py
+     Functions: add_topics_to_entry, extract_date_from_filename, extract_persona_from_header, extract_topics, has_frontmatter (+1 more)
+
+  [F] backfill_frontmatter_192939.py
+     Functions: add_topics_to_entry, extract_date_from_filename, extract_persona_from_header, extract_topics, has_frontmatter (+1 more)
+
+  [F] base.py
+     Classes: OAuthProvider
+     Functions: _make_request, api_call, check_scope, complete_authorization, get_access_token (+5 more)
+
+  [F] base17_gen.py
+     Functions: base17_id, generate_branch_name, main, validate_base17
+
+  [F] base17_gen_192939.py
+     Functions: base17_id, generate_branch_name, main, validate_base17
+
+  [F] build_runner.py
+     Classes: AppInfo, BuildResult
+     Functions: build_all, build_app, check_all, discover_apps, get_app (+8 more)
+
+  [F] build_runner_193000.py
+     Classes: AppInfo, BuildResult
+     Functions: build_all, build_app, check_all, discover_apps, get_app (+8 more)
+
+  [F] categorize_192939.py
+     Functions: analyze_image, categorize_folder, generate_thumbnail
+
+  [F] changelog_gen.py
+     Functions: append_to_changelog, generate_changelog, get_commits_since_days, get_commits_since_tag, get_detailed_commits (+1 more)
+
+  [F] changelog_gen_192939.py
+     Functions: append_to_changelog, generate_changelog, get_commits_since_days, get_commits_since_tag, get_detailed_commits (+1 more)
+
+  [F] claude_api.py
+     Classes: ClaudeClient, ClaudeResponse
+     Functions: analyze_code, ask, ask_claude, ask_stream, generate_code (+5 more)
+
+  [F] claude_api_192939.py
+     Classes: ClaudeClient, ClaudeResponse
+     Functions: analyze_code, ask, ask_claude, ask_stream, generate_code (+5 more)
+
+  [F] clean_formatting.py
+     Functions: clean_file, scan_and_clean
+
+  [F] coherence (1).py
+     Classes: CoherenceEntry, CoherenceTracker
+     Functions: _compute_similarity, _extract_words, _load_state, _save_state, calculate_coherence (+11 more)
+
+  [F] coherence.py
+     Classes: CoherenceEntry, CoherenceTracker
+     Functions: _compute_similarity, _extract_words, _load_state, _save_state, calculate_coherence (+11 more)
+
+  [F] coherence_193002.py
+     Classes: CoherenceEntry, CoherenceTracker
+     Functions: _compute_similarity, _extract_words, _load_state, _save_state, calculate_coherence (+11 more)
+
+  [F] commit_msg.py
+     Functions: copy_to_clipboard, generate_commit_message, get_git_diff, get_staged_files
+
+  [F] consent.py
+     Classes: ConsentFlow
+     Functions: check_consent, deny_consent, grant_consent, list_consents, request_consent (+1 more)
+
+  [F] consent_192907.py
+     Classes: ConsentFlow
+     Functions: check_consent, deny_consent, grant_consent, list_consents, request_consent (+1 more)
+
+  [F] content_scan.py
+     Functions: extract_notes, extract_text, log_scan, scan_for_purge, scan_screenshot (+3 more)
+
+  [F] continuity_audit.py
+     Functions: audit, check_archived, find_latest_seed_packet, parse_changelog, parse_journal (+3 more)
+
+  [F] continuity_audit_192939.py
+     Functions: audit, check_archived, find_latest_seed_packet, parse_changelog, parse_journal (+3 more)
+
+  [F] cost_tracker.py
+     Classes: UsageRecord
+     Functions: format_cost, get_daily_summary, get_summary_by_provider, get_summary_by_task, get_usage (+2 more)
+
+  [F] dead_code.py
+     Classes: CodeAnalyzer
+     Functions: analyze_file, analyze_with_llm, extract_code, find_all_references, find_dead_code
+
+  [F] dead_code_193003.py
+     Classes: CodeAnalyzer
+     Functions: analyze_file, analyze_with_llm, extract_code, find_all_references, find_dead_code
+
+  [F] dep_audit.py
+     Functions: analyze_deps, check_outdated, find_imports, get_installed_version, parse_pyproject (+1 more)
+
+  [F] dep_audit_192939.py
+     Functions: analyze_deps, check_outdated, find_imports, get_installed_version, parse_pyproject (+1 more)
+
+  [F] error_explain.py
+     Functions: explain_error
+
+  [F] export_training_data (1).py
+     Functions: export_persona_docs, parse_claude_session, parse_conversation_log
+
+  [F] export_training_data (1)_193003.py
+     Functions: export_persona_docs, parse_claude_session, parse_conversation_log
+
+  [F] export_training_data.py
+     Functions: export_persona_docs, parse_claude_session, parse_conversation_log
+
+  [F] export_training_data_192939.py
+     Functions: export_persona_docs, parse_claude_session, parse_conversation_log
+
+  [F] eyes_events.py
+     Functions: on_key_press, on_mouse_click, on_mouse_move, start_activity_listeners
+
+  [F] fitbit.py
+     Classes: FitbitProvider
+     Functions: _get_basic_auth, _make_request, get_auth_url, get_daily_activity, get_heart_rate (+4 more)
+
+  [F] folder_ui (1).py
+     Functions: _handle_lounge_chat, _handle_single_chat, _pick_lounge_responders, add_message, get_chat_key (+13 more)
+
+  [F] folder_ui (1)_192939.py
+     Functions: _handle_lounge_chat, _handle_single_chat, _pick_lounge_responders, add_message, get_chat_key (+13 more)
+
+  [F] folder_ui.py
+     Functions: _handle_lounge_chat, _handle_single_chat, _pick_lounge_responders, add_message, get_chat_key (+13 more)
+
+  [F] fuse_analytics.py
+     Functions: find_file_paths
+
+  [F] fuse_analytics_192939.py
+     Functions: find_file_paths
+
+  [F] gate.py
+     Classes: Gatekeeper
+     Functions: _audit_event, _get_decision_type, _halt, _idempotency_delta_event, _is_protected (+15 more)
+
+  [F] generate_tests.py
+     Functions: generate_test
+
+  [F] generate_tests_193004.py
+     Functions: generate_test
+
+  [F] generate_tool.py
+     Functions: generate_tool, test_tool, validate_code
+
+  [F] generate_tool_192939.py
+     Functions: generate_tool, test_tool, validate_code
+
+  [F] google.py
+     Classes: GoogleProvider
+     Functions: _make_request, _map_scopes, get_auth_url, handle_callback, list_calendar_events (+3 more)
+
+  [F] google_193004.py
+     Classes: GoogleProvider
+     Functions: _make_request, _map_scopes, get_auth_url, handle_callback, list_calendar_events (+3 more)
+
+  [F] google_docs_192939.py
+     Classes: GoogleDocsProvider
+     Functions: _extract_doc_id, _extract_text, read_doc, read_doc_text, read_gdoc_file (+1 more)
+
+  [F] health_check.py
+     Functions: check_provider
+
+  [F] health_check_193003.py
+     Functions: check_provider
+
+  [F] id_generator.py
+     Functions: base17_decode, base17_encode, collision_space, generate_artifact_id, generate_branch_id (+3 more)
+
+  [F] image_processor.py
+     Functions: audit_folder, create_journal_entry, delete_duplicates, get_route, parse_filename (+1 more)
+
+  [F] image_processor_192939.py
+     Functions: audit_folder, create_journal_entry, delete_duplicates, get_route, parse_filename (+1 more)
+
+  [F] indexer.py
+     Functions: build_index, clear_db, cli, extract_headers, extract_headers_md (+15 more)
+
+  [F] indexer_192939.py
+     Functions: build_index, clear_db, cli, extract_headers, extract_headers_md (+15 more)
+
+  [F] instance_registry.py
+     Classes: Instance, RoutingRule, TrustLevel
+     Functions: add_routing_rule, bootstrap_defaults, can_do, get_connection, get_escalation_target (+8 more)
+
+  [F] instance_registry_193002.py
+     Classes: Instance, RoutingRule, TrustLevel
+     Functions: add_routing_rule, bootstrap_defaults, can_do, get_connection, get_escalation_target (+8 more)
+
+  [F] kart.py
+     Functions: check_mail, consult_kart_mind, delegate_to_willow, escalate_to_llm, handle_headers (+3 more)
+
+  [F] kart_192939.py
+     Functions: check_mail, consult_kart_mind, delegate_to_willow, escalate_to_llm, handle_headers (+3 more)
+
+  [F] llm_router.py
+     Classes: LLMResponse, Provider
+     Functions: _log_and_return, ask, ask_code, ask_reason, call_provider (+6 more)
+
+  [F] llm_router_192941.py
+     Classes: LLMResponse, Provider
+     Functions: _log_and_return, ask, ask_code, ask_reason, call_provider (+6 more)
+
+  [F] local_api (1).py
+     Functions: _extract_topics, _load_claude_api_key, _log, _rate_limit, check_claude_available (+17 more)
+
+  [F] local_api (1)_193003.py
+     Functions: _extract_topics, _load_claude_api_key, _log, _rate_limit, check_claude_available (+17 more)
+
+  [F] local_api.py
+     Functions: _extract_topics, _load_claude_api_key, _log, _rate_limit, check_claude_available (+17 more)
+
+  [F] local_api_192939.py
+     Functions: _extract_topics, _load_claude_api_key, _log, _rate_limit, check_claude_available (+17 more)
+
+  [F] orchestrator.py
+     Classes: ArchitecturalGap, KartInterface, KartTask, Orchestrator, RepoScanner (+1 more)
+     Functions: _build_config_prompt, _build_init_prompt, _execute_tasks, _generate_content, _report_gaps (+9 more)
+
+  [F] pr_describe.py
+     Functions: copy_to_clipboard, generate_pr_description, get_commits_since, get_current_branch, get_diff_stat (+1 more)
+
+  [F] process.py
+     Functions: get_processor, github_lookup, list_processors, load_registry, process_file (+1 more)
+
+  [F] process_193002.py
+     Functions: get_processor, github_lookup, list_processors, load_registry, process_file (+1 more)
+
+  [F] processing_log.py
+     Functions: get_stem, hash_file, load_log, normalize_stem, rebuild_log (+5 more)
+
+  [F] profile_17d_gen.py
+     Functions: pack, to_compact, to_json, unpack
+
+  [F] profile_17d_gen_192939.py
+     Functions: pack, to_compact, to_json, unpack
+
+  [F] purge.py
+     Functions: get_folder_size_mb, get_routed_files, quick_purge, smart_purge
+
+  [F] purge_192939.py
+     Functions: get_folder_size_mb, get_routed_files, quick_purge, smart_purge
+
+  [F] read_inbox_gdocs.py
+     Functions: extract_doc_id_from_gdoc, get_provider, list_gdocs, load_config, read_and_export
+
+  [F] read_inbox_gdocs_192939.py
+     Functions: extract_doc_id_from_gdoc, get_provider, list_gdocs, load_config, read_and_export
+
+  [F] revocation.py
+     Classes: RevocationManager
+     Functions: check_authorization_status, list_active_authorizations, revoke_all, revoke_service
+
+  [F] revocation_192941.py
+     Classes: RevocationManager
+     Functions: check_authorization_status, list_active_authorizations, revoke_all, revoke_service
+
+  [F] scope_registry.py
+     Classes: ScopeRegistry
+     Functions: check, get_scope, grant, list_services, revoke
+
+  [F] sdocx_processor_192939.py
+     Functions: analyze_script, audit_folder, convert_to_markdown, extract_text_from_note, process_hopper (+3 more)
+
+  [F] seed_gen.py
+     Functions: generate_seed, get_branch, get_commits, get_diff_stat, get_files_changed
+
+  [F] seed_gen_193003.py
+     Functions: generate_seed, get_branch, get_commits, get_diff_stat, get_files_changed
+
+  [F] seed_registry.py
+     Functions: main, seed_instances, seed_routing_rules, show_summary
+
+  [F] seed_registry_192939.py
+     Functions: main, seed_instances, seed_routing_rules, show_summary
+
+  [F] senses_tactile.py
+     Classes: NervousSystem
+     Functions: disconnect, move_finger, read_sensor
+
+  [F] senses_tactile_192939.py
+     Classes: NervousSystem
+     Functions: disconnect, move_finger, read_sensor
+
+  [F] session_index.py
+     Classes: Session, SessionNote
+     Functions: build_index, clear_db, get_accomplishments, get_pending_tasks, get_recent_notes (+8 more)
+
+  [F] setup_google_193000.py
+     Functions: step_1_console, step_2_credentials, step_3_collect, step_4_authorize, step_5_test
+
+  [F] signal_bus.py
+     Classes: Signal, SignalBus
+     Functions: _ensure_local_queue_header, _get_merged_signals, _parse_file, check_inbox, check_inbox_routed (+6 more)
+
+  [F] signal_bus_193003.py
+     Classes: Signal, SignalBus
+     Functions: _ensure_local_queue_header, _get_merged_signals, _parse_file, check_inbox, check_inbox_routed (+6 more)
+
+  [F] signal_router.py
+     Classes: RoutingResult, SignalRouter
+     Functions: _suggest_action, add_routing_rule, add_rule, format_notification, get_router (+6 more)
+
+  [F] signal_router_192939.py
+     Classes: RoutingResult, SignalRouter
+     Functions: _suggest_action, add_routing_rule, add_rule, format_notification, get_router (+6 more)
+
+  [F] smarthome.py
+     Classes: SmartHomeProvider
+     Functions: control_lock, get_auth_url, get_camera_status, get_camera_stream, get_lights_status (+5 more)
+
+  [F] smarthome_192925.py
+     Classes: SmartHomeProvider
+     Functions: control_lock, get_auth_url, get_camera_status, get_camera_stream, get_lights_status (+5 more)
+
+  [F] split_voices (1).py
+     Functions: detect_persona, parse_md_conversations, score_text
+
+  [F] split_voices (1)_193003.py
+     Functions: detect_persona, parse_md_conversations, score_text
+
+  [F] split_voices.py
+     Functions: detect_persona, parse_md_conversations, score_text
+
+  [F] split_voices_192939.py
+     Functions: detect_persona, parse_md_conversations, score_text
+
+  [F] state.py
+     Classes: AuditEntry, Authority, DecisionCode, DecisionType, GateDecision (+5 more)
+     Functions: _extract_canonical_fields, _generate_id, compute_hash, create_genesis_hash, recompute_entry_hash (+3 more)
+
+  [F] token_store.py
+     Classes: TokenStore
+     Functions: delete_token, get_token, list_services, lock, store_token (+1 more)
+
+  [F] token_store_192939.py
+     Classes: TokenStore
+     Functions: delete_token, get_token, list_services, lock, store_token (+1 more)
+
+  [F] triggers.py
+     Functions: check_triggers, classify, execute_triggers, load_state, log_trigger (+6 more)
+
+  [F] triggers_192939.py
+     Functions: check_triggers, classify, execute_triggers, load_state, log_trigger (+6 more)
+
+  [F] type_hints.py
+     Classes: FunctionFinder
+     Functions: apply_type_hints, extract_function_def, find_untyped_functions, process_file, suggest_type_hints
+
+  [F] type_hints_193001.py
+     Classes: FunctionFinder
+     Functions: apply_type_hints, extract_function_def, find_untyped_functions, process_file, suggest_type_hints
+
+  [F] unified_watcher.py
+     Functions: check_queue
+
+  [F] watcher.py
+     Functions: classify_file, ensure_dirs, get_file_hash, load_state, log_event (+4 more)
+
+  [F] willow.py
+     Functions: background_listener, execute_command, process_willow_turn, process_with_llm, route_command
+
+  [F] willow_192939.py
+     Functions: background_listener, execute_command, process_willow_turn, process_with_llm, route_command
+
+  [F] willow_gdoc_reader.py
+     Functions: export_inbox_docs, find_folder_by_name, get_access_token, list_drive_files, load_config (+1 more)
+
+  [F] willow_gdoc_reader_192939.py
+     Functions: export_inbox_docs, find_folder_by_name, get_access_token, list_drive_files, load_config (+1 more)
+
+[D] artifacts\Sweet-Pea-Rudi19\data/
+
+  [F] sdocx_processor.py
+     Functions: analyze_script, audit_folder, convert_to_markdown, extract_text_from_note, process_hopper (+3 more)
+
+[D] artifacts\Sweet-Pea-Rudi19\documents/
+
+  [F] categorize.py
+     Functions: analyze_image, categorize_folder, generate_thumbnail
+
+[D] artifacts\Sweet-Pea-Rudi19\logs/
+
+  [F] audit.py
+     Classes: AuditLog
+     Functions: get_access_history, get_logs, log
+
+[D] artifacts\Sweet-Pea-Rudi19\narrative/
+
+  [F] import_chatgpt_history.py
+     Functions: extract_messages, format_conversation_to_markdown, import_conversations
+
+  [F] import_chatgpt_history_192939.py
+     Functions: extract_messages, format_conversation_to_markdown, import_conversations
+
+  [F] import_claude_history.py
+     Functions: format_conversation_to_markdown, import_conversations, parse_claude_export
+
+  [F] import_claude_history_192939.py
+     Functions: format_conversation_to_markdown, import_conversations, parse_claude_export
+
+[D] artifacts\Sweet-Pea-Rudi19\projects/
+
+  [F] analyze_socials.py
+     Functions: parse_metric
+
+[D] artifacts\Sweet-Pea-Rudi19\specs/
+
+  [F] google_docs.py
+     Classes: GoogleDocsProvider
+     Functions: _extract_doc_id, _extract_text, read_doc, read_doc_text, read_gdoc_file (+1 more)
+
+  [F] session_index_193000.py
+     Classes: Session, SessionNote
+     Functions: build_index, clear_db, get_accomplishments, get_pending_tasks, get_recent_notes (+8 more)
+
+[D] artifacts\Sweet-Pea-Rudi19\video/
+
+  [F] setup_google.py
+     Functions: step_1_console, step_2_credentials, step_3_collect, step_4_authorize, step_5_test
+
+[D] artifacts\claude-code/
+
+  [F] auth_manager.py
+     Functions: authenticated_request, get_auth_headers, get_auth_manager, get_token, load_credentials (+2 more)
+
+[D] artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Pickup/
+
+  [F] analyze_countries (1).py
+     Functions: parse_filename_timestamp
+
+  [F] analyze_countries.py
+     Functions: parse_filename_timestamp
+
+  [F] analyze_socials (1).py
+     Functions: parse_metric
+
+  [F] analyze_socials.py
+     Functions: parse_metric
+
+  [F] api (1).py
+     Classes: AuditHeadResponse, AuditVerifyResponse, HealthResponse, HumanActionRequest, HumanActionResponse (+5 more)
+     Functions: check_api_surface_authorized
+
+  [F] api.py
+     Classes: AuditHeadResponse, AuditVerifyResponse, HealthResponse, HumanActionRequest, HumanActionResponse (+5 more)
+     Functions: check_api_surface_authorized
+
+  [F] audit.py
+     Classes: AuditLog
+     Functions: get_access_history, get_logs, log
+
+  [F] auth (1) (1).py
+     Functions: _check_device_remembered, _check_lockout, _clear_failed_attempts, _generate_api_key, _get_client_context (+33 more)
+
+  [F] auth (1).py
+     Functions: _check_device_remembered, _check_lockout, _clear_failed_attempts, _generate_api_key, _get_client_context (+33 more)
+
+  [F] auth.py
+     Functions: _check_device_remembered, _check_lockout, _clear_failed_attempts, _generate_api_key, _get_client_context (+33 more)
+
+  [F] auto_docstrings (1).py
+     Functions: extract_definition, find_undocumented, generate_docstring, insert_docstring, process_file
+
+  [F] auto_docstrings.py
+     Functions: extract_definition, find_undocumented, generate_docstring, insert_docstring, process_file
+
+  [F] backfill_frontmatter.py
+     Functions: add_topics_to_entry, extract_date_from_filename, extract_persona_from_header, extract_topics, has_frontmatter (+1 more)
+
+  [F] base (1).py
+     Classes: OAuthProvider
+     Functions: _make_request, api_call, check_scope, complete_authorization, get_access_token (+5 more)
+
+  [F] base.py
+     Classes: OAuthProvider
+     Functions: _make_request, api_call, check_scope, complete_authorization, get_access_token (+5 more)
+
+  [F] base17_gen.py
+     Functions: base17_id, generate_branch_name, main, validate_base17
+
+  [F] build_runner.py
+     Classes: AppInfo, BuildResult
+     Functions: build_all, build_app, check_all, discover_apps, get_app (+8 more)
+
+  [F] categorize.py
+     Functions: analyze_image, categorize_folder, generate_thumbnail
+
+  [F] changelog_gen.py
+     Functions: append_to_changelog, generate_changelog, get_commits_since_days, get_commits_since_tag, get_detailed_commits (+1 more)
+
+  [F] claude_api.py
+     Classes: ClaudeClient, ClaudeResponse
+     Functions: analyze_code, ask, ask_claude, ask_stream, generate_code (+5 more)
+
+  [F] clean_formatting (1).py
+     Functions: clean_file, scan_and_clean
+
+  [F] clean_formatting.py
+     Functions: clean_file, scan_and_clean
+
+  [F] coherence (1) (1).py
+     Classes: CoherenceEntry, CoherenceTracker
+     Functions: _compute_similarity, _extract_words, _load_state, _save_state, calculate_coherence (+11 more)
+
+  [F] coherence (1).py
+     Classes: CoherenceEntry, CoherenceTracker
+     Functions: _compute_similarity, _extract_words, _load_state, _save_state, calculate_coherence (+11 more)
+
+  [F] coherence.py
+     Classes: CoherenceEntry, CoherenceTracker
+     Functions: _compute_similarity, _extract_words, _load_state, _save_state, calculate_coherence (+11 more)
+
+  [F] commit_msg (1).py
+     Functions: copy_to_clipboard, generate_commit_message, get_git_diff, get_staged_files
+
+  [F] commit_msg.py
+     Functions: copy_to_clipboard, generate_commit_message, get_git_diff, get_staged_files
+
+  [F] consent.py
+     Classes: ConsentFlow
+     Functions: check_consent, deny_consent, grant_consent, list_consents, request_consent (+1 more)
+
+  [F] content_scan (1).py
+     Functions: extract_notes, extract_text, log_scan, scan_for_purge, scan_screenshot (+3 more)
+
+  [F] content_scan.py
+     Functions: extract_notes, extract_text, log_scan, scan_for_purge, scan_screenshot (+3 more)
+
+  [F] continuity_audit.py
+     Functions: audit, check_archived, find_latest_seed_packet, parse_changelog, parse_journal (+3 more)
+
+  [F] cost_tracker (1).py
+     Classes: UsageRecord
+     Functions: format_cost, get_daily_summary, get_summary_by_provider, get_summary_by_task, get_usage (+2 more)
+
+  [F] cost_tracker.py
+     Classes: UsageRecord
+     Functions: format_cost, get_daily_summary, get_summary_by_provider, get_summary_by_task, get_usage (+2 more)
+
+  [F] dead_code.py
+     Classes: CodeAnalyzer
+     Functions: analyze_file, analyze_with_llm, extract_code, find_all_references, find_dead_code
+
+  [F] dep_audit.py
+     Functions: analyze_deps, check_outdated, find_imports, get_installed_version, parse_pyproject (+1 more)
+
+  [F] error_explain (1).py
+     Functions: explain_error
+
+  [F] error_explain.py
+     Functions: explain_error
+
+  [F] export_training_data (1).py
+     Functions: export_persona_docs, parse_claude_session, parse_conversation_log
+
+  [F] export_training_data.py
+     Functions: export_persona_docs, parse_claude_session, parse_conversation_log
+
+  [F] eyes_events (1).py
+     Functions: on_key_press, on_mouse_click, on_mouse_move, start_activity_listeners
+
+  [F] eyes_events.py
+     Functions: on_key_press, on_mouse_click, on_mouse_move, start_activity_listeners
+
+  [F] fitbit (1).py
+     Classes: FitbitProvider
+     Functions: _get_basic_auth, _make_request, get_auth_url, get_daily_activity, get_heart_rate (+4 more)
+
+  [F] fitbit.py
+     Classes: FitbitProvider
+     Functions: _get_basic_auth, _make_request, get_auth_url, get_daily_activity, get_heart_rate (+4 more)
+
+  [F] folder_ui (1).py
+     Functions: _handle_lounge_chat, _handle_single_chat, _pick_lounge_responders, add_message, get_chat_key (+13 more)
+
+  [F] folder_ui (2).py
+     Functions: _handle_lounge_chat, _handle_single_chat, _pick_lounge_responders, add_message, get_chat_key (+13 more)
+
+  [F] folder_ui.py
+     Functions: _handle_lounge_chat, _handle_single_chat, _pick_lounge_responders, add_message, get_chat_key (+13 more)
+
+  [F] fuse_analytics.py
+     Functions: find_file_paths
+
+  [F] gate (1).py
+     Classes: Gatekeeper
+     Functions: _audit_event, _get_decision_type, _halt, _idempotency_delta_event, _is_protected (+15 more)
+
+  [F] gate.py
+     Classes: Gatekeeper
+     Functions: _audit_event, _get_decision_type, _halt, _idempotency_delta_event, _is_protected (+15 more)
+
+  [F] generate_tests.py
+     Functions: generate_test
+
+  [F] generate_tool.py
+     Functions: generate_tool, test_tool, validate_code
+
+  [F] google.py
+     Classes: GoogleProvider
+     Functions: _make_request, _map_scopes, get_auth_url, handle_callback, list_calendar_events (+3 more)
+
+  [F] google_docs.py
+     Classes: GoogleDocsProvider
+     Functions: _extract_doc_id, _extract_text, read_doc, read_doc_text, read_gdoc_file (+1 more)
+
+  [F] health_check.py
+     Functions: check_provider
+
+  [F] id_generator (1).py
+     Functions: base17_decode, base17_encode, collision_space, generate_artifact_id, generate_branch_id (+3 more)
+
+  [F] id_generator.py
+     Functions: base17_decode, base17_encode, collision_space, generate_artifact_id, generate_branch_id (+3 more)
+
+  [F] image_processor.py
+     Functions: audit_folder, create_journal_entry, delete_duplicates, get_route, parse_filename (+1 more)
+
+  [F] import_chatgpt_history.py
+     Functions: extract_messages, format_conversation_to_markdown, import_conversations
+
+  [F] import_claude_history.py
+     Functions: format_conversation_to_markdown, import_conversations, parse_claude_export
+
+  [F] indexer.py
+     Functions: build_index, clear_db, cli, extract_headers, extract_headers_md (+15 more)
+
+  [F] instance_registry.py
+     Classes: Instance, RoutingRule, TrustLevel
+     Functions: add_routing_rule, bootstrap_defaults, can_do, get_connection, get_escalation_target (+8 more)
+
+  [F] kart.py
+     Functions: check_mail, consult_kart_mind, delegate_to_willow, escalate_to_llm, handle_headers (+3 more)
+
+  [F] llm_router.py
+     Classes: LLMResponse, Provider
+     Functions: _log_and_return, ask, ask_code, ask_reason, call_provider (+6 more)
+
+  [F] local_api (1).py
+     Functions: _extract_topics, _load_claude_api_key, _log, _rate_limit, check_claude_available (+17 more)
+
+  [F] local_api.py
+     Functions: _extract_topics, _load_claude_api_key, _log, _rate_limit, check_claude_available (+17 more)
+
+  [F] orchestrator (1).py
+     Classes: ArchitecturalGap, KartInterface, KartTask, Orchestrator, RepoScanner (+1 more)
+     Functions: _build_config_prompt, _build_init_prompt, _execute_tasks, _generate_content, _report_gaps (+9 more)
+
+  [F] orchestrator.py
+     Classes: ArchitecturalGap, KartInterface, KartTask, Orchestrator, RepoScanner (+1 more)
+     Functions: _build_config_prompt, _build_init_prompt, _execute_tasks, _generate_content, _report_gaps (+9 more)
+
+  [F] pr_describe.py
+     Functions: copy_to_clipboard, generate_pr_description, get_commits_since, get_current_branch, get_diff_stat (+1 more)
+
+  [F] process.py
+     Functions: get_processor, github_lookup, list_processors, load_registry, process_file (+1 more)
+
+  [F] processing_log (1).py
+     Functions: get_stem, hash_file, load_log, normalize_stem, rebuild_log (+5 more)
+
+  [F] processing_log.py
+     Functions: get_stem, hash_file, load_log, normalize_stem, rebuild_log (+5 more)
+
+  [F] profile_17d_gen.py
+     Functions: pack, to_compact, to_json, unpack
+
+  [F] purge.py
+     Functions: get_folder_size_mb, get_routed_files, quick_purge, smart_purge
+
+  [F] read_inbox_gdocs.py
+     Functions: extract_doc_id_from_gdoc, get_provider, list_gdocs, load_config, read_and_export
+
+  [F] revocation.py
+     Classes: RevocationManager
+     Functions: check_authorization_status, list_active_authorizations, revoke_all, revoke_service
+
+  [F] scope_registry (1).py
+     Classes: ScopeRegistry
+     Functions: check, get_scope, grant, list_services, revoke
+
+  [F] scope_registry.py
+     Classes: ScopeRegistry
+     Functions: check, get_scope, grant, list_services, revoke
+
+  [F] sdocx_processor.py
+     Functions: analyze_script, audit_folder, convert_to_markdown, extract_text_from_note, process_hopper (+3 more)
+
+  [F] seed_gen.py
+     Functions: generate_seed, get_branch, get_commits, get_diff_stat, get_files_changed
+
+  [F] seed_registry.py
+     Functions: main, seed_instances, seed_routing_rules, show_summary
+
+  [F] senses_tactile.py
+     Classes: NervousSystem
+     Functions: disconnect, move_finger, read_sensor
+
+  [F] session_index.py
+     Classes: Session, SessionNote
+     Functions: build_index, clear_db, get_accomplishments, get_pending_tasks, get_recent_notes (+8 more)
+
+  [F] setup_google.py
+     Functions: step_1_console, step_2_credentials, step_3_collect, step_4_authorize, step_5_test
+
+  [F] signal_bus.py
+     Classes: Signal, SignalBus
+     Functions: _ensure_local_queue_header, _get_merged_signals, _parse_file, check_inbox, check_inbox_routed (+6 more)
+
+  [F] signal_router.py
+     Classes: RoutingResult, SignalRouter
+     Functions: _suggest_action, add_routing_rule, add_rule, format_notification, get_router (+6 more)
+
+  [F] smarthome.py
+     Classes: SmartHomeProvider
+     Functions: control_lock, get_auth_url, get_camera_status, get_camera_stream, get_lights_status (+5 more)
+
+  [F] split_voices (1).py
+     Functions: detect_persona, parse_md_conversations, score_text
+
+  [F] split_voices.py
+     Functions: detect_persona, parse_md_conversations, score_text
+
+  [F] state (1).py
+     Classes: AuditEntry, Authority, DecisionCode, DecisionType, GateDecision (+5 more)
+     Functions: _extract_canonical_fields, _generate_id, compute_hash, create_genesis_hash, recompute_entry_hash (+3 more)
+
+  [F] state.py
+     Classes: AuditEntry, Authority, DecisionCode, DecisionType, GateDecision (+5 more)
+     Functions: _extract_canonical_fields, _generate_id, compute_hash, create_genesis_hash, recompute_entry_hash (+3 more)
+
+  [F] storage (1).py
+     Functions: append_audit_entry, append_pending, apply_events, create_default_state, ensure_storage_dir (+12 more)
+
+  [F] storage.py
+     Functions: append_audit_entry, append_pending, apply_events, create_default_state, ensure_storage_dir (+12 more)
+
+  [F] token_store.py
+     Classes: TokenStore
+     Functions: delete_token, get_token, list_services, lock, store_token (+1 more)
+
+  [F] triggers.py
+     Functions: check_triggers, classify, execute_triggers, load_state, log_trigger (+6 more)
+
+  [F] type_hints.py
+     Classes: FunctionFinder
+     Functions: apply_type_hints, extract_function_def, find_untyped_functions, process_file, suggest_type_hints
+
+  [F] unified_watcher (1).py
+     Functions: check_queue
+
+  [F] unified_watcher.py
+     Functions: check_queue
+
+  [F] watcher (1).py
+     Functions: classify_file, ensure_dirs, get_file_hash, load_state, log_event (+4 more)
+
+  [F] watcher (2).py
+     Functions: classify_file, ensure_dirs, get_file_hash, load_state, log_event (+4 more)
+
+  [F] watcher.py
+     Functions: classify_file, ensure_dirs, get_file_hash, load_state, log_event (+4 more)
+
+  [F] willow (1).py
+     Functions: background_listener, execute_command, process_willow_turn, process_with_llm, route_command
+
+  [F] willow.py
+     Functions: background_listener, execute_command, process_willow_turn, process_with_llm, route_command
+
+  [F] willow_gdoc_reader.py
+     Functions: export_inbox_docs, find_folder_by_name, get_access_token, list_drive_files, load_config (+1 more)
+
+[D] cli/
+
+  [F] base17.py
+     Functions: base17_id, generate_branch_name, main, validate_base17
+
+  [F] kart_cli.py
+     Functions: cmd_execute, cmd_resume, cmd_status, cmd_tasks, cmd_tools (+1 more)
+
+[D] core/
+
+  [F] agent_engine.py
+     Classes: AgentEngine
+     Functions: __init__, _build_prompt, _chat_blocking, _chat_streaming, _execute_tool (+8 more)
+
+  [F] agent_registry.py
+     Functions: _conn, get_mailbox, init_agent_tables, mark_read, register_agent (+2 more)
+
+  [F] awareness.py
+     Functions: _compose, _decide_channels, _log_notification, _send_ntfy, _send_pickup (+6 more)
+
+  [F] checksum_chain.py
+     Classes: ChecksumChain
+     Functions: create_handoff_envelope, generate_checksum, validate_chain
+
+  [F] coherence.py
+     Classes: CoherenceEntry, CoherenceTracker
+     Functions: _compute_similarity, _extract_words, _load_state, _save_state, calculate_coherence (+12 more)
+
+  [F] coherence_scanner.py
+     Functions: _analyze_coherence, _log_issues, run, scan_coherence
+
+  [F] consent_gate.py
+     Functions: check_signal_consent, list_signal_sources, request_signal_consent
+
+  [F] context_check.py
+     Functions: check_context, verify_architecture
+
+  [F] conversation_rag.py
+     Functions: _chunk_conversation, _extract_text, get_stats, index_session, init_db (+1 more)
+
+  [F] cost_tracker.py
+     Classes: UsageRecord
+     Functions: calculate_cost, format_cost, get_daily_summary, get_summary_by_provider, get_summary_by_task (+3 more)
+
+  [F] decision_checklist.py
+     Functions: query_databases, query_rag, read_index_files, run_checklist
+
+  [F] delta_tracker.py
+     Classes: DeltaTracker
+     Functions: _init_db, _save_to_db, calculate_delta, generate_delta_file, get_latest_delta (+1 more)
+
+  [F] embeddings.py
+     Functions: _load, cosine_similarity, embed, is_available
+
+  [F] extraction.py
+     Functions: analyze_content_for_routing, extract_content, extract_text_from_document, extract_text_from_image_ocr, extract_text_from_image_vision (+1 more)
+
+  [F] eyes_ingest.py
+     Functions: _file_hash, _load_processed, _mark_processed, ingest_screenshot, run_pipeline
+
+  [F] file_annotations.py
+     Functions: _connect, _update_routing_history, get_annotation_stats, get_annotations_by_file_type, get_recent_annotations (+3 more)
+
+  [F] filename_sanitizer.py
+     Functions: _hash_to_base17, sanitize_filename
+
+  [F] find_duplicates.py
+     Functions: find_duplicates, get_relative_path, hash_file, is_image_file, main (+4 more)
+
+  [F] fleet_feedback.py
+     Functions: _connect, enhance_prompt_with_feedback, get_feedback_for_task, get_feedback_stats, init_feedback_db (+1 more)
+
+  [F] gate.py
+     Classes: Gatekeeper
+     Functions: _audit_event, _get_decision_type, _halt, _idempotency_delta_event, _is_protected (+15 more)
+
+  [F] health.py
+     Functions: _connect, _log_check, _log_issue, _send_alert, attempt_self_heal (+7 more)
+
+  [F] kart_orchestrator.py
+     Classes: KartOrchestrator
+     Functions: __init__, _build_system_prompt, _detect_repetition, _get_next_action, _load_seed_packet (+4 more)
+
+  [F] kart_tasks.py
+     Functions: _connect, _db_path, create_task, delete_task, get_stats (+5 more)
+
+  [F] knowledge.py
+     Functions: _assign_ring, _connect, _db_path, _extract_entities_llm, _extract_entities_regex (+15 more)
+
+  [F] knowledge_compactor.py
+     Functions: _archive_knowledge, _compact_knowledge, _connect_db, _disconnect_db, _get_old_knowledge (+4 more)
+
+  [F] litellm_adapter.py
+     Functions: get_litellm_model_name, litellm_fallback
+
+  [F] llm_router.py
+     Functions: _estimate_tokens, _infer_task_type, _log_and_return, ask, ask_with_vision (+4 more)
+
+  [F] n2n_db.py
+     Classes: N2NDatabase
+     Functions: _init_db, get_packet, list_packets, mark_acknowledged, mark_received (+2 more)
+
+  [F] n2n_packets.py
+     Classes: N2NPacket, PacketType
+     Functions: create_bootstrap, create_delta, create_handoff, create_packet, deserialize_packet (+2 more)
+
+  [F] patterns.py
+     Functions: _connect, _send_anomaly_alert, _update_learned_preferences, confirm_rule, detect_anomalies (+7 more)
+
+  [F] patterns_provider.py
+     Functions: _connect, get_best_provider_for, get_provider_by_file_type, get_provider_stats, log_provider_performance
+
+  [F] provider_health.py
+     Classes: ProviderHealth
+     Functions: _connect, get_all_health_status, get_healthy_providers, get_provider_health, init_health_db (+3 more)
+
+  [F] request_manager.py
+     Functions: _cache_get, _cache_put, _can_call, _evict_cache, _hash_prompt (+5 more)
+
+  [F] restore_personas.py
+     Functions: is_text_file
+
+  [F] safe_sync.py
+     Functions: append_to_safe_repo, format_as_markdown, git_commit_changes, initialize_repo, parse_args (+3 more)
+
+  [F] seed_packet.py
+     Functions: load_packet, save_packet, seed_packet, validate_packet
+
+  [F] state.py
+     Classes: AuditEntry, Authority, DecisionCode, DecisionType, GateDecision (+5 more)
+     Functions: _extract_canonical_fields, _generate_id, compute_hash, create_genesis_hash, recompute_entry_hash (+3 more)
+
+  [F] storage.py
+     Functions: append_audit_entry, append_pending, apply_events, create_default_state, ensure_storage_dir (+12 more)
+
+  [F] tool_engine.py
+     Classes: ToolDefinition
+     Functions: _check_permission, _tool_bash_exec, _tool_delegate_to_agent, _tool_edit_file, _tool_glob_find (+11 more)
+
+  [F] topology.py
+     Functions: _init_tables, build_edges, check_strip_continuity, cluster_atoms, get_ring_distribution (+2 more)
+
+  [F] topology_builder.py
+     Functions: run_cycle
+
+  [F] tts_router.py
+     Functions: _speak_elevenlabs, _speak_espeak, _speak_piper, get_available_providers, get_voices (+1 more)
+
+  [F] workflow_state.py
+     Classes: WorkflowDetector
+     Functions: __init__, auto_detect_enabled, get_workflow_state, set_auto_detect_enabled, set_manual_state
+
+[D] governance/
+
+  [F] apply_commits.py
+     Functions: apply_commit, extract_diff, extract_metadata, main
+
+  [F] monitor.py
+     Functions: _check_violation, _handle_signal, _log_violation, _scan_pending_files, run
+
+  [F] proposal.py
+     Functions: approve_proposal, create_proposal, list_proposals, reject_proposal
+
+[D] mcp/
+
+  [F] willow_server.py
+     Functions: _call
+
+[D] scripts/
+
+  [F] bulk_ingest.py
+     Functions: direct_insert
+
+  [F] consolidate_artifacts.py
+     Functions: is_junk_name
+
+[D] skills/
+
+  [F] coherence.py
+     Functions: check_coherence
+
+  [F] journal.py
+     Functions: add_journal_entry
+
+  [F] persona.py
+     Functions: invoke_persona
+
+  [F] query.py
+     Functions: query_knowledge
+
+  [F] route.py
+     Functions: route_file
+
+  [F] status.py
+     Functions: check_daemons, check_disk_usage, check_ollama, check_server, check_tunnel (+1 more)
+
+[D] temp/
+
+  [F] auth_endpoints.py
+     Classes: Token, User, UserCreate, UserLogin
+     Functions: create_access_token, decode_access_token, get_user_from_db, hash_password, init_db (+2 more)
+
+  [F] cleanup_databases.py
+     Functions: backup_and_delete_databases, load_cleanup_plan
+
+  [F] db_functions.py
+     Functions: get_user_from_db, init_db, save_user_to_db
+
+  [F] filename_sanitizer.py
+     Functions: sanitize_filename
+
+  [F] refresh_drive_token_clean.py
+     Functions: refresh_drive_token
+
+  [F] routing_api_insert.py
+     Functions: _find_similar_canonical, _migrate_proposed_folder, routing_proposed_list
+
+  [F] schema_helpers.py
+     Functions: _load_routing_schema, _save_routing_schema
+
+[D] tools/
+
+  [F] code_rag.py
+     Functions: extract_markdown_chunks, extract_python_chunks, index_all_code, index_code_file
+
+  [F] db_cleanup.py
+     Functions: analyze_database, categorize_databases, execute_cleanup, find_all_databases, find_duplicates (+1 more)
+
+  [F] db_verify_unique.py
+     Functions: analyze_database_uniqueness, generate_verification_report, get_table_hashes, verify_empty_databases
+
+  [F] generate_index.py
+     Functions: generate, generate_index_content, get_module_docstring, scan_directory
+
+  [F] generate_tool.py
+     Functions: generate_tool, test_tool, validate_code
+
+  [F] index_all_sessions.py
+     Functions: index_all
+
+  [F] normalize.py
+     Functions: decode, derive_positions, detect, encode, extract_digit (+4 more)
+
+  [F] populate_index.py
+     Functions: extract_metadata, index_file, init_db, populate_all
+
+  [F] validate_release.py
+     Functions: clean_content, hash_file, print_manifest, should_exclude, validate_artifact

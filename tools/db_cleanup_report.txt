@@ -1,0 +1,443 @@
+================================================================================
+WILLOW DATABASE CLEANUP REPORT
+================================================================================
+
+SUMMARY:
+  Empty databases:    241 (2.8 MB)
+  Minimal databases:   21 (1.3 MB)
+  Active databases:    47
+  Errors:               0
+
+RECOMMENDED FOR CLEANUP (EMPTY):
+--------------------------------------------------------------------------------
+    36.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\kart_tasks.db
+           0 rows across 2 tables
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\documents\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\photos\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\reddit\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\deltas.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-01-2001\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-2_1_2013txt\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-arecording\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0101\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\02022024\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0bytes0pagesfree1\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0i\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0_8800\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\1234\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\12345672007200textcopyofvideo\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\1w1q1s1r1f1h1g\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2004307200-5000000pages\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2022-12-23192406\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2023-08-11203652\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2023-10-27184542\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2025-02-08date\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\3dmodels\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\4df1ohqi2pksl5ertu8ns6\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\5a2w\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\5i7btbciiciabiiababcaciaai\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\5pr0_a__a\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\6cgiagzs\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\7c8t4cxa0amp_xx_\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\7q1a8zp8zq4p1zq708q0q77q8qz\catalog.db
+           File size 12.0KB < threshold 20KB
+    12.0KB  C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\8902\catalog.db
+           File size 12.0KB < threshold 20KB
+  ... and 211 more
+
+MINIMAL DATABASES (REVIEW BEFORE CLEANUP):
+--------------------------------------------------------------------------------
+    24.0KB    2 rows  file_annotations.db
+           2 rows - file_annotations:2
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    64.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+    68.0KB    3 rows  willow_knowledge.db
+           3 rows - knowledge_fts_data:2, knowledge_fts_config:1
+
+ACTIVE DATABASES (KEEP):
+--------------------------------------------------------------------------------
+  19068.0KB   13053 rows  willow_knowledge_CORRUPTED_20260213.db
+   7580.0KB   64564 rows  health.db
+   5124.0KB   15269 rows  .index.db
+   5124.0KB   15269 rows  .index.db
+   5124.0KB   15269 rows  .index.db
+   2448.0KB   15078 rows  patterns.db
+   2080.0KB    9178 rows  willow_index.db
+   1896.0KB   15001 rows  provider_health.db
+   1460.0KB     111 rows  context.db
+   1460.0KB     111 rows  context.db
+    628.0KB    1341 rows  willow_knowledge.db
+    584.0KB    1624 rows  index.db
+    360.0KB    1316 rows  catalog.db
+    260.0KB      23 rows  context_130943.db
+    260.0KB      23 rows  context_130943.db
+
+POTENTIAL DUPLICATES:
+--------------------------------------------------------------------------------
+  catalog.db (262 copies):
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\documents\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\photos\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\reddit\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-01-2001\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-2_1_2013txt\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-arecording\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0101\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\02022024\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0bytes0pagesfree1\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0i\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0_8800\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\1234\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\12345672007200textcopyofvideo\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\1w1q1s1r1f1h1g\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2004307200-5000000pages\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2022-12-23192406\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2023-08-11203652\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2023-10-27184542\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2025-02-08date\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\3dmodels\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\4df1ohqi2pksl5ertu8ns6\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\5a2w\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\5i7btbciiciabiiababcaciaai\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\5pr0_a__a\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\6cgiagzs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\7c8t4cxa0amp_xx_\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\7q1a8zp8zq4p1zq708q0q77q8qz\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\8902\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\9a9a8b8b8b8b\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\a6ozvgxjzk7s6t5r4e3_\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\aes\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ai\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\aiocoaoo\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\aiocoaooaocoaoaoaoaoaocoaoao\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\aoaoaaaaaaaaa\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\archive\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\audio\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\audit\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\auth\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\avideoofanaccident\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\axzwacas\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\b5r4cgr\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\b6q5b\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\bash\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\bashscripts\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\batch\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\batchfiles\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\bf5ae9afj\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\binaries\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\biwii\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\bvzq7pr4x8zwq0x4r9c8p2g8w6e\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\bzqooqorojovooo\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\c4c4c8c8c2\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\c4c8b907\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\changelog\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\codes\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\command\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\config\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\consent\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\contentmachinelearning\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\contentmachinelearningdata\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\conversations\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\conversation_log\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\conversation_logs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\css\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\csv\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ctiioorryy\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\data\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\database\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\delta-reference\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\dep_audit\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\description\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\docs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\documentation\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\down\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\drive_sync\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\email\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\emails\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\excel\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\exe\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\exporttrainingdatanotpython\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\extract\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\f2\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\fileextract\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filelocation\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filenew\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\files\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filesinthefolder\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filesize0kb\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filestype\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filetypebinary\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filetypepdf\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filetypepython\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\filetypeunread\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\fj\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\folder\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\formatbinary\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\g1\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\gcwq\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\generate_tests\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\gi6i_5i\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\git\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\github\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\gqipmwi\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\hook\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\html\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\i3sff\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ibgdw\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\idx\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ifgebnchfbiiibfcbbb\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\imageextract\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\index\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\index_lock\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ireserved_special_token_145rbq\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\iv\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\jh4ai5c8i2tlw5e3r4t5s6o7p8a9u0\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\js\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\jsonfiles\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\jsontxt\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\jsx\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\jupyter\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\license\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\local_api\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\logs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\look_secure\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\m4a\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\markdown\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\memories\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\mesh\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\mid\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\midi\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\mobile_uplink\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\new\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\organize_files\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\orig_head\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\p7cs__i__i____\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\pack\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\packfile\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\phones\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\plain\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\plainext\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\post-update\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\pre-commit\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\processed_reddit\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\purge\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\pytest\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\qidefault_token\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\qpqcbsqqbbcqbbqqb\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\qriiem5\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\qy7\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\rdpjgkfhe\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\redacted\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\redditscreenshots\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\restructured\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\revocation\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\s8p\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\scad\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\schema\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\scope_registry\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\screen_recorder\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\script\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\scripts\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\session_index\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\settings\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\setup\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\size95kb\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\social\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\sp120___\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\spec\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\stl\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\sync\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\tests\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\tex\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\texetextract\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\texextract\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\textbox\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\textextraction\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\textract\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\textraction\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\texts\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\thecorrectfoldernameiscode\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\thefoldernameistext\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\thefoldernameistexts\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\thefoldernameshouldbepython\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\thisimagecontainstext\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\thisisavideoofanaccident\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\thumbnails\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\tools\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\training\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\txtextract\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\typescript\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\u9q7mi0n1jhgg\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ua\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\undecidable\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\undecided\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\unidentified\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\unnamed\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\untitled\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\urqsiiitiitiiiiiiiiitiiiiiii\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\v1\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\vid\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\video\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\videos\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\w9bi0mjp8ms7ng9r8d6a5c1v7u4\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\watchman\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\wiiqiqgqi\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\wqp_jz_____\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\wzaj\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\xlsx\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ziazxgjfbig\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_2001\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_g\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_i\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_p\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_wi0i0o0o\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_wqpcriwadadbjzkojc\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\12\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\ai-chatbots\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\aios-protocols\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\commitlogs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\config\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\conversations\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\conversation_log\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\conversation_logs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\convert-logs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\delta-reference\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\documentation\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\hanz\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\head_214047\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\i8q5c1x5\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\issue-reports\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\logs\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\messages\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\projects\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\research\catalog.db
+      12.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\_proposed\test-results\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\screenshots\catalog.db
+      36.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\ai-chatbots\catalog.db
+      36.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\binary\catalog.db
+      48.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\code\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\document\catalog.db
+      92.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\documents\catalog.db
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\governance\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\javascript\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\json\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\narrative\catalog.db
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\pdf\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\pdfs\catalog.db
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\photos\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\plaintext\catalog.db
+      48.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\python\catalog.db
+      56.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\reddit\catalog.db
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\screencapture\catalog.db
+      36.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\screencaptures\catalog.db
+     360.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\screenshots\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\specs\catalog.db
+      64.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\text\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\textextract\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\txt\catalog.db
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\unknown\catalog.db
+      20.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\unread\catalog.db
+      40.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\unsorted\catalog.db
+  willow_knowledge.db (20 copies):
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\ada\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\claude-code\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\documents\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\gerald\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\jane\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\kart\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\kart-interface\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\pending\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\photos\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\reddit\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\riggs\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\screenshots\willow_knowledge.db
+      64.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sean\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\social-media-tracker\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\steve\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\test_node\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\test_node_creation\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\Unsorted\willow_knowledge.db
+      68.0KB  MINIMAL   C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\willow_knowledge.db
+     628.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\willow_knowledge.db
+  .cost_tracker.db (3 copies):
+       8.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Archive\database\.cost_tracker.db
+       8.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\database\.cost_tracker.db
+       8.0KB  EMPTY     C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\documents\.cost_tracker.db
+  .index.db (3 copies):
+    5124.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Archive\database\.index.db
+    5124.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\database\.index.db
+    5124.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\documents\.index.db
+  .instance_registry.db (3 copies):
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Archive\database\.instance_registry.db
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\database\.instance_registry.db
+      32.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\screenshots\.instance_registry.db
+  .session_index.db (3 copies):
+     136.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Archive\session_index\.session_index.db
+     136.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\documents\.session_index.db
+     136.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\session_index\.session_index.db
+  context.db (2 copies):
+    1460.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Archive\0bytes0pagesfree1\context.db
+    1460.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0bytes0pagesfree1\context.db
+  context_130943.db (2 copies):
+     260.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Archive\2004307200-5000000pages\context_130943.db
+     260.0KB  ACTIVE    C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2004307200-5000000pages\context_130943.db

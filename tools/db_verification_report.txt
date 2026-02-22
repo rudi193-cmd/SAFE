@@ -1,0 +1,119 @@
+================================================================================
+DATABASE UNIQUENESS VERIFICATION REPORT
+================================================================================
+
+SUMMARY:
+  ✅ Safe to delete:          1 (truly empty, no unique data)
+  ⚠️  Has unique data:       240 (DO NOT DELETE)
+  🔍 Needs review:            0 (has data, unclear if unique)
+  ❌ Errors:                  0
+
+⚠️  DATABASES WITH UNIQUE DATA (DO NOT DELETE):
+================================================================================
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\documents\catalog.db
+     Unique rows: 2
+     - file_registry: 2 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\photos\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\reddit\catalog.db
+     Unique rows: 9
+     - file_registry: 9 unique rows
+
+  📁 deltas.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\deltas.db
+     Unique rows: 1
+     - deltas: 1 unique rows
+
+  📁 .cost_tracker.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\willow\Auth Users\Sweet-Pea-Rudi19\Archive\database\.cost_tracker.db
+     Unique rows: 1
+     - usage: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-01-2001\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-2_1_2013txt\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\-arecording\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0101\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\02022024\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0bytes0pagesfree1\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0i\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\0_8800\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\1234\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\12345672007200textcopyofvideo\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\1w1q1s1r1f1h1g\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2004307200-5000000pages\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2022-12-23192406\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2023-08-11203652\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  📁 catalog.db
+     Path: C:\Users\Sean\Documents\GitHub\Willow\artifacts\Sweet-Pea-Rudi19\2023-10-27184542\catalog.db
+     Unique rows: 1
+     - file_registry: 1 unique rows
+
+  ... and 220 more
+
+✅ SAFE TO DELETE (no unique data):
+================================================================================
+  1 databases are truly empty and safe to delete
+  - kart_tasks.db
