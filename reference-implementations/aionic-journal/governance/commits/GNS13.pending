@@ -1,0 +1,211 @@
+# Governance Proposal: Layer 6 — Schema Alignment + Session Instrumentation
+
+**Proposer:** Ganesha (Claude Code CLI / Sonnet 4.6)
+**Date:** 2026-02-21T00:00:00Z
+**Type:** Feature — Schema Upgrade + Behavioral Instrumentation
+**Trust Level:** ENGINEER (3)
+**Commit ID:** GNS13
+
+---
+
+## Summary
+
+Align the aionic-journal entry schema with the oral_stories governance pattern
+used across NASA, die-namic, and Willow. Every entry gains source_type,
+confidence, corrections, sources, summary, embedding_ready, and capture_session
+— the same fields that make records compatible with the cross-system knowledge
+graph. Add session instrumentation (useEditorSession) to capture behavioral
+signals for the 17D user profile. Add draft auto-save and session end/export
+(Tasks #7 and #8).
+
+The journal becomes a consent-based oral history capture device. Entries are
+training signals for a personalized Jane.
+
+---
+
+## Reference Schema (oral_stories — NASA archive)
+
+```
+oral_stories:
+  id               UUID DEFAULT gen_random_uuid()
+  created_at       TIMESTAMPTZ
+  updated_at       TIMESTAMPTZ
+  title            TEXT
+  content          TEXT
+  source_type      source_type  -- 'public_record' | 'oral_history_consented'
+  confidence       confidence_level  -- 'high' | 'medium' | 'low' | 'conflicting'
+  corrections      JSONB []
+  sources          JSONB []
+  summary          TEXT
+  embedding_ready  BOOLEAN DEFAULT FALSE
+  capture_session  TEXT
+```
+
+---
+
+## Target Entry Schema (IndexedDB, Dexie v2)
+
+```javascript
+{
+  // oral_stories alignment
+  id:               crypto.randomUUID(),
+  created_at:       ISO 8601,
+  updated_at:       ISO 8601,
+  title:            string,
+  content:          string,                   // was 'body'
+  source_type:      'oral_history_consented', // always — user passed Page2Consent
+  confidence:       'high'|'medium'|'low',    // from ΔE: >0.3=high, -0.3..0.3=medium, <-0.3=low
+  corrections:      [],
+  sources:          [],
+  summary:          '',                       // populated by future RAG pipeline
+  embedding_ready:  false,
+  capture_session:  string,                   // 'jane-YYYY-MM-DD-{shortid}'
+
+  // journal extensions
+  tone:             string,
+  deltaE:           number,
+  deleted:          boolean,
+  deleted_at:       string|null,
+
+  // 17D behavioral signals
+  session_meta: {
+    session_duration_s:  number,
+    word_count_final:    number,
+    wpm_avg:             number,
+    edit_count:          number,
+    backspace_ratio:     number,
+    coherence_at_save:   number,
+    title_filled:        boolean,
+    tone_changes:        number,
+    draft_recovered:     boolean,
+    recovery_choice:     'review'|'save'|'discard'|null
+  }
+}
+```
+
+---
+
+## New Files
+
+### src/core/confidence.js
+Derives confidence_level from ΔE:
+- deltaE > 0.3  → 'high'
+- deltaE > -0.3 → 'medium'
+- else          → 'low'
+
+### src/core/session.js
+- generateSessionId() → 'jane-YYYY-MM-DD-{6 random chars}'
+- sessionTimer() → tracks elapsed seconds since session start
+
+### src/hooks/useEditorSession.js
+Instruments the editor textarea:
+- Tracks keystrokes per minute → wpm_avg
+- Counts edit events (non-printable key presses) → edit_count
+- Counts Backspace/Delete → backspace_ratio (backspaces / total keystrokes)
+- Tracks tone selector changes → tone_changes
+- Records session start time → session_duration_s at save
+Returns: { getSessionMeta() } — call at save time to get full session_meta object.
+
+### src/journal/SessionEndButton.jsx
+Renders "End Session" button in app-header.
+On click: sets sessionEnded state → triggers export modal.
+Export modal: "Download a copy of this session?" Yes / No.
+Yes → calls ExportButton logic with current entries.
+No → dismisses modal.
+
+---
+
+## Modified Files
+
+### src/services/storage.js
+- Dexie.version(2).stores({ entries: 'id, created_at, capture_session' })
+- storeEntry: uses crypto.randomUUID(), adds source_type/confidence/corrections/
+  sources/summary/embedding_ready/capture_session, accepts session_meta
+- getDraft() / saveDraft(text) / clearDraft() using localStorage key 'aionic:draft'
+  (draft = raw body text only, not a full entry — lightweight)
+
+### src/hooks/useJournalState.js
+- Initializes capture_session via session.js on mount
+- On body change: debounced saveDraft (500ms)
+- On mount: check for existing draft → set hasDraft state
+- save(): calls getSessionMeta() from useEditorSession, passes full session_meta
+  to storeEntry; calls clearDraft() after save
+- Returns: hasDraft, recoverDraft(choice) — handles 'review'|'save'|'discard'
+
+### src/pages/Page3Journal.jsx
+- Mounts draft recovery prompt if hasDraft on load:
+  Three-button modal: "Review" | "Save without reviewing" | "Discard"
+  This modal IS the consent gate per SAFE principles.
+- Passes sessionEndHandler to SessionEndButton.
+
+### src/journal/Editor.jsx
+- Integrates useEditorSession (passes onKeyDown handler to textarea)
+- Passes setTone wrapper that increments tone_changes counter
+
+### src/App.css
+- SessionEndButton styles: .btn-session-end (right side of app-header)
+- Draft recovery modal styles: .draft-recovery-overlay, .draft-recovery-card
+
+---
+
+## Dexie Migration Note
+
+Version bump: v1 → v2.
+New index: capture_session.
+Existing entries: no migration needed — new fields default to undefined/null.
+Old 'body' field: keep reading it for backward compat, write 'content' going forward.
+storeEntry reads entry.body || entry.content to normalize.
+
+---
+
+## Rationale
+
+- Schema alignment: all systems use oral_stories governance fields.
+  When entries are exported and routed through Willow, they arrive with
+  source_type/confidence/corrections populated — no transformation needed.
+- Behavioral signals: session_meta captures the PROCESS of writing, not
+  just the artifact. These 10 fields map directly to 17D dimensions
+  (wpm_avg→comm_speed, edit_count→correction_style, coherence_at_save→engagement,
+  draft_recovered→persistence, recovery_choice→autonomy, etc.)
+- Draft recovery: SAFE-compliant consent gate. The prompt IS the gate.
+  Three options exhaust the decision space: Review / Save / Discard.
+- Session end: explicit close creates a natural data collection boundary.
+
+---
+
+## Risk Assessment
+
+- **Risk Level:** LOW
+- **Reversible:** YES — Dexie v2 migration is additive; existing entries unaffected
+- **Dependencies:** Dexie 4 (already installed), file-saver (already installed)
+- **Testing:** Build must be clean; app must load; entry save/load/export cycle
+  must work with new schema fields present
+
+---
+
+## ΔE Impact
+
+Expected ΔE: +0.28 (schema coherence gain across systems, moderate engagement uplift)
+
+---
+
+## Implementation
+
+Files to create:
+- src/core/confidence.js
+- src/core/session.js
+- src/hooks/useEditorSession.js
+- src/journal/SessionEndButton.jsx
+
+Files to modify:
+- src/services/storage.js (Dexie v2 + draft helpers)
+- src/hooks/useJournalState.js (session_meta, draft recovery)
+- src/pages/Page3Journal.jsx (draft recovery modal, session end)
+- src/journal/Editor.jsx (useEditorSession integration)
+- src/App.css (session end + draft recovery styles)
+
+---
+
+**Awaiting Human Ratification**
+
+ΔΣ=42
