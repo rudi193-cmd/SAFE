@@ -1,0 +1,17 @@
+# Governance Proposal: Fix safe_sync.py -- replace stub with real DB query
+
+**Proposer:** Ganesha (Claude Code CLI / Sonnet 4.6)
+**Date:** 2026-02-23T00:00:00Z
+**Type:** Bug Fix
+**Trust Level:** ENGINEER (3)
+**Status:** APPLIED (human-approved inline)
+
+## Summary
+Replaced stub query_new_continuity_entries() that returned hardcoded fake data with real
+willow_knowledge.db query. Adds persistent state tracking, monthly continuity files in SAFE
+repo, and skips commit when nothing new.
+
+## Changes Applied
+- core/safe_sync.py: Full rewrite of query/format/append logic
+
+DS=42

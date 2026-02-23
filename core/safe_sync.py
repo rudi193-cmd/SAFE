@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import logging
 import signal
+import sqlite3
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import git
 from git import Repo, GitCommandError
 
-# Constants
-DEFAULT_INTERVAL = 300  # 5 minutes in seconds
+DEFAULT_INTERVAL = 300
 LOG_FILE = Path(__file__).parent.parent / "core" / "safe_sync.log"
-SAFE_REPO_DEFAULT = Path(__file__).parent.parent.parent / "SAFE"  # ../SAFE relative to Willow
+SAFE_REPO_DEFAULT = Path(__file__).parent.parent.parent / "SAFE"
+WILLOW_ROOT = Path(__file__).parent.parent
+STATE_FILE = Path(__file__).parent / "safe_sync_state.json"
+KB_PATH = WILLOW_ROOT / "artifacts" / "Sweet-Pea-Rudi19" / "willow_knowledge.db"
 
-# Configure logging
+CONTINUITY_SOURCE_TYPES = {"session_handoff", "context_store", "narrative", "governance", "ocr_image"}
+CONTINUITY_CATEGORIES = {"history", "analysis", "narrative", "governance"}
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -26,93 +33,149 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def _load_state() -> dict:
+    """Load persistent sync state (last sync timestamp)."""
+    if STATE_FILE.exists():
+        try:
+            return json.loads(STATE_FILE.read_text())
+        except Exception:
+            pass
+    return {"last_sync_at": "2000-01-01T00:00:00"}
+
+
+def _save_state(state: dict) -> None:
+    """Persist sync state."""
+    try:
+        STATE_FILE.write_text(json.dumps(state, indent=2))
+    except Exception as e:
+        logger.error(f"Could not save sync state: {e}")
+
+
 class SafeSyncDaemon:
     def __init__(self, safe_path: Path, interval: int):
         self.safe_path = safe_path
         self.interval = interval
         self.running = False
-        self.last_sync_time = 0
         self.repo: Optional[Repo] = None
 
     def initialize_repo(self) -> None:
-        """Initialize the git repository."""
         try:
             self.repo = Repo(self.safe_path)
             logger.info(f"Initialized SAFE repo at {self.safe_path}")
         except git.InvalidGitRepositoryError:
             logger.error(f"Invalid git repository at {self.safe_path}")
             raise
-        except Exception as e:
-            logger.error(f"Error initializing repo: {e}")
-            raise
 
     def query_new_continuity_entries(self) -> list:
-        """Query knowledge database for new continuity entries since last sync."""
-        # Placeholder for actual database query logic
-        logger.info("Querying for new continuity entries...")
-        # Simulate some entries
-        return [
-            {"id": 1, "conversation": "Sample conversation 1", "handoff": "Handoff details 1"},
-            {"id": 2, "conversation": "Sample conversation 2", "handoff": "Handoff details 2"}
-        ]
+        """Query willow_knowledge.db for entries since last sync."""
+        state = _load_state()
+        last_sync = state["last_sync_at"]
+
+        if not KB_PATH.exists():
+            logger.warning(f"Knowledge DB not found: {KB_PATH}")
+            return []
+
+        try:
+            conn = sqlite3.connect(str(KB_PATH), timeout=10)
+            conn.row_factory = sqlite3.Row
+            placeholders = ','.join('?' for _ in CONTINUITY_SOURCE_TYPES)
+            cat_placeholders = ','.join('?' for _ in CONTINUITY_CATEGORIES)
+            params = list(CONTINUITY_SOURCE_TYPES) + list(CONTINUITY_CATEGORIES) + [last_sync]
+            rows = conn.execute(f"""
+                SELECT id, source_type, source_id, title, summary, content_snippet,
+                       category, ring, created_at, lattice_domain, lattice_type, lattice_status
+                FROM knowledge
+                WHERE (source_type IN ({placeholders}) OR category IN ({cat_placeholders}))
+                  AND created_at > ?
+                ORDER BY created_at ASC
+                LIMIT 100
+            """, params).fetchall()
+            conn.close()
+            entries = [dict(r) for r in rows]
+            logger.info(f"Found {len(entries)} new entries since {last_sync}")
+            return entries
+        except Exception as e:
+            logger.error(f"DB query failed: {e}")
+            return []
 
     def format_as_markdown(self, entries: list) -> str:
-        """Format continuity entries as markdown."""
-        markdown = ""
+        """Format knowledge entries as markdown continuity record."""
+        lines = []
         for entry in entries:
-            markdown += f"## Entry {entry['id']}\n\n"
-            markdown += f"**Conversation:** {entry['conversation']}\n\n"
-            markdown += f"**Handoff:** {entry['handoff']}\n\n"
-            markdown += "---\n\n"
-        return markdown
+            title = entry.get("title") or entry.get("source_id") or "Untitled"
+            lines.append(f"## {title}")
+            lines.append("")
+            lines.append(f"- **Source:** {entry.get('source_type', 'unknown')} / {entry.get('category', '')}")
+            lines.append(f"- **Ring:** {entry.get('ring', '')}")
+            lines.append(f"- **Lattice:** {entry.get('lattice_domain', '')} / {entry.get('lattice_type', '')} / {entry.get('lattice_status', '')}")
+            lines.append(f"- **Created:** {entry.get('created_at', '')}")
+            if entry.get("summary"):
+                lines.append("")
+                lines.append(entry["summary"])
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+        return "\n".join(lines)
 
-    def append_to_safe_repo(self, markdown_content: str) -> None:
-        """Append formatted markdown to SAFE repo files."""
-        continuity_file = self.safe_path / "continuity.md"
-        try:
-            with open(continuity_file, "a") as f:
-                f.write(markdown_content)
-            logger.info(f"Appended {len(markdown_content.split('---'))} entries to {continuity_file}")
-        except IOError as e:
-            logger.error(f"Error writing to continuity file: {e}")
-            raise
+    def append_to_safe_repo(self, markdown_content: str, entries: list) -> Path:
+        """Write formatted entries to monthly continuity file in SAFE repo."""
+        month = datetime.now().strftime("%Y-%m")
+        continuity_dir = self.safe_path / "continuity"
+        continuity_dir.mkdir(exist_ok=True)
+        continuity_file = continuity_dir / f"{month}.md"
 
-    def git_commit_changes(self) -> str:
-        """Commit changes to the SAFE repo."""
+        header = ""
+        if not continuity_file.exists():
+            header = f"# Continuity Log - {month}\n\nGenerated by safe_sync.py\n\n---\n\n"
+
+        with open(continuity_file, "a", encoding="utf-8") as f:
+            if header:
+                f.write(header)
+            f.write(f"*Synced: {datetime.now().isoformat()} - {len(entries)} entries*\n\n")
+            f.write(markdown_content)
+
+        logger.info(f"Wrote {len(entries)} entries to {continuity_file}")
+        return continuity_file
+
+    def git_commit_changes(self, entry_count: int) -> str:
         try:
-            repo = self.repo
-            repo.git.add(A=True)
-            commit_message = f"Sync continuity entries at {time.strftime('%Y-%m-%d %H:%M:%S')}"
-            commit = repo.index.commit(commit_message)
-            logger.info(f"Committed changes with hash: {commit.hexsha}")
+            self.repo.git.add(A=True)
+            msg = f"safe_sync: {entry_count} continuity entries [{datetime.now().strftime('%Y-%m-%d %H:%M')}]"
+            commit = self.repo.index.commit(msg)
+            logger.info(f"Committed: {commit.hexsha}")
             return commit.hexsha
         except GitCommandError as e:
             logger.error(f"Git operation failed: {e}")
             raise
 
     def sync(self) -> None:
-        """Perform a full sync cycle."""
         try:
             if self.repo is None:
                 self.initialize_repo()
+
             entries = self.query_new_continuity_entries()
             if not entries:
                 logger.info("No new entries to sync")
                 return
 
             markdown_content = self.format_as_markdown(entries)
-            self.append_to_safe_repo(markdown_content)
-            commit_hash = self.git_commit_changes()
-            logger.info(f"Sync completed. Entries: {len(entries)}, Commit: {commit_hash}")
-            self.last_sync_time = time.time()
+            self.append_to_safe_repo(markdown_content, entries)
+            self.git_commit_changes(len(entries))
+
+            # Advance last_sync_at to latest entry
+            latest = max(e["created_at"] for e in entries if e.get("created_at"))
+            state = _load_state()
+            state["last_sync_at"] = latest
+            _save_state(state)
+
+            logger.info(f"Sync complete. {len(entries)} entries. Last sync: {latest}")
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
     def run(self) -> None:
-        """Run the daemon."""
         self.running = True
         logger.info(f"Starting SAFE sync daemon (interval: {self.interval}s)")
-
         try:
             while self.running:
                 self.sync()
@@ -123,37 +186,24 @@ class SafeSyncDaemon:
             self.running = False
             logger.info("Daemon stopped")
 
+
 def parse_args() -> argparse.Namespace:
-    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="SAFE Continuity Sync Daemon")
-    parser.add_argument(
-        "--interval",
-        type=int,
-        default=DEFAULT_INTERVAL,
-        help=f"Sync interval in seconds (default: {DEFAULT_INTERVAL})"
-    )
-    parser.add_argument(
-        "--safe-path",
-        type=Path,
-        default=SAFE_REPO_DEFAULT,
-        help=f"Path to SAFE repository (default: {SAFE_REPO_DEFAULT})"
-    )
-    parser.add_argument(
-        "--daemon",
-        action="store_true",
-        help="Run as a daemon"
-    )
+    parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL)
+    parser.add_argument("--safe-path", type=Path, default=SAFE_REPO_DEFAULT)
+    parser.add_argument("--daemon", action="store_true")
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
     daemon = SafeSyncDaemon(args.safe_path, args.interval)
-
     if args.daemon:
         daemon.run()
     else:
-        # Single run mode
         daemon.sync()
+
 
 if __name__ == "__main__":
     main()
+
