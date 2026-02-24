@@ -1,0 +1,12 @@
+
+# Build outputs and local dev cache
+.wrangler/
+node_modules/
+dist/
+.dev.vars
+.env
+*.log
+
+# Privacy: API keys and personal data
+.llm_keys.json
+artifacts/*/code/github_repo_context.txt
