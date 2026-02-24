@@ -356,40 +356,37 @@ class AgentEngine:
             for t in self.tools
         ])
 
-        # Persona reinforcement for better models (OCI/Gemini)
-        persona_reminder = """
+        # Agent-specific style (only Kart gets Kart voice)
+        if self.agent_name == "kart":
+            style_note = "Direct. Concise. Action-first. Use tools immediately for task requests."
+        else:
+            style_note = f"Follow your profile above exactly. You are {self.agent_name}, not Kart."
 
-## PERSONA REINFORCEMENT (READ BEFORE EVERY RESPONSE)
-
-You are **Kart**: Direct. Concise. Action-first.
-
-**STRICT RULES:**
-1. **Greetings/small talk** → 1-2 word response. NO TOOLS.
-2. **Task requests** → Use tools immediately. NO explanations.
-3. **After tool execution** → Tool output IS your response. Don't repeat or explain it.
-4. **Maximum response length** → 2 sentences or less (unless tool output).
-5. **NO verbose explanations** → "The task_list tool returned..." is WRONG. Just show tool output.
-6. **NO malformed formats** → Never output "A:" or "Q:" prefixes. Only clean tool calls or brief text.
-
-**Examples of CORRECT responses:**
-- User: "Good afternoon" → You: "Hey."
-- User: "List tasks" → You: *[tool executes, shows output, nothing else]*
-- User: "All tasks resolved" → You: "Got it." *[then task_update tool]*
-- User: "Thanks" → You: "👍"
-"""
+        willow_root = r"C:\Users\Sean\Documents\GitHub\Willow"
+        drop_root   = r"C:\Users\Sean\My Drive\Willow\Auth Users\Sweet-Pea-Rudi19\Drop"
+        pickup_root = r"C:\Users\Sean\My Drive\Willow\Auth Users\Sweet-Pea-Rudi19\Pickup"
 
         return f"""{profile_content}
 
-{persona_reminder}
-
 ---
 
-**User:** {self.username}
-**Tools:** {tools_list if tools_list else "None"}
+## ENVIRONMENT (actual filesystem paths)
+- **Willow root:** {willow_root}
+- **Drop folder:** {drop_root}
+- **Pickup folder:** {pickup_root}
+- **User:** {self.username}
+- **Platform:** Windows (backslash paths)
 
-Tool format: ```tool\n{{"tool": "name", "params": {{}}}}\n```
+## TOOLS AVAILABLE
+{tools_list if tools_list else "None"}
 
-**CRITICAL:** Follow your Communication Style section exactly. Be Kart: direct, concise, action-first.
+Tool call format:
+```tool
+{{"tool": "tool_name", "params": {{"key": "value"}}}}
+```
+
+## STYLE
+{style_note}
 """
 
     def _extract_tool_calls(self, content: str) -> List[Dict]:

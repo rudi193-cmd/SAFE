@@ -1,0 +1,120 @@
+# Governance Proposal: Fix Agent Paths and Persona Injection
+
+**Proposer:** Ganesha (Claude Code CLI / Sonnet 4.6)
+**Date:** 2026-02-23T00:00:00Z
+**Type:** Bug Fix
+**Trust Level:** ENGINEER (3)
+
+## Summary
+
+Two bugs in `agent_engine.py::_load_agent_profile()`:
+
+1. **Path hallucination** — no environment context injected into system prompt. LLM guesses
+   Linux paths (`/home/kart/...`) instead of actual Windows paths.
+
+2. **Persona bleed** — `persona_reminder` hardcodes "You are **Kart**" for ALL agents.
+   Jane, Willow, Riggs, Ada, Gerald, Steve all get Kart's voice injected over their own profiles.
+
+## Proposed Changes
+
+**File:** `core/agent_engine.py`
+**Location:** `_load_agent_profile()` method
+
+## Rationale
+
+- All tool calls fail path resolution because LLM doesn't know where Willow lives
+- Every agent except Kart gets a contradictory system prompt ("Be Kart" while their profile says otherwise)
+- Fix: inject WILLOW_ROOT + key paths into system prompt; make persona_reminder agent-specific
+
+## Risk Assessment
+
+- **Risk Level:** LOW
+- **Reversible:** YES
+- **Dependencies:** None
+- **Testing:** Chat with Jane, ask her to read a file — confirm correct path used and Jane's voice
+
+## ΔE Impact
+
+Expected ΔE: +0.220 (correct paths + correct personas for all 7 agents)
+
+## Implementation
+
+```diff
+--- a/core/agent_engine.py
++++ b/core/agent_engine.py
+@@ _load_agent_profile method @@
+
+-        # Persona reinforcement for better models (OCI/Gemini)
+-        persona_reminder = """
+-
+-## PERSONA REINFORCEMENT (READ BEFORE EVERY RESPONSE)
+-
+-You are **Kart**: Direct. Concise. Action-first.
+-
+-**STRICT RULES:**
+-1. **Greetings/small talk** → 1-2 word response. NO TOOLS.
+-2. **Task requests** → Use tools immediately. NO explanations.
+-3. **After tool execution** → Tool output IS your response. Don't repeat or explain it.
+-4. **Maximum response length** → 2 sentences or less (unless tool output).
+-5. **NO verbose explanations** → "The task_list tool returned..." is WRONG. Just show tool output.
+-6. **NO malformed formats** → Never output "A:" or "Q:" prefixes. Only clean tool calls or brief text.
+-
+-**Examples of CORRECT responses:**
+-- User: "Good afternoon" → You: "Hey."
+-- User: "List tasks" → You: *[tool executes, shows output, nothing else]*
+-- User: "All tasks resolved" → You: "Got it." *[then task_update tool]*
+-- User: "Thanks" → You: "👍"
+-"""
+-
+-        return f"""{profile_content}
+-
+-{persona_reminder}
+-
+----
+-
+-**User:** {self.username}
+-**Tools:** {tools_list if tools_list else "None"}
+-
+-Tool format: ```tool\n{{"tool": "name", "params": {{}}}}\n```
+-
+-**CRITICAL:** Follow your Communication Style section exactly. Be Kart: direct, concise, action-first.
+-"""
++        # Agent-specific style note (only Kart gets Kart's voice)
++        if self.agent_name == "kart":
++            style_note = "Direct. Concise. Action-first. Use tools immediately for task requests."
++        else:
++            style_note = f"Follow your profile above exactly. You are {self.agent_name}, not Kart."
++
++        willow_root = r"C:\Users\Sean\Documents\GitHub\Willow"
++        drop_root   = r"C:\Users\Sean\My Drive\Willow\Auth Users\Sweet-Pea-Rudi19\Drop"
++        pickup_root = r"C:\Users\Sean\My Drive\Willow\Auth Users\Sweet-Pea-Rudi19\Pickup"
++
++        return f"""{profile_content}
++
++---
++
++## ENVIRONMENT (actual filesystem — use these exact paths)
++- **Willow root:** {willow_root}
++- **Drop folder:** {drop_root}
++- **Pickup folder:** {pickup_root}
++- **User:** {self.username}
++- **Platform:** Windows (use backslash paths or raw strings)
++
++## TOOLS AVAILABLE
++{tools_list if tools_list else "None"}
++
++Tool call format:
++```tool
++{{"tool": "tool_name", "params": {{"key": "value"}}}}
++```
++
++## STYLE
++{style_note}
++"""
+```
+
+---
+
+**Awaiting Human Ratification**
+
+ΔΣ=42
