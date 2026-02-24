@@ -5,10 +5,11 @@ __pycache__/
 *.log
 test_output.txt
 
+# Runtime user data - never commit (media, DBs, user files)
+artifacts/
+
 # Privacy: API keys and personal data
-artifacts/*/code/github_repo_context.txt
-artifacts/*/ai-chatbots/*.jsonl
-artifacts/*/ai-chatbots/*.db
+.llm_keys.json
 .llm_keys.json
 .dev.vars
 .wrangler/
