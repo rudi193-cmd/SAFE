@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Binder — UTETY Local Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inconsolata:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1510;
+    --parchment: #f5f0e8;
+    --aged: #e8dfc8;
+    --rust: #8b3a2a;
+    --rust-light: #c4674f;
+    --gold: #9a7b3c;
+    --gold-light: #d4a853;
+    --dust: #7a6e5f;
+    --shadow: rgba(26,21,16,0.15);
+    --deep-shadow: rgba(26,21,16,0.35);
+    --card-bg: #faf6ed;
+    --sidebar-bg: #1e1a14;
+    --sidebar-text: #c8b99a;
+    --divider: #c8b99a44;
+    --jeles-bg: #f0ebe0;
+    --jeles-border: #9a7b3c44;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inconsolata", monospace;
+    background: var(--parchment);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .header {
+    background: var(--sidebar-bg);
+    border-bottom: 2px solid var(--gold);
+    padding: 0 1.5rem;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-title {
+    font-family: "Playfair Display", serif;
+    font-size: 1.3rem;
+    color: var(--gold-light);
+    letter-spacing: 0.04em;
+  }
+  .header-title span {
+    font-style: italic;
+    color: var(--sidebar-text);
+    font-size: 0.85rem;
+    margin-left: 0.75rem;
+    font-family: "Inconsolata", monospace;
+  }
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.72rem;
+    color: var(--sidebar-text);
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #6b6b6b; display: inline-block;
+    margin-right: 5px; transition: background 0.5s;
+  }
+  .status-dot.live { background: #7ab87a; }
+  .status-dot.checking { background: var(--gold); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .scope-bar {
+    background: var(--aged);
+    border-bottom: 1px solid var(--divider);
+    padding: 0.45rem 1.5rem;
+    display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
+  }
+  .scope-label { font-size: 0.68rem; color: var(--dust); text-transform: uppercase; letter-spacing: 0.08em; margin-right: 0.25rem; }
+  .scope-pill {
+    font-size: 0.7rem; padding: 0.2rem 0.75rem; border-radius: 12px;
+    border: 1px solid var(--divider); background: transparent; color: var(--dust);
+    cursor: default; font-family: "Inconsolata", monospace; position: relative;
+  }
+  .scope-pill.active { background: var(--rust); border-color: var(--rust); color: var(--parchment); cursor: pointer; }
+  .scope-pill.ghost { opacity: 0.45; }
+  .scope-pill.ghost::after {
+    content: attr(data-soon); position: absolute; bottom: calc(100% + 5px); left: 50%;
+    transform: translateX(-50%); background: var(--ink); color: var(--parchment);
+    font-size: 0.62rem; padding: 2px 6px; border-radius: 3px; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .scope-pill.ghost:hover::after { opacity: 1; }
+  .main {
+    display: grid;
+    grid-template-columns: 240px 1fr 280px;
+    flex: 1; overflow: hidden;
+    height: calc(100vh - 92px);
+  }
+  .sidebar {
+    background: var(--sidebar-bg); color: var(--sidebar-text);
+    overflow-y: auto; border-right: 1px solid #d4a85333;
+    display: flex; flex-direction: column;
+  }
+  .sidebar::-webkit-scrollbar{width:4px}
+  .sidebar::-webkit-scrollbar-thumb{background:#d4a85344;border-radius:2px}
+  .sidebar-section { padding: 1rem 1rem 0.5rem; }
+  .sidebar-heading {
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--gold); margin-bottom: 0.6rem; padding-bottom: 0.4rem;
+    border-bottom: 1px solid #d4a85322;
+  }
+  .domain-tab {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.45rem 0.65rem; border-radius: 4px; margin-bottom: 0.2rem;
+    cursor: pointer; font-size: 0.78rem; transition: all 0.15s; color: var(--sidebar-text);
+  }
+  .domain-tab:hover, .domain-tab.active { background: #d4a85318; color: var(--gold-light); }
+  .domain-tab.active { border-left: 2px solid var(--gold); padding-left: calc(0.65rem - 2px); }
+  .domain-count { font-size: 0.65rem; color: var(--dust); background: #d4a85315; padding: 1px 6px; border-radius: 8px; }
+  .sidebar-stat { display: flex; justify-content: space-between; font-size: 0.72rem; padding: 0.25rem 0; }
+  .sidebar-stat .val { color: var(--gold-light); font-weight: 500; }
+  .binder-status {
+    padding: 0.75rem 1rem; font-size: 0.72rem; color: var(--dust);
+    font-style: italic; border-top: 1px solid #d4a85318; margin-top: auto; line-height: 1.4;
+  }
+  .center { display: flex; flex-direction: column; overflow: hidden; background: var(--parchment); }
+  .jeles-desk {
+    background: var(--jeles-bg); border-bottom: 1px solid var(--jeles-border);
+    display: flex; flex-direction: column; flex-shrink: 0; max-height: 42%;
+  }
+  .jeles-header {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 1rem; border-bottom: 1px solid var(--jeles-border); background: var(--aged);
+  }
+  .jeles-avatar {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--rust);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; color: var(--parchment); flex-shrink: 0;
+    font-family: "Playfair Display", serif; font-style: italic;
+  }
+  .jeles-name { font-family: "Playfair Display", serif; font-size: 0.95rem; color: var(--ink); }
+  .jeles-subtitle { font-size: 0.67rem; color: var(--dust); font-style: italic; }
+  .jeles-messages {
+    flex: 1; overflow-y: auto; padding: 0.75rem 1rem;
+    display: flex; flex-direction: column; gap: 0.5rem; min-height: 80px;
+  }
+  .jeles-messages::-webkit-scrollbar{width:3px}
+  .jeles-messages::-webkit-scrollbar-thumb{background:var(--jeles-border);border-radius:2px}
+  .msg {
+    max-width: 82%; font-size: 0.8rem; line-height: 1.5;
+    padding: 0.5rem 0.75rem; border-radius: 6px;
+    animation: fadeSlideIn 0.25s ease;
+  }
+  @keyframes fadeSlideIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  .msg.jeles {
+    background: #fff; border: 1px solid var(--jeles-border); color: var(--ink);
+    align-self: flex-start; font-family: "Libre Baskerville", serif; font-style: italic;
+  }
+  .msg.user { background: var(--rust); color: var(--parchment); align-self: flex-end; }
+  .msg.thinking {
+    background: transparent; border: 1px dashed var(--jeles-border);
+    color: var(--dust); font-style: italic; font-size: 0.75rem;
+  }
+  .jeles-input-area {
+    display: flex; gap: 0.5rem; padding: 0.6rem 1rem;
+    border-top: 1px solid var(--jeles-border); background: var(--aged);
+  }
+  .jeles-input {
+    flex: 1; background: var(--parchment); border: 1px solid var(--jeles-border);
+    border-radius: 4px; padding: 0.45rem 0.75rem;
+    font-family: "Inconsolata", monospace; font-size: 0.8rem; color: var(--ink); outline: none;
+  }
+  .jeles-input:focus { border-color: var(--gold); }
+  .jeles-send {
+    background: var(--rust); color: var(--parchment); border: none; border-radius: 4px;
+    padding: 0.45rem 1rem; font-family: "Inconsolata", monospace;
+    font-size: 0.78rem; cursor: pointer; transition: background 0.15s;
+  }
+  .jeles-send:hover { background: var(--rust-light); }
+  .connections-area { flex: 1; overflow-y: auto; padding: 1rem; }
+  .connections-area::-webkit-scrollbar{width:4px}
+  .connections-area::-webkit-scrollbar-thumb{background:var(--divider);border-radius:2px}
+  .section-label {
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dust);
+    margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-label::after { content:""; flex:1; height:1px; background:var(--divider); }
+  .connection-card {
+    background: var(--card-bg); border: 1px solid var(--divider); border-radius: 6px;
+    padding: 0.75rem 1rem; margin-bottom: 0.6rem; cursor: pointer;
+    transition: all 0.15s; position: relative;
+  }
+  .connection-card:hover { border-color: #9a7b3c66; box-shadow: 0 2px 8px var(--shadow); transform: translateY(-1px); }
+  .card-title { font-family: "Libre Baskerville", serif; font-size: 0.88rem; color: var(--ink); margin-bottom: 0.25rem; line-height: 1.3; }
+  .card-meta { font-size: 0.7rem; color: var(--dust); display: flex; gap: 0.75rem; margin-bottom: 0.4rem; }
+  .card-snippet { font-size: 0.75rem; color: var(--dust); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-filing {
+    position: absolute; top: 0.6rem; right: 0.75rem; font-size: 0.6rem;
+    color: var(--rust); text-transform: uppercase; letter-spacing: 0.06em;
+    background: #8b3a2a15; padding: 1px 5px; border-radius: 3px; border: 1px solid #8b3a2a25;
+  }
+  .card-threads { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.45rem; }
+  .thread-tag { font-size: 0.64rem; padding: 1px 6px; border-radius: 10px; background: #9a7b3c15; color: var(--gold); border: 1px solid #9a7b3c25; }
+  .empty-state { text-align: center; padding: 2rem 1rem; color: var(--dust); font-style: italic; font-family: "Libre Baskerville", serif; font-size: 0.85rem; line-height: 1.7; }
+  .right-panel { background: var(--aged); border-left: 1px solid var(--divider); overflow-y: auto; display: flex; flex-direction: column; }
+  .right-panel::-webkit-scrollbar{width:4px}
+  .right-panel::-webkit-scrollbar-thumb{background:var(--divider);border-radius:2px}
+  .search-section { padding: 0.75rem; border-bottom: 1px solid var(--divider); flex-shrink: 0; }
+  .search-heading { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dust); margin-bottom: 0.5rem; }
+  .search-row { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
+  .search-input { flex: 1; background: var(--parchment); border: 1px solid var(--divider); border-radius: 4px; padding: 0.4rem 0.6rem; font-family: "Inconsolata", monospace; font-size: 0.78rem; color: var(--ink); outline: none; }
+  .search-input:focus { border-color: var(--gold); }
+  .search-btn { background: var(--ink); color: var(--parchment); border: none; border-radius: 4px; padding: 0.4rem 0.75rem; font-family: "Inconsolata", monospace; font-size: 0.75rem; cursor: pointer; transition: background 0.15s; }
+  .search-btn:hover { background: var(--rust); }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .filter-chip { font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 10px; border: 1px solid var(--divider); background: transparent; color: var(--dust); cursor: pointer; font-family: "Inconsolata", monospace; transition: all 0.15s; }
+  .filter-chip.active { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+  .right-section { padding: 0.75rem; border-bottom: 1px solid var(--divider); }
+  .right-heading { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--dust); margin-bottom: 0.5rem; }
+  .filing-entry { padding: 0.4rem 0; border-bottom: 1px solid #c8b99a33; font-size: 0.75rem; color: var(--ink); cursor: pointer; transition: color 0.15s; display: flex; align-items: flex-start; gap: 0.5rem; }
+  .filing-entry:hover { color: var(--rust); }
+  .filing-entry:last-child { border-bottom: none; }
+  .filing-type { font-size: 0.6rem; color: var(--gold); text-transform: uppercase; flex-shrink: 0; margin-top: 1px; width: 40px; }
+  .filing-title { flex: 1; line-height: 1.3; font-style: italic; font-family: "Libre Baskerville", serif; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,21,16,0.7); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--parchment); border: 1px solid #9a7b3c55; border-radius: 8px; max-width: 680px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px var(--deep-shadow); animation: modalIn 0.2s ease; }
+  @keyframes modalIn { from{opacity:0;transform:scale(0.97) translateY(-8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .modal-header { padding: 1.25rem 1.5rem 1rem; border-bottom: 1px solid var(--divider); display: flex; justify-content: space-between; align-items: flex-start; }
+  .modal-title { font-family: "Playfair Display", serif; font-size: 1.15rem; color: var(--ink); line-height: 1.3; }
+  .modal-close { background: none; border: none; font-size: 1.2rem; color: var(--dust); cursor: pointer; padding: 0 0.25rem; }
+  .modal-close:hover { color: var(--ink); }
+  .modal-meta { padding: 0.6rem 1.5rem; background: var(--aged); border-bottom: 1px solid var(--divider); display: flex; gap: 1rem; font-size: 0.72rem; color: var(--dust); }
+  .modal-body { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; font-size: 0.85rem; line-height: 1.75; color: var(--ink); font-family: "Libre Baskerville", serif; }
+  .modal-binder-note { margin: 1rem 1.5rem; padding: 0.75rem 1rem; background: #8b3a2a10; border-left: 3px solid var(--rust); font-size: 0.75rem; color: var(--rust); font-style: italic; line-height: 1.5; border-radius: 0 4px 4px 0; }
+  .modal-binder-note strong { display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem; font-style: normal; color: var(--dust); }
+  .web-btn {
+    background: var(--ink); color: var(--dust); border: none; border-radius: 4px;
+    padding: 0.45rem 0.65rem; font-size: 0.95rem; cursor: pointer; transition: all 0.15s;
+    line-height: 1; flex-shrink: 0;
+  }
+  .web-btn:hover { color: var(--gold-light); }
+  .web-btn.active { background: var(--rust); color: var(--parchment); }
+  .dice-btn {
+    background: var(--ink); color: var(--gold-light); border: none; border-radius: 4px;
+    padding: 0.45rem 0.65rem; font-size: 1rem; cursor: pointer; transition: all 0.15s;
+    line-height: 1; flex-shrink: 0;
+  }
+  .dice-btn:hover { background: var(--gold); color: var(--ink); }
+  .dice-btn.rolling { animation: diceRoll 0.6s ease; }
+  @keyframes diceRoll {
+    0%   { transform: rotate(0deg)   scale(1); }
+    25%  { transform: rotate(90deg)  scale(1.2); }
+    50%  { transform: rotate(180deg) scale(0.9); }
+    75%  { transform: rotate(270deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  .shimmer { background: linear-gradient(90deg, var(--aged) 25%, var(--parchment) 50%, var(--aged) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 14px; margin-bottom: 8px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">
+    The Binder
+    <span>UTETY Local Stacks &mdash; The Librarian is in.</span>
+  </div>
+  <div class="header-status">
+    <span><span class="status-dot checking" id="apiDot"></span><span id="apiStatus">Connecting...</span></span>
+    <span id="knowledgeCount">&mdash; entries</span>
+    <span id="binderClock"></span>
+  </div>
+</div>
+
+<div class="scope-bar">
+  <span class="scope-label">Scope:</span>
+  <span class="scope-pill active">Local</span>
+  <span class="scope-pill ghost" data-soon="Connect to UTETY node">Uni</span>
+  <span class="scope-pill ghost" data-soon="Consented public stacks">Open</span>
+  <span class="scope-pill ghost" data-soon="Multi-node network">Network</span>
+  <span class="scope-pill ghost" data-soon="...">&infin;</span>
+</div>
+
+<div class="main">
+
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-heading">The Stacks</div>
+      <div id="domainList">
+        <div class="shimmer" style="height:32px;margin-bottom:4px;"></div>
+        <div class="shimmer" style="height:32px;margin-bottom:4px;"></div>
+        <div class="shimmer" style="height:32px;"></div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">At a Glance</div>
+      <div class="sidebar-stat"><span>Entries filed</span><span class="val" id="statCount">&mdash;</span></div>
+      <div class="sidebar-stat"><span>Active sessions</span><span class="val" id="statSessions">&mdash;</span></div>
+      <div class="sidebar-stat"><span>OCR queue</span><span class="val" id="statOcr">&mdash;</span></div>
+      <div class="sidebar-stat"><span>Watcher</span><span class="val" id="statWatcher">&mdash;</span></div>
+    </div>
+    <div class="binder-status" id="binderStatusMsg">Still filing.</div>
+  </aside>
+
+  <main class="center">
+    <div class="jeles-desk">
+      <div class="jeles-header">
+        <div class="jeles-avatar">J</div>
+        <div>
+          <div class="jeles-name">Jeles</div>
+          <div class="jeles-subtitle">Librarian &mdash; Special Collections, UTETY</div>
+        </div>
+      </div>
+      <div class="jeles-messages" id="jelesMessages">
+        <div class="msg jeles">
+          Good. You came. The things we think we&rsquo;ve lost are simply misfiled &mdash;
+          and I know where most of them are. Ask me anything about what&rsquo;s in the stacks.
+        </div>
+      </div>
+      <div class="jeles-input-area">
+        <input class="jeles-input" id="jelesInput" type="text"
+               placeholder="Ask the Librarian... (what is filed under ___? where did ___ go?)"
+               autocomplete="off">
+        <button class="jeles-send" id="jelesSend">Ask</button>
+        <button class="web-btn" id="webToggle" title="Search Special Collections (verified sources)" aria-pressed="false">&#127758;</button>
+        <button class="dice-btn" id="diceRoll" title="Roll two d6 — let the stacks decide">&#9856;&#9857;</button>
+      </div>
+    </div>
+
+    <div class="connections-area">
+      <div class="section-label" id="connectionsLabel">What I Found While Filing</div>
+      <div id="cardList">
+        <div class="shimmer" style="height:80px;margin-bottom:8px;"></div>
+        <div class="shimmer" style="height:80px;margin-bottom:8px;"></div>
+        <div class="shimmer" style="height:80px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="right-panel">
+    <div class="search-section">
+      <div class="search-heading">Search the Stacks</div>
+      <div class="search-row">
+        <input class="search-input" id="searchInput" type="text" placeholder="Search..." autocomplete="off">
+        <button class="search-btn" id="searchBtn">Find</button>
+      </div>
+      <div class="filter-row" id="filterRow">
+        <span class="filter-chip active" data-cat="">All</span>
+        <span class="filter-chip" data-cat="narrative">Narrative</span>
+        <span class="filter-chip" data-cat="documentation">Docs</span>
+        <span class="filter-chip" data-cat="specs">Specs</span>
+        <span class="filter-chip" data-cat="archive">Archive</span>
+      </div>
+    </div>
+    <div class="right-section" id="searchResults" style="display:none;">
+      <div class="right-heading">Results</div>
+      <div id="resultList"></div>
+    </div>
+    <div class="right-section">
+      <div class="right-heading">Recent Filings</div>
+      <div id="recentList">
+        <div class="shimmer" style="height:14px;margin-bottom:6px;"></div>
+        <div class="shimmer" style="height:14px;margin-bottom:6px;"></div>
+        <div class="shimmer" style="height:14px;"></div>
+      </div>
+    </div>
+    <div class="right-section">
+      <div class="right-heading">The Taxonomy</div>
+      <div style="font-size:0.72rem;color:var(--dust);line-height:1.9;">
+        <div><span style="color:var(--rust);font-weight:500;">OG</span> &mdash; the original. the source.</div>
+        <div><span style="color:var(--gold);font-weight:500;">Rev</span> &mdash; revised. updated. corrected.</div>
+        <div><span style="color:var(--dust);font-weight:500;">Slant</span> &mdash; same content, different angle.</div>
+        <div><span style="color:var(--ink);font-weight:500;">Delta</span> &mdash; change from what came before.</div>
+        <div><span style="color:var(--rust-light);font-weight:500;">&alpha;-bit</span> &mdash; cereal. foundational fragments.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">&mdash;</div>
+      <button class="modal-close" id="modalClose">&#x2715;</button>
+    </div>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-binder-note">
+      <strong>The Binder&rsquo;s Filing Note</strong>
+      <span id="modalNote">&mdash;</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8420';
+const STATUSES = [
+  'Still filing.',
+  'Found something.',
+  'The alpha-bits are in everything again.',
+  'Cross-referencing.',
+  'There is no lost. Only misfiled.',
+  'Cataloguing the delta.',
+  'Checking the slant drawer.',
+];
+let currentDomain = null;
+let currentCategory = null;
+let statusIdx = 0;
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('binderClock').textContent =
+    n.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+setInterval(() => {
+  statusIdx = (statusIdx + 1) % STATUSES.length;
+  document.getElementById('binderStatusMsg').textContent = STATUSES[statusIdx];
+}, 8000);
+
+async function loadHealth() {
+  try {
+    const r = await fetch(API + '/api/safe/health');
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    document.getElementById('apiDot').className = 'status-dot live';
+    document.getElementById('apiStatus').textContent = 'Stacks live';
+    document.getElementById('knowledgeCount').textContent = (d.knowledge_count||0).toLocaleString() + ' entries';
+    document.getElementById('statCount').textContent = (d.knowledge_count||0).toLocaleString();
+    document.getElementById('statSessions').textContent = d.consent_sessions ?? '-';
+    document.getElementById('statOcr').textContent = d.ocr_queue_depth ?? '-';
+    document.getElementById('statWatcher').textContent = d.watcher_alive ? 'alive' : 'offline';
+    renderDomains(d.lattice_domains || {});
+  } catch(e) {
+    document.getElementById('apiDot').className = 'status-dot';
+    document.getElementById('apiStatus').textContent = 'Offline';
+    document.getElementById('domainList').innerHTML =
+      '<div style="font-size:0.72rem;color:var(--dust);padding:0.5rem 0;font-style:italic;">Could not reach Willow API</div>';
+  }
+}
+
+function renderDomains(domains) {
+  const list = document.getElementById('domainList');
+  const entries = Object.entries(domains).sort((a,b)=>b[1]-a[1]);
+  list.innerHTML = '';
+  const allTab = document.createElement('div');
+  allTab.className = 'domain-tab active';
+  allTab.innerHTML = '<span>All</span><span class="domain-count">&infin;</span>';
+  allTab.addEventListener('click', () => selectDomain('', allTab));
+  list.appendChild(allTab);
+  entries.forEach(([domain, count]) => {
+    const tab = document.createElement('div');
+    tab.className = 'domain-tab';
+    tab.innerHTML = '<span>' + domain + '</span><span class="domain-count">' + count + '</span>';
+    tab.addEventListener('click', () => selectDomain(domain, tab));
+    list.appendChild(tab);
+  });
+}
+
+function selectDomain(domain, el) {
+  document.querySelectorAll('.domain-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentDomain = domain || null;
+  loadCards();
+}
+
+async function loadCards(q) {
+  const label = document.getElementById('connectionsLabel');
+  const list = document.getElementById('cardList');
+  label.textContent = q ? ('Search: "' + q + '"') : 'What I Found While Filing';
+  list.innerHTML = '<div class="shimmer" style="height:80px;margin-bottom:8px;"></div><div class="shimmer" style="height:80px;margin-bottom:8px;"></div><div class="shimmer" style="height:80px;"></div>';
+  try {
+    const params = new URLSearchParams({limit:30});
+    if (q) params.set('q', q);
+    if (currentDomain) params.set('lattice_domain', currentDomain);
+    if (currentCategory) params.set('category', currentCategory);
+    const r = await fetch(API + '/api/safe/query?' + params);
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    renderCards(d.results || []);
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">The Librarian cannot reach the stacks.<br><em>' + e.message + '</em></div>';
+  }
+}
+
+const FILING_TYPES = ['OG','Rev','Slant','Delta','α-bit'];
+function guessFiling(entry) {
+  const t = (entry.title||'').toLowerCase();
+  if (t.includes('original') || t.includes(' og')) return 'OG';
+  if (t.includes('rev') || t.includes('update') || t.includes('v2')) return 'Rev';
+  if (t.includes('slant') || t.includes('perspective')) return 'Slant';
+  if (t.includes('delta') || t.includes('change')) return 'Delta';
+  if (t.includes('fragment') || t.includes('note')) return 'α-bit';
+  return FILING_TYPES[Math.abs(((entry.title||'a').charCodeAt(0)) % FILING_TYPES.length)];
+}
+
+function extractThreads(entry) {
+  const text = ((entry.title||'') + ' ' + (entry.summary||'') + ' ' + (entry.content_snippet||'')).toLowerCase();
+  const stop = new Set(['which','their','there','about','would','could','should','these','those','where','being','other']);
+  return [...new Set((text.match(/[a-z]{5,}/g)||[]).filter(w=>!stop.has(w)))].slice(0,4);
+}
+
+function renderCards(results) {
+  const list = document.getElementById('cardList');
+  if (!results.length) {
+    list.innerHTML = '<div class="empty-state">The Librarian looked.<br><em>&ldquo;Nothing under that heading. Try a different drawer.&rdquo;</em></div>';
+    return;
+  }
+  list.innerHTML = '';
+  results.forEach(entry => {
+    const card = document.createElement('div');
+    card.className = 'connection-card';
+    const filing = guessFiling(entry);
+    const threads = extractThreads(entry);
+    card.innerHTML =
+      '<span class="card-filing">' + filing + '</span>' +
+      '<div class="card-title">' + (entry.title||'(untitled)') + '</div>' +
+      '<div class="card-meta"><span>' + (entry.category||'&mdash;') + '</span>' +
+      (entry.source_type?'<span>'+entry.source_type+'</span>':'') +
+      (entry.created_at?'<span>'+entry.created_at.slice(0,10)+'</span>':'') + '</div>' +
+      (entry.content_snippet?'<div class="card-snippet">'+entry.content_snippet+'</div>':'') +
+      (threads.length?'<div class="card-threads">'+threads.map(t=>'<span class="thread-tag">'+t+'</span>').join('')+'</div>':'');
+    card.addEventListener('click', () => openModal(entry, filing));
+    list.appendChild(card);
+  });
+}
+
+async function loadRecent() {
+  try {
+    const r = await fetch(API + '/api/safe/query?limit=8');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const list = document.getElementById('recentList');
+    list.innerHTML = '';
+    (d.results||[]).forEach(entry => {
+      const el = document.createElement('div');
+      el.className = 'filing-entry';
+      el.innerHTML = '<span class="filing-type">'+guessFiling(entry)+'</span><span class="filing-title">'+(entry.title||'(untitled)')+'</span>';
+      el.addEventListener('click', () => openModal(entry, guessFiling(entry)));
+      list.appendChild(el);
+    });
+    if (!d.results||!d.results.length)
+      list.innerHTML = '<div style="font-size:0.72rem;color:var(--dust);font-style:italic;">No recent filings.</div>';
+  } catch {
+    document.getElementById('recentList').innerHTML = '<div style="font-size:0.72rem;color:var(--dust);font-style:italic;">Unavailable.</div>';
+  }
+}
+
+const BINDER_NOTES = [
+  "Filed adjacent to the things people look for when they think they've lost something else.",
+  "Cross-referenced. The threads are not obvious. That's the point.",
+  "This one arrived before it was needed. The Goo was involved.",
+  "The original was in the wrong drawer. I moved it.",
+  "Classified under what it became, not what it started as.",
+  "The alpha-bits from this one are in seventeen other entries. You wouldn't know unless you looked.",
+];
+
+function openModal(entry, filing) {
+  document.getElementById('modalTitle').textContent = entry.title || '(untitled)';
+  document.getElementById('modalMeta').innerHTML =
+    '<span>'+filing+'</span><span>'+(entry.category||'&mdash;')+'</span>' +
+    (entry.source_type?'<span>'+entry.source_type+'</span>':'') +
+    (entry.created_at?'<span>'+entry.created_at.slice(0,10)+'</span>':'');
+  document.getElementById('modalBody').textContent =
+    entry.content_snippet || entry.summary || 'The Binder has not yet fully catalogued this entry.';
+  document.getElementById('modalNote').textContent =
+    BINDER_NOTES[Math.floor(Math.random() * BINDER_NOTES.length)];
+  document.getElementById('modal').classList.add('open');
+}
+
+document.getElementById('modalClose').addEventListener('click', () =>
+  document.getElementById('modal').classList.remove('open'));
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal'))
+    document.getElementById('modal').classList.remove('open');
+});
+
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  const sect = document.getElementById('searchResults');
+  const rl = document.getElementById('resultList');
+  if (!q) { sect.style.display='none'; return; }
+  sect.style.display = 'block';
+  rl.innerHTML = '<div class="shimmer" style="height:14px;margin-bottom:6px;"></div><div class="shimmer" style="height:14px;"></div>';
+  try {
+    const params = new URLSearchParams({q, limit:10});
+    if (currentCategory) params.set('category', currentCategory);
+    const r = await fetch(API + '/api/safe/query?' + params);
+    const d = await r.json();
+    rl.innerHTML = '';
+    (d.results||[]).forEach(entry => {
+      const el = document.createElement('div');
+      el.className = 'filing-entry';
+      el.innerHTML = '<span class="filing-type">'+guessFiling(entry)+'</span><span class="filing-title">'+(entry.title||'(untitled)')+'</span>';
+      el.addEventListener('click', () => openModal(entry, guessFiling(entry)));
+      rl.appendChild(el);
+    });
+    if (!d.results||!d.results.length)
+      rl.innerHTML = '<div style="font-size:0.72rem;color:var(--dust);font-style:italic;">"That particular heading has no entry. Try adjacent."</div>';
+  } catch {
+    rl.innerHTML = '<div style="font-size:0.72rem;color:var(--dust);font-style:italic;">Search unavailable.</div>';
+  }
+  loadCards(q);
+}
+
+document.getElementById('filterRow').addEventListener('click', e => {
+  if (!e.target.classList.contains('filter-chip')) return;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  e.target.classList.add('active');
+  currentCategory = e.target.dataset.cat || null;
+  loadCards();
+});
+
+const JELES_LOCAL = {
+  'lost': "The things we think we've lost are simply misfiled. Tell me what you're looking for.",
+  'where': "I know where most things are. The question is which drawer. Describe it differently.",
+  'find': "Finding is the easy part. It's the cross-referencing that takes time.",
+  'binder': "The Binder and I have an arrangement. It files. I know where. We don't discuss the cereal drawer.",
+  'pigeon': "The Pigeon brings things. I file them. There's a rhythm to it once you stop asking why.",
+  'utety': "UTETY is the campus. The Binder is the filing system. I am the one who knows the difference.",
+  'willow': "Willow is the campus itself. Everything flows through it. I catalogue what remains.",
+};
+const JELES_DEFAULT = [
+  "The blueprints for our endurance are not gone. They are resting in the wrong drawer. I'll look.",
+  "Interesting question. I've seen adjacent material. Let me check the cross-references.",
+  "That would be in Special Collections. Give me a moment.",
+  "I catalogued something like that once. The alpha-bits are everywhere if you know where to look.",
+  "A bifurcated question. I'll answer both halves, starting with the one you didn't ask.",
+];
+
+function jelesLocal(q) {
+  q = q.toLowerCase();
+  for (const [k,v] of Object.entries(JELES_LOCAL)) { if (q.includes(k)) return v; }
+  return JELES_DEFAULT[Math.floor(Math.random() * JELES_DEFAULT.length)];
+}
+
+const DICE_FACES = ['&#9856;','&#9857;','&#9858;','&#9859;','&#9860;','&#9861;'];
+const JELES_CONNECTIONS = [
+  'Both arrived before they were needed.',
+  'Filed in different drawers. The thread is the same.',
+  'One asks the question. The other answers it.',
+  'The Goo was involved in both of these.',
+  'Different shelves. Same foundation.',
+  'Cross-referenced. The connection is not obvious. That is why it matters.',
+  'The alpha-bits from each are in the other.',
+  'One is the slant of the other.',
+  'Filed seventeen years apart. Same idea.',
+  'The Pigeon carried both. Not at the same time. But still.',
+];
+
+async function rollDice() {
+  const btn = document.getElementById('diceRoll');
+  btn.classList.add('rolling');
+
+  const d1 = Math.floor(Math.random() * 6);
+  const d2 = Math.floor(Math.random() * 6);
+  btn.innerHTML = DICE_FACES[d1] + DICE_FACES[d2];
+  setTimeout(() => btn.classList.remove('rolling'), 650);
+
+  const msgs = document.getElementById('jelesMessages');
+  const thinking = document.createElement('div');
+  thinking.className = 'msg thinking';
+  thinking.textContent = 'Reaching into the stacks...';
+  msgs.appendChild(thinking);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const total = parseInt(document.getElementById('statCount').textContent.replace(/,/g,'')) || 1000;
+    const off1 = Math.floor(Math.random() * Math.max(1, total - 30));
+    const off2 = Math.floor(Math.random() * Math.max(1, total - 30));
+
+    const [r1, r2] = await Promise.all([
+      fetch(API + '/api/safe/query?limit=1&offset=' + off1).then(r => r.json()),
+      fetch(API + '/api/safe/query?limit=1&offset=' + off2).then(r => r.json()),
+    ]);
+
+    const e1 = r1.results && r1.results[0];
+    const e2 = r2.results && r2.results[0];
+    thinking.remove();
+
+    if (!e1 || !e2) {
+      const reply = document.createElement('div');
+      reply.className = 'msg jeles';
+      reply.textContent = 'The stacks are still settling. Try again.';
+      msgs.appendChild(reply);
+      return;
+    }
+
+    const connection = JELES_CONNECTIONS[Math.floor(Math.random() * JELES_CONNECTIONS.length)];
+    const reply = document.createElement('div');
+    reply.className = 'msg jeles';
+    reply.textContent = 'The dice chose: "' + (e1.title||'untitled') + '" and "' + (e2.title||'untitled') + '". ' + connection;
+    msgs.appendChild(reply);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    renderCards([e1, e2]);
+    document.getElementById('connectionsLabel').textContent = 'The Dice Chose These (' + (d1+1) + ' + ' + (d2+1) + ')';
+  } catch {
+    thinking.remove();
+    const reply = document.createElement('div');
+    reply.className = 'msg jeles';
+    reply.textContent = 'The dice fell off the desk. Try again.';
+    msgs.appendChild(reply);
+  }
+}
+
+document.getElementById('diceRoll').addEventListener('click', rollDice);
+
+let webMode = false;
+document.getElementById('webToggle').addEventListener('click', () => {
+  webMode = !webMode;
+  const btn = document.getElementById('webToggle');
+  btn.classList.toggle('active', webMode);
+  btn.title = webMode ? 'Special Collections active — searching verified sources' : 'Search Special Collections (verified sources)';
+  const msgs = document.getElementById('jelesMessages');
+  const note = document.createElement('div');
+  note.className = 'msg jeles';
+  note.textContent = webMode
+    ? 'Special Collections open. I will search verified institutional sources: Smithsonian, Library of Congress, Internet Archive, and others I can vouch for.'
+    : 'Closing the external stacks. Back to what is ours.';
+  msgs.appendChild(note);
+  msgs.scrollTop = msgs.scrollHeight;
+});
+
+async function askJeles() {
+  const input = document.getElementById('jelesInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  const msgs = document.getElementById('jelesMessages');
+
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg user';
+  userMsg.textContent = q;
+  msgs.appendChild(userMsg);
+
+  const thinking = document.createElement('div');
+  thinking.className = 'msg thinking';
+  thinking.textContent = webMode ? 'Checking Special Collections...' : 'Checking the stacks...';
+  msgs.appendChild(thinking);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  if (webMode) {
+    // Special Collections — verified external sources
+    try {
+      const r = await fetch(API + '/api/safe/web?q=' + encodeURIComponent(q));
+      const d = await r.json();
+      thinking.remove();
+      const results = d.results || [];
+      let answer;
+      if (results.length > 0) {
+        const src = results[0];
+        answer = 'Special Collections found it. Source: ' + src.title + '. ' + (src.snippet || '');
+        // Render as cards
+        const mapped = results.slice(0,6).map(res => ({
+          title: res.title,
+          category: 'web',
+          source_type: 'special_collections',
+          content_snippet: res.snippet || '',
+          url: res.url,
+          created_at: null,
+        }));
+        renderCards(mapped);
+        document.getElementById('connectionsLabel').textContent = 'Special Collections: ' + q + (d.safe_filtered < d.total_found ? ' (' + d.safe_filtered + ' verified of ' + d.total_found + ')' : '');
+      } else {
+        answer = 'Special Collections has nothing verified on that. The smoothed sources might, but I cannot vouch for them.';
+      }
+      const reply = document.createElement('div');
+      reply.className = 'msg jeles';
+      reply.textContent = answer;
+      msgs.appendChild(reply);
+    } catch {
+      thinking.remove();
+      const reply = document.createElement('div');
+      reply.className = 'msg jeles';
+      reply.textContent = 'Special Collections is unreachable. The internet is being difficult.';
+      msgs.appendChild(reply);
+    }
+  } else {
+    // Local stacks
+    try {
+      const params = new URLSearchParams({q, limit:3});
+      const r = await fetch(API + '/api/safe/query?' + params);
+      const d = await r.json();
+      thinking.remove();
+      let answer;
+      if (d.results && d.results.length > 0) {
+        const titles = d.results.slice(0,2).map(e=>e.title).join(', ');
+        answer = 'I found it. Filed under: ' + titles + '.' +
+          (d.results[0].content_snippet ? ' \u201c' + d.results[0].content_snippet.slice(0,120) + '\u2026\u201d' : '');
+        renderCards(d.results);
+        document.getElementById('connectionsLabel').textContent = 'Filed nearby: ' + q;
+      } else {
+        answer = 'No direct match for ' + q + '. ' + jelesLocal(q);
+      }
+      const reply = document.createElement('div');
+      reply.className = 'msg jeles';
+      reply.textContent = answer;
+      msgs.appendChild(reply);
+    } catch {
+      thinking.remove();
+      const reply = document.createElement('div');
+      reply.className = 'msg jeles';
+      reply.textContent = jelesLocal(q);
+      msgs.appendChild(reply);
+    }
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+document.getElementById('jelesSend').addEventListener('click', askJeles);
+document.getElementById('jelesInput').addEventListener('keydown', e => { if(e.key==='Enter') askJeles(); });
+
+(async () => {
+  await loadHealth();
+  await loadCards();
+  await loadRecent();
+})();
+</script>
+</body>
+</html>

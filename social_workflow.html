@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Wire - Social Dispatch</title>
+    <style>
+        :root {
+            --bg: #0f0e0c;
+            --paper: #f0e8d5;
+            --amber: #c8881a;
+            --amber-dim: #8a5e10;
+            --green: #2d7a4f;
+            --red: #8b2020;
+            --border: #2a2620;
+            --surface: #1a1815;
+            --muted: #6b6355;
+            --teal: #1e6b6b;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-family: 'Courier Prime', monospace;
+            background: var(--bg);
+        }
+
+        .grain {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            filter: url(#grain);
+            mix-blend-mode: multiply;
+            opacity: 0.03;
+        }
+
+        .section > div {
+            padding: 10px;
+            background: var(--paper);
+            border: none;
+            box-shadow: inset 0 0 1px 1px var(--amber-dim);
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, var(--amber) 0%, var(--amber) 100%);
+            border: none;
+            margin: 10px -10px;
+            width: calc(100% + 20px);
+        }
+
+        .title {
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--surface);
+            border: none;
+            box-shadow: 0 0 1px 1px var(--amber-dim);
+        }
+
+        .input {
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            box-shadow: inset 0 0 1px 1px var(--amber-dim);
+        }
+
+        .queue {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: var(--paper);
+            border: none;
+            box-shadow: inset 0 0 1px 1px var(--amber-dim);
+        }
+
+        .pill {
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+
+        .status-pill {
+            background: var(--muted);
+        }
+
+        .status-pill.active {
+            background: var(--teal);
+        }
+
+        .status-pill.draft {
+            background: var(--amber);
+        }
+
+        .status-pill.posted {
+            background: var(--green);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px;
+            background: var(--amber);
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 0 1px 1px var(--amber-dim);
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background: var(--paper);
+            border: none;
+            box-shadow: inset 0 0 1px 1px var(--amber-dim);
+        }
+
+        .button {
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 0 1px 1px var(--amber-dim);
+            text-transform: uppercase;
+        }
+
+        .button:hover {
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .button.active {
+            background: var(--amber);
+        }
+
+        .textarea {
+            padding: 10px;
+            background: none;
+            border: none;
+            line-height: 1.7;
+            font-size: 1.2rem;
+        }
+
+        .preview {
+            padding: 10px;
+            background: var(--paper);
+            border: none;
+            box-shadow: inset 0 0 1px 1px var(--amber-dim);
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+        }
+
+        /* Gradient texture SVG */
+        <svg width="0" height="0">
+            <defs>
+                <filter id="grain" x="-100%" y="-100%" width="200%" height="200%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.02" result="turbulence">
+                    </feTurbulence>
+                    <feDiffuseLighting in="turbulence" diffuseConstant="1" surfaceScale="10" result="lit">
+                        <animate 
+                            attributeName="scale" 
+                            from="1" 
+                            to="2" 
+                            dur="0.5s" 
+                            repeatCount="indefinite" 
+                        />
+                    </feDiffuseLighting>
+                    <feFlood floodColor="#333" result="flood"/>
+                    <feComposite in2="lit" operation="xor" result="overlay"/>
+                    <feComposite in2="flood" operator="atop" result="diffuse"/>
+                    <feComposite in2="diffuse" method="in" result="grain"/>
+                    <feDisplacementMap scale="10" xChannelSelector="R" yChannelSelector="G" in2="turbulence"></feDisplacementMap>
+                </filter>
+            </defs>
+        </svg>
+
+        .toast {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px;
+            background: var(--paper);
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 0 1px 1px var(--amber-dim);
+            font-size: 1.2rem;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.fade-in {
+            animation: fadeIn 0.2s forwards;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .toast.fade-out {
+            animation: fadeOut 0.2s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="grain"></div>
+    <main class="main">
+        <!-- Left sidebar -->
+        <aside class="sidebar">
+            <div class="status">
+                <div class="pill status-pill manuscript" data-status="manuscript">Manuscript <span class="badge">45</span></div>
+                <div class="pill status-pill draft" data-status="draft">Draft <span class="badge">2</span></div>
+                <div class="pill status-pill active" data-status="active">Active <span class="badge">61</span></div>
+                <div class="pill status-pill posted" data-status="posted">Posted <span class="badge">3</span></div>
+            </div>
+            <div class="queue">
+                <h2>Series Queue</h2>
+                <ul id="series-queue">
+                    <!-- series queue list items -->
+                </ul>
+            </div>
+            <div class="reddit-status">
+                <h2>Reddit Status</h2>
+                <p id="reddit-status">Loading...</p>
+            </div>
+        </aside>
+        <!-- Center content -->
+        <div class="content">
+            <!-- Title input -->
+            <div class="title">
+                <h1 id="post-title">Title</h1>
+                <input type="text" id="post-title-input" placeholder="Enter title">
+            </div>
+            <!-- Series and community tags -->
+            <div class="series-community">
+                <div class="tag">
+                    <label for="post-series">Series:</label>
+                    <select id="post-series"></select>
+                </div>
+                <div class="tag">
+                    <label for="post-community">Community:</label>
+                    <select id="post-community"></select>
+                </div>
+            </div>
+            <!-- Notes blockquote -->
+            <div class="notes">
+                <blockquote>
+                    <p id="post-notes"></p>
+                </blockquote>
+            </div>
+            <!-- Large draft textarea -->
+            <div class="textarea-container">
+                <textarea id="post-draft" rows="10" cols="30" placeholder="Enter draft text here..."></textarea>
+                <div class="word-count">
+                    <span id="word-count">0</span>
+                    / <span id="char-count">0</span>
+                </div>
+            </div>
+            <!-- Status badge -->
+            <div class="status-badge">
+                <span id="post-status">New</span>
+            </div>
+        </div>
+        <!-- Right action buttons and preview panel -->
+        <aside class="buttons">
+            <button id="load-next" class="button">Load Next</button>
+            <button id="save-draft" class="button active" disabled>Save Draft</button>
+            <button id="dry-run" class="button active" disabled>Dry Run</button>
+            <button id="post-to-reddit" class="button active" disabled>Post to Reddit</button>
+            <button id="pull-reddit" class="button">Pull Reddit</button>
+            <div class="preview">
+                <h2 id="preview-title">Preview Title:</h2>
+                <p id="preview-draft"></p>
+            </div>
+        </aside>
+    </main>
+    <!-- Toasts container -->
+    <div id="toasts"></div>
+    <script>
+        const API_URL = 'http://localhost:8420/api/social/workflow';
+
+        let currentPost = {
+            id: '',
+            title: '',
+            notes: '',
+            series: '',
+            series_slug: '',
+            community: '',
+            draftText: '',
+            status: 'new',
+            modified: false,
+            dryRunDone: false,
+        };
+
+        let seriesQueue = [];
+
+        function fetchSeriesOrder() {
+            fetch(API_URL + '/series-order')
+                .then(response => response.json())
+                .then(data => {
+                    seriesQueue = data;
+                    renderSeriesQueue(seriesQueue);
+                })
+                .catch(error => console.error('Error fetching series order:', error));
+        }
+
+        function fetchRedditStatus() {
+            fetch(API_URL + '/reddit/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('reddit-status').textContent = data;
+                })
+                .catch(error => console.error('Error fetching Reddit status:', error));
+        }
+
+        function loadNext() {
+            const slug = getIdFromSelected('post-series');
+            if (slug) {
+                fetch(API_URL + '/next?series_slug=' + slug)
+                    .then(response => response.json())
+                    .then(data => {
+                        currentPost = data;
+                        updateCurrentPostUI();
+                    })
+                    .catch(error => console.error('Error loading next post:', error));
+            } else {
+                fetch(API_URL + '/next')
+                    .then(response => response.json())
+                    .then(data => {
+                        currentPost = data;
+                        updateCurrentPostUI();
+                    })
+                    .catch(error => console.error('Error loading next post:', error));
+            }
+        }
+
+        function updateCurrentPostUI() {
+            const { id, title, notes, series, community, draftText } = currentPost;
+            document.getElementById('post-title').textContent = title;
+            document.getElementById('post-title-input').value = title;
+            document.getElementById('post-notes').textContent = notes;
+            document.getElementById('post-series').value = series;
+            document.getElementById('post-community').value = community;
+            document.getElementById('post-draft').value = draftText;
+            document.getElementById('post-status').textContent = 'New';
+            document.getElementById('preview-title').textContent = title;
+            document.getElementById('preview-draft').textContent = draftText;
+            document.getElementById('save-draft').disabled = false;
+            document.getElementById('post-to-reddit').disabled = true;
+            document.getElementById('dry-run').disabled = true;
+            document.getElementById('word-count').textContent = draftText.split(' ').length;
+            document.getElementById('char-count').textContent = draftText.length;
+        }
+
+        function saveDraft() {
+            const { id, title, notes, series, community, draftText } = currentPost;
+            if (id) {
+                fetch(API_URL + '/' + id + '/draft', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ draftText }),
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        currentPost.modified = false;
+                        document.getElementById('save-draft').disabled = true;
+                    })
+                    .catch(error => console.error('Error saving draft:', error));
+            } else {
+                console.error('Error saving draft: no post ID');
+            }
+        }
+
+        function dryRun() {
+            const { id, title, notes, series, community, draftText } = currentPost;
+            if (id) {
+                fetch(API_URL + '/' + id + '/post-to-reddit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dry_run: true }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        currentPost.dryRunDone = true;
+                        document.getElementById('preview-title').textContent = title;
+                        document.getElementById('preview-draft').textContent = data.result;
+                        document.getElementById('dry-run').disabled = true;
+                        document.getElementById('post-to-reddit').disabled = false;
+                    })
+                    .catch(error => console.error('Error performing dry run:', error));
+            } else {
+                console.error('Error performing dry run: no post ID');
+            }
+        }
+
+        function postToReddit() {
+            const { id, title, notes, series, community, draftText } = currentPost;
+            if (id) {
+                fetch(API_URL + '/' + id + '/post-to-reddit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dry_run: false }),
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        currentPost.dryRunDone = false;
+                        document.getElementById('post-to-reddit').disabled = true;
+                    })
+                    .catch(error => console.error('Error posting to Reddit:', error));
+            } else {
+                console.error('Error posting to Reddit: no post ID');
+            }
+        }
+
+        function pullReddit() {
+            fetch(API_URL + '/reddit/pull')
+                .then(response => response.json())
+                .then(() => {
+                    showToast('Reddit pulled!');
+                })
+                .catch(error => console.error('Error pulling Reddit:', error));
+        }
+
+        // Render series queue list
+        function renderSeriesQueue(seriesQueue) {
+            const seriesQueueElement = document.getElementById('series-queue');
+            seriesQueueElement.innerHTML = '';
+            seriesQueue.forEach((series) => {
+                const seriesListItem = document.createElement('LI');
+                seriesListItem.textContent = series.name;
+                seriesQueueElement.appendChild(seriesListItem);
+            });
+        }
+
+        // Render Reddit status
+        function renderRedditStatus(rss) {
+            const redditStatusElement = document.getElementById('reddit-status');
+            redditStatusElement.textContent = rss.description;
+        }
+
+        // Get ID from selected element
+        function getIdFromSelected(elementId) {
+            const selectElement = document.getElementById(elementId);
+            const selectedIndex = selectElement.selectedIndex;
+            if (selectedIndex > -1) {
+                const selectedOption = selectElement.options[selectedIndex];
+                return selectedOption.value;
+            }
+            return null;
+        }
+
+        // showToast function
+        function showToast(message) {
+            const toastContainer = document.getElementById('toasts');
+            const toastElement = document.createElement('DIV');
+            toastElement.classList.add('toast');
+            toastElement.textContent = message;
+            toastContainer.appendChild(toastElement);
+            toastElement.classList.add('fade-in');
+            setTimeout(() => {
+                toastElement.classList.remove('fade-in');
+                toastElement.classList.add('fade-out');
+                setTimeout(() => {
+                    toastElement.remove();
+                }, 200);
+            }, 2000);
+        }
+
+        // Fetch initial series queue and Reddit status
+        fetchSeriesOrder();
+        fetchRedditStatus();
+        renderSeriesQueue(seriesQueue);
+        renderRedditStatus('');
+
+        // Button event listeners
+        document.getElementById('load-next').addEventListener('click', loadNext);
+        document.getElementById('save-draft').addEventListener('click', saveDraft);
+        document.getElementById('dry-run').addEventListener('click', dryRun);
+        document.getElementById('post-to-reddit').addEventListener('click', postToReddit);
+        document.getElementById('pull-reddit').addEventListener('click', pullReddit);
+
+        // Add event listener to update current post UI when loading next post
+        document.addEventListener('DOMContentLoaded', updateCurrentPostUI);
+
+        // Add event listener to update current post UI when changing series
+        document.getElementById('post-series').addEventListener('change', (e) => {
+            updateCurrentPostUI();
+        });
+
+        // Add event listener to update current post UI when changing community
+        document.getElementById('post-community').addEventListener('change', (e) => {
+            updateCurrentPostUI();
+        });
+
+        // Add event listener to save draft when typing in draft textarea
+        document.getElementById('post-draft').addEventListener('input', () => {
+            currentPost.draftText = document.getElementById('post-draft').value;
+            document.getElementById('word-count').textContent = currentPost.draftText.split(' ').length;
+            document.getElementById('char-count').textContent = currentPost.draftText.length;
+            if (currentPost.modified === false) {
+                document.getElementById('save-draft').disabled = false;
+            } else {
+                document.getElementById('save-draft').disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>

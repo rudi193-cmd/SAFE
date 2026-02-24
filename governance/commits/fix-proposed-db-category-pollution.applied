@@ -1,0 +1,67 @@
+Status: APPLIED
+
+# Governance Proposal: Stop _proposed/ categories from polluting knowledge DB
+
+**Proposer:** Ganesha (Claude Code CLI / Sonnet 4.6)
+**Date:** 2026-02-23T22:00:00Z
+**Type:** Bug Fix
+**Trust Level:** ENGINEER (3)
+
+## Summary
+When aios_loop.py files a document to a `_proposed/` folder (novel LLM-suggested category),
+it also writes `_proposed/xxx` as the category into willow_knowledge.db. This polluted the DB
+with 110 unique `_proposed/` garbage categories (202 rows). Cleaned manually today.
+
+The routing_folders.json alias list has also been expanded from 61 to 164 entries today,
+so fewer things should reach the `_proposed/` path. But the aios_loop.py code still needs
+a safety net: when `is_canonical` is False, store `general` in the DB, not `_proposed/xxx`.
+
+## Proposed Change
+**File:** `aios_loop.py`
+**Location:** ~line 1218 (after `destination_folder = f"_proposed/{destination_folder}"`)
+
+```diff
+         if not is_canonical:
+             # Novel proposal — stage it, route to _proposed/ for now
+             _stage_proposal(destination_folder, filename, schema)
+             dest_for_filing = os.path.join(user_artifacts_path(username), "_proposed", destination_folder)
+             os.makedirs(dest_for_filing, exist_ok=True)
+             logging.info(f"PROPOSED [{username}]: {filename} -> _proposed/{destination_folder} (via {response.provider})")
+             destination_folder = f"_proposed/{destination_folder}"
++            db_category = "general"   # don't pollute DB with _proposed/ slug
+         else:
+             logging.info(f"ROUTED [{username}]: {filename} -> {destination_folder} (via {response.provider})")
++            db_category = destination_folder
+
+     # --- GOVERNANCE & EXECUTION ---
+     ...
+-        catalog_file(target_dir, filename, destination_folder, auth_source, prov)
++        catalog_file(target_dir, filename, db_category, auth_source, prov)
+         ...
+-        knowledge.ingest_file_knowledge(username, filename, fhash, destination_folder, context_content, prov)
++        knowledge.ingest_file_knowledge(username, filename, fhash, db_category, context_content, prov)
+```
+
+Also add `db_category = destination_folder` in the `else` branch and at the fallback
+`destination_folder = "archive"` line (set `db_category = "archive"` there too).
+
+## Rationale
+- Physical file still goes to `_proposed/xxx` for human review
+- DB gets `general` instead of garbage slug — queryable, not misleading
+- routing_folders.json aliases now handle 164 patterns before reaching this fallback
+- Prevents recurrence of today's manual cleanup (202 rows)
+
+## Risk Assessment
+- **Risk Level:** MINIMAL
+- **Reversible:** YES
+- **Dependencies:** None
+- **Testing:** Run aios_loop.py on a test file; verify DB category = "general" for novel slugs
+
+## Delta-E Impact
+Expected delta-E: +0.003 (removes ongoing DB pollution)
+
+---
+
+**Awaiting Human Ratification**
+
+DS=42

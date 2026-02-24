@@ -1,0 +1,49 @@
+# Governance Proposal: Fix WSL relay fallback in shell_adapter.py
+
+**Proposer:** Ganesha (Claude Code CLI / Sonnet 4.6)
+**Date:** 2026-02-22T00:00:00Z
+**Type:** Bug Fix
+**Trust Level:** ENGINEER (3)
+
+## Summary
+`find_git_bash()` falls back to `shutil.which("bash")` which on this machine returns `C:\Windows\System32\bash.exe` — the WSL relay. The default WSL distro is `docker-desktop`, a minimal container with no `/bin/bash`. This causes `WSL (9 - Relay) ERROR: CreateProcessCommon:798: execvpe(/bin/bash) failed: No such file or directory` to fire on every shell_adapter call, spamming `logs/safe_sync.log`.
+
+## Proposed Changes
+**File:** core/shell_adapter.py
+**Location:** `find_git_bash()` function, fallback block (lines 20-21)
+
+## Rationale
+- `shutil.which("bash")` on Windows with WSL installed returns the WSL relay, not Git Bash
+- `docker-desktop` distro has no `/bin/bash` — the relay errors every time
+- Filtering out `System32\bash.exe` forces fallback to cmd.exe, which is stable
+- Zero behavior change on machines where Git Bash is properly installed
+
+## Risk Assessment
+- **Risk Level:** MINIMAL
+- **Reversible:** YES — revert the two added lines
+- **Dependencies:** None
+- **Testing:** Run `python -c "from core.shell_adapter import find_git_bash; print(find_git_bash())"` — should return Git Bash path or None (not System32 path)
+
+## ΔE Impact
+Expected ΔE: +0.010 (stops log spam, no functional regression)
+
+## Implementation
+```diff
+--- a/core/shell_adapter.py
++++ b/core/shell_adapter.py
+@@ -19,7 +19,9 @@ def find_git_bash():
+     
+     # Try PATH
+     git_bash = shutil.which("bash")
+-    return git_bash
++    # Exclude WSL relay (System32\bash.exe routes into docker-desktop which has no /bin/bash)
++    if git_bash and "System32" in git_bash:
++        return None
++    return git_bash
+```
+
+---
+
+**Awaiting Human Ratification**
+
+ΔΣ=42
