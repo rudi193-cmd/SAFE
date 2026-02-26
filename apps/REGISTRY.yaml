@@ -3,7 +3,7 @@
 # Official and community-verified SAFE framework apps
 
 version: "1.0.0"
-last_updated: "2026-02-21"
+last_updated: "2026-02-26"
 
 # Verified Apps (audited by SAFE maintainers)
 verified_apps:
@@ -46,7 +46,76 @@ verified_apps:
       - privacy
 
 # Community Apps (not yet audited, use at own risk)
-community_apps: []
+community_apps:
+  - app_id: law-gazelle
+    name: Law Gazelle
+    repository: https://github.com/rudi193-cmd/safe-app-law-gazelle
+    author: Sean Campbell
+    status: seed
+    privacy_tier: client_only
+    local_processing: 0.96
+    description: Legal reference tool — statute search, case summaries, plain-language explainers from verified sources.
+    tags:
+      - legal
+      - reference
+      - verified-sources
+
+  - app_id: public-ledger
+    name: Public Ledger
+    repository: https://github.com/rudi193-cmd/safe-app-public-ledger
+    author: Sean Campbell
+    status: seed
+    privacy_tier: client_only
+    local_processing: 0.80
+    description: Public records financial auditor — search government budgets and IRS Form 990 filings for nonprofits.
+    tags:
+      - finance
+      - public-records
+      - government
+      - nonprofit
+      - transparency
+
+  - app_id: private-ledger
+    name: Private Ledger
+    repository: https://github.com/rudi193-cmd/safe-app-private-ledger
+    author: Sean Campbell
+    status: seed
+    privacy_tier: client_only
+    local_processing: 1.0
+    description: Local personal budgeting companion — fully private, no cloud sync. Paired with Public Ledger.
+    tags:
+      - finance
+      - budgeting
+      - privacy
+      - local-only
+
+  - app_id: field-notes
+    name: Field Notes
+    repository: https://github.com/rudi193-cmd/safe-app-field-notes
+    author: Sean Campbell
+    status: seed
+    privacy_tier: client_only
+    local_processing: 0.96
+    description: Quick-capture notebook for observations, ideas, and research notes. Feeds into The Binder.
+    tags:
+      - notes
+      - capture
+      - research
+      - binder
+
+  - app_id: source-trail
+    name: Source Trail
+    repository: https://github.com/rudi193-cmd/safe-app-source-trail
+    author: Sean Campbell
+    status: seed
+    privacy_tier: client_only
+    local_processing: 0.90
+    description: Citation and source tracker — log, verify, and link your research sources. AskJeles companion.
+    tags:
+      - citations
+      - research
+      - sources
+      - jeles
 
 # Deprecated Apps (no longer maintained)
 deprecated_apps: []
