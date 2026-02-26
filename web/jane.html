@@ -367,6 +367,58 @@
       vertical-align: middle;
     }
     .pickup-badge.zero { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); }
+    .wconn-item {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 12px;
+    }
+    .wconn-item:last-of-type { border-bottom: none; }
+    .wconn-entities {
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 3px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .wconn-type {
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .wconn-actions {
+      display: flex;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .wconn-btn {
+      flex: 1;
+      padding: 3px 0;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .wconn-approve { background: rgba(74,222,128,0.18); color: #4ade80; }
+    .wconn-approve:hover { background: rgba(74,222,128,0.3); }
+    .wconn-edit    { background: rgba(122,180,255,0.15); color: #7ab4ff; }
+    .wconn-edit:hover    { background: rgba(122,180,255,0.28); }
+    .wconn-deny    { background: rgba(248,113,113,0.15); color: #f87171; }
+    .wconn-deny:hover    { background: rgba(248,113,113,0.28); }
+    .wconn-empty   { color: rgba(255,255,255,0.3); font-size: 12px; font-style: italic; }
+    .wconn-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 10px;
+      padding: 1px 6px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .wconn-badge.zero { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); }
 
     .sidebar-back-link {
       font-size: 13px;
@@ -608,6 +660,13 @@
             Pickup <span class="pickup-badge zero" id="pickup-badge">0</span>
           </div>
           <div id="pickup-list"><span class="pickup-empty">Empty</span></div>
+        </div>
+
+        <div class="sidebar-section" id="wconn-section">
+          <div class="sidebar-section-title">
+            Willow Noticed <span class="wconn-badge zero" id="wconn-badge">0</span>
+          </div>
+          <div id="wconn-list"><span class="wconn-empty">Loading...</span></div>
         </div>
 
         <a href="index.html" class="sidebar-back-link">← Back to SAFE</a>
@@ -897,6 +956,70 @@ ${item.preview}`);
 
     setInterval(loadPickup, 30000);
     loadPickup();
+
+    // ── Willow Connections ──────────────────────────────────────────
+    async function loadWillowConnections() {
+      try {
+        const res = await fetch(`${WILLOW_API}/api/willow/connections/pending?username=Sweet-Pea-Rudi19`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = data.connections || [];
+        const list  = document.getElementById('wconn-list');
+        const badge = document.getElementById('wconn-badge');
+        badge.textContent = items.length;
+        badge.className = items.length > 0 ? 'wconn-badge' : 'wconn-badge zero';
+        if (items.length === 0) {
+          list.innerHTML = '<span class="wconn-empty">Nothing pending.</span>';
+          return;
+        }
+        list.innerHTML = items.map(c => `
+          <div class="wconn-item" id="wconn-${c.id}">
+            <div class="wconn-entities">${escH(c.name_a)} → ${escH(c.name_b)}</div>
+            <div class="wconn-type">${escH(c.connection_type)}</div>
+            <div class="wconn-actions">
+              <button class="wconn-btn wconn-approve" onclick="wconnApprove(${c.id})">✓ Approve</button>
+              <button class="wconn-btn wconn-edit"    onclick="wconnEdit(${c.id}, '${escH(c.connection_type)}')">✎ Edit</button>
+              <button class="wconn-btn wconn-deny"    onclick="wconnDeny(${c.id})">✗ Deny</button>
+            </div>
+          </div>`).join('');
+      } catch (e) {}
+    }
+
+    function escH(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function wconnApprove(id) {
+      try {
+        await fetch(`${WILLOW_API}/api/willow/connections/${id}/approve?username=Sweet-Pea-Rudi19`, {method:'POST'});
+        document.getElementById(`wconn-${id}`)?.remove();
+        loadWillowConnections();
+      } catch (e) {}
+    }
+
+    async function wconnDeny(id) {
+      try {
+        await fetch(`${WILLOW_API}/api/willow/connections/${id}/deny?username=Sweet-Pea-Rudi19`, {method:'POST'});
+        document.getElementById(`wconn-${id}`)?.remove();
+        loadWillowConnections();
+      } catch (e) {}
+    }
+
+    async function wconnEdit(id, currentType) {
+      const newType = prompt('Edit connection type:', currentType);
+      if (newType === null) return;
+      try {
+        await fetch(`${WILLOW_API}/api/willow/connections/${id}/edit?username=Sweet-Pea-Rudi19`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({connection_type: newType.trim()})
+        });
+        loadWillowConnections();
+      } catch (e) {}
+    }
+
+    setInterval(loadWillowConnections, 60000);
+    loadWillowConnections();
   </script>
 
 </body>
