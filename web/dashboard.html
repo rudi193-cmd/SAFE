@@ -102,6 +102,19 @@
     .btn-willow-cancel { font-size: 12px; padding: 0.3rem 0.6rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; }
     .willow-test-result { font-size: 12px; margin-top: 0.35rem; }
 
+    /* WILLOW SERVER LINK */
+    .willow-setup-form { margin-top: 0.75rem; display: none; }
+    .willow-setup-form.open { display: block; }
+    .willow-setup-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
+    .willow-setup-label { font-size: 12px; color: var(--fg-muted); width: 68px; flex-shrink: 0; }
+    .willow-setup-input { flex: 1; font-size: 13px; padding: 0.3rem 0.5rem; border: 1px solid var(--border); border-radius: 3px; font-family: inherit; color: var(--fg); background: var(--bg); }
+    .willow-setup-input:focus { outline: none; border-color: var(--accent); }
+    .willow-setup-actions { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+    .btn-willow-test { font-size: 12px; padding: 0.3rem 0.7rem; background: var(--accent-light); color: var(--accent); border: none; border-radius: 3px; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .btn-willow-save { font-size: 12px; padding: 0.3rem 0.7rem; background: var(--accent); color: #fff; border: none; border-radius: 3px; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .btn-willow-cancel { font-size: 12px; padding: 0.3rem 0.6rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .willow-test-result { font-size: 12px; margin-top: 0.35rem; }
+
     /* WHAT WILLOW KNOWS */
     #willowKnowsContainer { margin-top: 1rem; }
     .entity-group { margin-bottom: 1.5rem; }
@@ -191,6 +204,28 @@
         <div class="card-label">Google</div>
         <div class="card-status" id="googleStatus">&mdash;</div>
         <div id="googleAction"></div>
+      </div>
+      <div class="status-card">
+        <div class="card-label">Willow Server</div>
+        <div class="card-status" id="willowServerStatus">&mdash;</div>
+        <div class="card-detail" id="willowServerDetail"></div>
+        <div id="willowServerAction"><a href="#" class="card-link" onclick="toggleWillowSetup(); return false;">Configure &rarr;</a></div>
+        <div class="willow-setup-form" id="willowSetupForm">
+          <div class="willow-setup-row">
+            <span class="willow-setup-label">Server URL</span>
+            <input class="willow-setup-input" id="willowUrlInput" type="text" placeholder="http://localhost:8420">
+          </div>
+          <div class="willow-setup-row">
+            <span class="willow-setup-label">Username</span>
+            <input class="willow-setup-input" id="willowUserInput" type="text" placeholder="auto-detect">
+          </div>
+          <div class="willow-test-result" id="willowTestResult"></div>
+          <div class="willow-setup-actions">
+            <button class="btn-willow-test" onclick="testWillowConnection()">Test</button>
+            <button class="btn-willow-save" onclick="saveWillowLink()">Save</button>
+            <button class="btn-willow-cancel" onclick="toggleWillowSetup()">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="finishPrompt"></div>
@@ -426,6 +461,91 @@ function renderPickup() {
       '</div>';
   });
   el.innerHTML = rows.join('');
+}
+
+
+// ── Willow Server Link ─────────────────────────────────────────────────────────────────────────────
+
+function getWillowBase() {
+  try {
+    const raw = localStorage.getItem('safe_account');
+    if (raw) { const a = JSON.parse(raw); if (a && a.willow_url) return a.willow_url.replace(/\/+$/, ''); }
+  } catch (e) {}
+  return 'http://localhost:8420';
+}
+
+function getWillowUser() {
+  try {
+    const raw = localStorage.getItem('safe_account');
+    if (raw) { const a = JSON.parse(raw); if (a && a.willow_user) return a.willow_user; }
+  } catch (e) {}
+  return '';
+}
+
+function renderWillowServer(acct) {
+  const s = document.getElementById('willowServerStatus');
+  const d = document.getElementById('willowServerDetail');
+  const a = document.getElementById('willowServerAction');
+  const ui = document.getElementById('willowUrlInput');
+  const uu = document.getElementById('willowUserInput');
+  if (acct && acct.willow_url && acct.willow_user) {
+    s.innerHTML = '<span class="status-dot-green"></span>' + escHtml(acct.willow_user) + ' · linked';
+    s.style.color = '';
+    d.textContent = acct.willow_url;
+    a.innerHTML = '<a href="#" class="card-link" onclick="toggleWillowSetup(); return false;">Change &rarr;</a>';
+  } else {
+    s.textContent = 'Not linked';
+    s.style.color = 'var(--fg-muted)';
+    d.textContent = '';
+    a.innerHTML = '<a href="#" class="card-link" onclick="toggleWillowSetup(); return false;">Configure &rarr;</a>';
+  }
+  if (ui) ui.value = (acct && acct.willow_url) || 'http://localhost:8420';
+  if (uu) uu.value = (acct && acct.willow_user) || '';
+}
+
+function toggleWillowSetup() {
+  document.getElementById('willowSetupForm').classList.toggle('open');
+}
+
+async function testWillowConnection() {
+  const url = (document.getElementById('willowUrlInput').value || '').trim().replace(/\/+$/, '');
+  const r = document.getElementById('willowTestResult');
+  if (!url) { r.textContent = 'Enter a server URL first'; r.style.color = '#c0392b'; return; }
+  r.textContent = 'Testing…'; r.style.color = 'var(--fg-muted)';
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const res = await fetch(url + '/api/safe/whoami', { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.status === 'ok' && data.username) {
+      document.getElementById('willowUserInput').value = data.username;
+      r.textContent = '✓ Connected — user: ' + data.username;
+      r.style.color = 'var(--accent)';
+    } else { r.textContent = 'Connected but no user returned'; r.style.color = 'var(--fg-muted)'; }
+  } catch (e) {
+    clearTimeout(t);
+    r.textContent = e.name === 'AbortError' ? 'Connection timed out' : 'Could not reach server';
+    r.style.color = '#c0392b';
+  }
+}
+
+function saveWillowLink() {
+  const url = (document.getElementById('willowUrlInput').value || '').trim().replace(/\/+$/, '');
+  const user = (document.getElementById('willowUserInput').value || '').trim();
+  if (!url) { showToast('Enter a server URL'); return; }
+  const raw = localStorage.getItem('safe_account');
+  if (!raw) { showToast('No account found'); return; }
+  try {
+    const acct = JSON.parse(raw);
+    acct.willow_url = url; acct.willow_user = user;
+    localStorage.setItem('safe_account', JSON.stringify(acct));
+    renderWillowServer(acct);
+    toggleWillowSetup();
+    showToast('Willow server linked');
+    loadConnections(); loadWillowKnows();
+  } catch (e) { showToast('Save failed'); }
 }
 
 function escHtml(str) {
