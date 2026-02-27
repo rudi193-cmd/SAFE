@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — SAFE</title>
+  <style>
+    :root {
+      --bg: #f9f9f7;
+      --fg: #1c1c1a;
+      --fg-muted: #6b6b64;
+      --accent: #2d6a4f;
+      --accent-light: #e8f4ee;
+      --border: #e2e2de;
+      --max: 680px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 16px; line-height: 1.75; background: var(--bg); color: var(--fg); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* NAV */
+    nav { border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+    .nav-inner { max-width: var(--max); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .nav-wordmark { font-weight: 700; font-size: 15px; color: var(--fg); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-right { display: flex; align-items: center; gap: 1.25rem; }
+    .nav-links { list-style: none; display: flex; gap: 1rem; margin: 0; padding: 0; }
+    .nav-links a { font-size: 14px; color: var(--fg-muted); text-decoration: none; }
+    .nav-links a:hover { color: var(--fg); }
+    .nav-user-chip { font-size: 13px; color: var(--fg-muted); display: flex; align-items: center; gap: 0.4rem; }
+    .user-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
+    .nav-user-chip a { color: var(--fg-muted); font-size: 13px; }
+
+    /* MAIN */
+    main { max-width: var(--max); margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ACCOUNT HEADER */
+    .account-header { padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .account-username { font-size: 2rem; font-weight: 700; color: var(--fg); letter-spacing: -0.01em; }
+    .account-meta { font-size: 14px; color: var(--fg-muted); margin-top: 0.25rem; }
+    .google-connected { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 0.5rem; }
+
+    /* SECTIONS */
+    .section { margin-top: 2.5rem; }
+    .section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+    .section-sub { font-size: 14px; color: var(--fg-muted); margin-top: 0.2rem; }
+
+    /* STATUS CARDS */
+    .status-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 1.25rem; }
+    @media (max-width: 580px) { .status-cards { grid-template-columns: 1fr; } }
+    .status-card { border: 1px solid var(--border); border-radius: 4px; padding: 1rem; }
+    .card-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-muted); margin-bottom: 0.35rem; }
+    .card-status { font-size: 14px; color: var(--fg); font-weight: 500; }
+    .card-detail { font-size: 12px; color: var(--fg-muted); margin-top: 0.3rem; }
+    .status-dot-green { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 5px; vertical-align: middle; }
+    .card-link { font-size: 13px; display: inline-block; margin-top: 0.5rem; color: var(--accent); }
+    .btn-small { font-size: 13px; padding: 0.3rem 0.75rem; background: none; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; color: var(--fg-muted); margin-top: 0.5rem; display: inline-block; }
+    .btn-small:hover { border-color: var(--accent); color: var(--accent); }
+    #ollamaResult { font-size: 12px; margin-top: 0.4rem; min-height: 1em; }
+    .badge-google-pending { display: inline-block; font-size: 11px; padding: 0.15rem 0.5rem; border-radius: 3px; background: #fef9c3; color: #854d0e; font-weight: 600; }
+
+    /* FINISH PROMPT */
+    .finish-prompt { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; color: var(--fg-muted); }
+    .finish-prompt a { color: var(--accent); font-weight: 600; }
+
+    /* PICKUP */
+    .pickup-empty { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
+    .pickup-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 0.75rem; }
+    .pickup-row:first-child { border-top: 1px solid var(--border); }
+    .pickup-name { flex: 1; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .pickup-date { font-size: 12px; color: var(--fg-muted); flex-shrink: 0; }
+    .badge { font-size: 11px; padding: 0.15rem 0.45rem; border-radius: 3px; font-weight: 600; flex-shrink: 0; }
+    .badge-queued { background: #fef9c3; color: #854d0e; }
+    .badge-processed { background: var(--accent-light); color: var(--accent); }
+    .badge-organized { background: #e0f2fe; color: #0369a1; }
+    .pickup-list { margin-top: 1rem; }
+
+    /* WILLOW NOTICED */
+    #connectionsContainer { margin-top: 1rem; }
+    .connection-card { border: 1px solid var(--border); border-radius: 4px; padding: 1rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.6rem; }
+    .connection-left { flex: 1; min-width: 0; }
+    .connection-entities { font-size: 15px; color: var(--fg); font-weight: 500; }
+    .connection-reason { font-size: 13px; color: var(--fg-muted); margin-top: 0.2rem; }
+    .connection-actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: flex-start; }
+    .btn-approve { font-size: 13px; padding: 0.3rem 0.7rem; background: var(--accent-light); color: var(--accent); border: none; border-radius: 3px; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .btn-dismiss { font-size: 13px; padding: 0.3rem 0.7rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .btn-approve:hover { background: #d4eddb; }
+    .btn-dismiss:hover { border-color: var(--fg-muted); }
+    .willow-offline { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
+    .willow-empty { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--fg); color: var(--bg); font-size: 13px; padding: 0.6rem 1rem; border-radius: 4px; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 1.5rem; font-size: 13px; color: var(--fg-muted); }
+    .footer-inner { max-width: var(--max); margin: 0 auto; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .footer-inner a { color: var(--fg-muted); }
+    .footer-inner a:hover { color: var(--fg); text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-wordmark">SAFE</a>
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href="jane.html">Jane</a></li>
+      </ul>
+      <div class="nav-user-chip" id="navUserChip">
+        <span class="user-dot"></span>
+        <span id="navUsername">username</span>
+        <span>&middot;</span>
+        <a href="#" onclick="signOut(); return false;">sign out</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <!-- Section 1: Account Header -->
+  <div class="account-header">
+    <div class="account-username" id="acctUsername">&mdash;</div>
+    <div class="account-meta" id="acctMeta">Member since &mdash;</div>
+    <div id="acctGoogle"></div>
+  </div>
+
+  <!-- Section 2: Setup Status -->
+  <div class="section">
+    <div class="section-eyebrow">Setup</div>
+    <div class="section-sub">Your connected services</div>
+    <div class="status-cards">
+      <div class="status-card">
+        <div class="card-label">AI Provider</div>
+        <div class="card-status" id="providerStatus">&mdash;</div>
+        <div class="card-detail" id="providerDetail"></div>
+        <div id="providerAction"></div>
+      </div>
+      <div class="status-card">
+        <div class="card-label">Local AI</div>
+        <div class="card-status" id="ollamaStatus">&mdash;</div>
+        <div id="ollamaAction"></div>
+        <div id="ollamaResult"></div>
+      </div>
+      <div class="status-card">
+        <div class="card-label">Google</div>
+        <div class="card-status" id="googleStatus">&mdash;</div>
+        <div id="googleAction"></div>
+      </div>
+    </div>
+    <div id="finishPrompt"></div>
+  </div>
+
+  <!-- Section 3: Pickup Box -->
+  <div class="section">
+    <div class="section-eyebrow">Pickup</div>
+    <div class="section-sub">Files dropped to your local inbox</div>
+    <div class="pickup-list" id="pickupList"></div>
+  </div>
+
+  <!-- Section 4: Willow Noticed -->
+  <div class="section">
+    <div class="section-eyebrow">Willow Noticed</div>
+    <div class="section-sub">Connections Willow proposed &mdash; yours to approve</div>
+    <div id="connectionsContainer"></div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span>SAFE &middot; Session-Authorized, Fully Explicit</span>
+    <span><a href="jane.html">Jane</a> &middot; <a href="index.html">Back to home</a></span>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'safe_account';
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+
+function loadAccount() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    window.location.href = 'index.html';
+    return null;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.href = 'index.html';
+    return null;
+  }
+}
+
+function signOut() {
+  localStorage.removeItem(STORAGE_KEY);
+  window.location.href = 'index.html';
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+  } catch (e) {
+    return iso;
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function providerLabel(p) {
+  const map = { gemini: 'Gemini', groq: 'Groq', openai: 'OpenAI' };
+  return map[p] || (p ? p.charAt(0).toUpperCase() + p.slice(1) : 'Unknown');
+}
+
+// ── Render: Account Header ───────────────────────────────────────────────────
+
+function renderAccount(acct) {
+  document.getElementById('navUsername').textContent = acct.username || 'user';
+  document.getElementById('acctUsername').textContent = acct.username || '—';
+  document.getElementById('acctMeta').textContent =
+    'Member since ' + formatDate(acct.created_at);
+
+  const googleEl = document.getElementById('acctGoogle');
+  if (acct.google === 'pending') {
+    googleEl.innerHTML =
+      '<span class="google-connected">' +
+      '<span class="status-dot-green"></span>Google connected (pending)' +
+      '</span>';
+  } else {
+    googleEl.innerHTML = '';
+  }
+}
+
+// ── Render: AI Provider card ─────────────────────────────────────────────────
+
+function renderProvider(acct) {
+  const statusEl = document.getElementById('providerStatus');
+  const detailEl = document.getElementById('providerDetail');
+  const actionEl = document.getElementById('providerAction');
+
+  if (acct.api_provider && acct.api_key) {
+    statusEl.innerHTML =
+      '<span class="status-dot-green"></span>' + providerLabel(acct.api_provider) + ' · connected';
+    statusEl.style.color = '';
+    detailEl.textContent = 'Your requests use ' + providerLabel(acct.api_provider) + ' API';
+    actionEl.innerHTML = '';
+  } else {
+    statusEl.textContent = 'No AI provider connected';
+    statusEl.style.color = 'var(--fg-muted)';
+    detailEl.textContent = '';
+    actionEl.innerHTML = '<a href="index.html" class="card-link">Set up →</a>';
+  }
+}
+
+// ── Render: Ollama card ──────────────────────────────────────────────────────
+
+function renderOllama(acct) {
+  const statusEl = document.getElementById('ollamaStatus');
+  const actionEl = document.getElementById('ollamaAction');
+
+  if (acct.ollama) {
+    window._ollamaEndpoint = acct.ollama;
+    statusEl.textContent = acct.ollama;
+    statusEl.style.color = '';
+    actionEl.innerHTML =
+      '<button class="btn-small" onclick="testOllama()">Test connection</button>';
+  } else {
+    statusEl.textContent = 'Ollama not configured';
+    statusEl.style.color = 'var(--fg-muted)';
+    actionEl.innerHTML = '<a href="index.html" class="card-link">Set up →</a>';
+  }
+}
+
+async function testOllama() {
+  const endpoint = window._ollamaEndpoint;
+  const resultEl = document.getElementById('ollamaResult');
+  if (!endpoint) {
+    resultEl.textContent = 'No endpoint configured';
+    resultEl.style.color = '#c0392b';
+    return;
+  }
+  resultEl.textContent = 'Testing…';
+  resultEl.style.color = 'var(--fg-muted)';
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const res = await fetch(endpoint.replace(/\/$/, '') + '/api/tags', {
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const count = (data.models || []).length;
+    resultEl.textContent = count + ' model' + (count !== 1 ? 's' : '') + ' available';
+    resultEl.style.color = 'var(--accent)';
+  } catch (e) {
+    clearTimeout(timer);
+    resultEl.textContent = e.name === 'AbortError' ? 'Connection timed out' : 'Connection failed';
+    resultEl.style.color = '#c0392b';
+  }
+}
+
+// ── Render: Google card ──────────────────────────────────────────────────────
+
+function renderGoogle(acct) {
+  const statusEl = document.getElementById('googleStatus');
+  const actionEl = document.getElementById('googleAction');
+
+  if (acct.google === 'pending') {
+    statusEl.innerHTML = '<span class="badge-google-pending">pending</span>';
+    statusEl.style.color = '';
+    actionEl.innerHTML = '';
+  } else {
+    statusEl.textContent = 'Not connected';
+    statusEl.style.color = 'var(--fg-muted)';
+    actionEl.innerHTML =
+      '<a href="#" class="card-link" onclick="showToast('Coming soon'); return false;">Connect →</a>';
+  }
+}
+
+// ── Render: Finish Prompt ────────────────────────────────────────────────────
+
+function renderFinishPrompt(acct) {
+  const el = document.getElementById('finishPrompt');
+  if (!acct.api_provider && !acct.ollama && !acct.google) {
+    el.innerHTML =
+      '<div class="finish-prompt">Finish setting up to get the most out of SAFE. ' +
+      '<a href="index.html">Complete setup →</a></div>';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// ── Render: Pickup Box ───────────────────────────────────────────────────────
+
+function renderPickup() {
+  const el = document.getElementById('pickupList');
+  let files = [];
+  try {
+    const raw = localStorage.getItem('safe_pickup');
+    if (raw) files = JSON.parse(raw);
+  } catch (e) { /* ignore */ }
+
+  if (!Array.isArray(files) || files.length === 0) {
+    el.innerHTML =
+      '<p class="pickup-empty">Nothing here yet. ' +
+      'Drop files to your Pickup folder to see them here.</p>';
+    return;
+  }
+
+  const rows = files.map(function(file) {
+    const status = file.status || 'queued';
+    const badgeClass = 'badge badge-' + status;
+    return '<div class="pickup-row">' +
+      '<span class="pickup-name" title="' + escHtml(file.name || '') + '">' +
+        escHtml(file.name || 'Unnamed') +
+      '</span>' +
+      '<span class="' + badgeClass + '">' + escHtml(status) + '</span>' +
+      '<span class="pickup-date">' + formatDate(file.added_at) + '</span>' +
+      '</div>';
+  });
+  el.innerHTML = rows.join('');
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Render: Willow Noticed ───────────────────────────────────────────────────
+
+async function loadConnections() {
+  const el = document.getElementById('connectionsContainer');
+  el.innerHTML = '<p class="willow-empty" style="opacity:0.5">Loading…</p>';
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const res = await fetch('http://localhost:8420/api/willow/connections/pending', {
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const connections = await res.json();
+
+    if (!Array.isArray(connections) || connections.length === 0) {
+      el.innerHTML = '<p class="willow-empty">No pending connections.</p>';
+      return;
+    }
+    el.innerHTML = connections.map(buildConnectionCard).join('');
+  } catch (e) {
+    clearTimeout(timer);
+    el.innerHTML =
+      '<p class="willow-offline">Willow is offline. ' +
+      'Connections will appear when the server is running.</p>';
+  }
+}
+
+function buildConnectionCard(c) {
+  const entityA = escHtml(c.entity_a || c.source || '?');
+  const entityB = escHtml(c.entity_b || c.target || '?');
+  const reason  = escHtml(c.reason || c.description || '');
+  return '<div class="connection-card" id="conn-' + c.id + '">' +
+    '<div class="connection-left">' +
+      '<div class="connection-entities">' + entityA + ' → ' + entityB + '</div>' +
+      (reason ? '<div class="connection-reason">' + reason + '</div>' : '') +
+    '</div>' +
+    '<div class="connection-actions">' +
+      '<button class="btn-approve" onclick="approveConnection(' + c.id + ')">Approve</button>' +
+      '<button class="btn-dismiss" onclick="dismissConnection(' + c.id + ')">Dismiss</button>' +
+    '</div>' +
+    '</div>';
+}
+
+async function approveConnection(id) {
+  const card = document.getElementById('conn-' + id);
+  try {
+    await fetch('http://localhost:8420/api/willow/connections/' + id + '/approve', {
+      method: 'POST'
+    });
+    if (card) card.remove();
+    const el = document.getElementById('connectionsContainer');
+    if (el && !el.querySelector('.connection-card')) {
+      el.innerHTML = '<p class="willow-empty">No pending connections.</p>';
+    }
+  } catch (e) {
+    console.error('approveConnection failed:', e);
+  }
+}
+
+async function dismissConnection(id) {
+  const card = document.getElementById('conn-' + id);
+  try {
+    await fetch('http://localhost:8420/api/willow/connections/' + id + '/deny', {
+      method: 'POST'
+    });
+    if (card) card.remove();
+    const el = document.getElementById('connectionsContainer');
+    if (el && !el.querySelector('.connection-card')) {
+      el.innerHTML = '<p class="willow-empty">No pending connections.</p>';
+    }
+  } catch (e) {
+    console.error('dismissConnection failed:', e);
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', function() {
+  const acct = loadAccount();
+  if (!acct) return;
+
+  renderAccount(acct);
+  renderProvider(acct);
+  renderOllama(acct);
+  renderGoogle(acct);
+  renderFinishPrompt(acct);
+  renderPickup();
+  loadConnections();
+});
+</script>
+</body>
+</html>
