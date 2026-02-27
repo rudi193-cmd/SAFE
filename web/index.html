@@ -26,6 +26,7 @@
       font-size: 17px;
     }
 
+    /* ── Nav ── */
     nav {
       position: sticky; top: 0;
       background: var(--bg);
@@ -40,14 +41,35 @@
       font-size: 14px; font-weight: 700; letter-spacing: 0.12em;
       color: var(--fg); text-decoration: none; text-transform: uppercase;
     }
-    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-right { display: flex; align-items: center; gap: 1.25rem; }
+    .nav-links { display: flex; gap: 1.25rem; list-style: none; }
     .nav-links a { font-size: 14px; color: var(--fg-muted); text-decoration: none; transition: color 0.15s; }
     .nav-links a:hover { color: var(--accent); }
+    .btn-nav-cta {
+      font-size: 13px; font-weight: 600; padding: 0.35rem 0.9rem;
+      background: var(--accent); color: white; border-radius: 4px;
+      border: none; cursor: pointer; font-family: inherit; text-decoration: none;
+      transition: background 0.15s; display: inline-block;
+    }
+    .btn-nav-cta:hover { background: #1e4d38; }
+    .nav-user-chip {
+      display: none; align-items: center; gap: 0.5rem;
+      font-size: 13px; color: var(--fg-muted);
+    }
+    .nav-user-chip .user-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    }
+    .nav-user-chip a {
+      color: var(--fg-muted); text-decoration: none; font-size: 13px;
+    }
+    .nav-user-chip a:hover { color: var(--accent); }
 
+    /* ── Layout ── */
     .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
     section { padding: 4rem 0; border-bottom: 1px solid var(--border); }
     section:last-of-type { border-bottom: none; }
 
+    /* ── Hero ── */
     .hero { padding: 5rem 0 4rem; }
     .hero-label {
       font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
@@ -59,19 +81,29 @@
     }
     .hero-headline em { font-style: normal; color: var(--accent); }
     .hero-sub { font-size: 19px; color: var(--fg-muted); max-width: 520px; margin-bottom: 2rem; line-height: 1.65; }
-    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
     .btn-primary {
       background: var(--accent); color: white; padding: 0.65rem 1.4rem;
-      border-radius: 4px; font-size: 15px; font-weight: 600; text-decoration: none; transition: background 0.15s;
+      border-radius: 4px; font-size: 15px; font-weight: 600; text-decoration: none;
+      border: none; cursor: pointer; font-family: inherit;
+      transition: background 0.15s; display: inline-block;
     }
     .btn-primary:hover { background: #1e4d38; }
     .btn-secondary {
       background: transparent; color: var(--fg); padding: 0.65rem 1.4rem;
       border-radius: 4px; border: 1px solid var(--border); font-size: 15px; font-weight: 500;
-      text-decoration: none; transition: border-color 0.15s, color 0.15s;
+      text-decoration: none; transition: border-color 0.15s, color 0.15s; display: inline-block;
     }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .hero-logged-in {
+      display: none; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .hero-logged-in-msg {
+      font-size: 15px; color: var(--fg-muted);
+    }
+    .hero-logged-in-msg strong { color: var(--fg); }
 
+    /* ── Content sections ── */
     .section-label {
       font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
       text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem;
@@ -130,6 +162,7 @@
     .badge-yellow { background: #fef9e7; color: #a0720a; }
     .badge-open { background: #f0f0f0; color: #555; }
 
+    /* ── Footer ── */
     footer { padding: 2.5rem 0; border-top: 1px solid var(--border); }
     .footer-inner {
       max-width: var(--max); margin: 0 auto; padding: 0 1.5rem;
@@ -141,10 +174,99 @@
     .footer-right a { color: var(--fg-muted); text-decoration: none; transition: color 0.15s; }
     .footer-right a:hover { color: var(--accent); }
 
+    /* ── SETUP MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28, 28, 26, 0.55); z-index: 500;
+      align-items: center; justify-content: center; padding: 1.5rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg); border-radius: 6px; border: 1px solid var(--border);
+      max-width: 460px; width: 100%; padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; font-size: 18px; color: var(--fg-muted);
+      cursor: pointer; line-height: 1; padding: 0.25rem;
+    }
+    .modal-close:hover { color: var(--fg); }
+
+    .setup-step { display: none; }
+    .setup-step.active { display: block; }
+
+    .setup-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 0.6rem;
+    }
+    .setup-title {
+      font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em;
+      margin-bottom: 0.6rem; color: var(--fg);
+    }
+    .setup-desc {
+      font-size: 14px; color: var(--fg-muted); line-height: 1.6; margin-bottom: 1.25rem;
+    }
+    .setup-field { margin-bottom: 1rem; }
+    .setup-field label {
+      display: block; font-size: 12px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--fg-muted); margin-bottom: 0.4rem;
+    }
+    .setup-field input {
+      width: 100%; font-family: inherit; font-size: 15px;
+      color: var(--fg); background: white;
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 0.6rem 0.85rem; outline: none;
+      transition: border-color 0.15s;
+    }
+    .setup-field input:focus { border-color: var(--accent); }
+    .setup-field .field-hint {
+      font-size: 12px; color: var(--fg-muted); margin-top: 0.35rem; line-height: 1.4;
+    }
+    .setup-actions {
+      display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; flex-wrap: wrap;
+    }
+    .btn-setup-skip {
+      font-size: 13px; color: var(--fg-muted); background: none; border: none;
+      cursor: pointer; font-family: inherit; text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .btn-setup-skip:hover { color: var(--fg); }
+    .setup-progress {
+      display: flex; gap: 5px; margin-bottom: 1.5rem;
+    }
+    .progress-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border); transition: background 0.2s;
+    }
+    .progress-dot.done { background: var(--accent); }
+    .progress-dot.active { background: var(--accent); opacity: 0.5; }
+
+    .google-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+      padding: 0.65rem 1rem; background: white; border: 1px solid var(--border);
+      border-radius: 4px; font-size: 15px; color: var(--fg); cursor: pointer;
+      font-family: inherit; transition: border-color 0.15s; margin-bottom: 0.5rem;
+    }
+    .google-btn:hover { border-color: var(--accent); }
+
+    .ollama-status {
+      font-size: 13px; margin-top: 0.5rem;
+      display: none;
+    }
+    .ollama-status.ok { color: var(--accent); display: block; }
+    .ollama-status.err { color: #c0392b; display: block; }
+
+    .setup-done-icon {
+      font-size: 2rem; margin-bottom: 1rem; color: var(--accent);
+    }
+
     @media (max-width: 600px) {
       .hero-headline { font-size: 2rem; }
       .gov-grid { grid-template-columns: 1fr; }
       .footer-inner { flex-direction: column; align-items: flex-start; }
+      .nav-links { display: none; }
     }
   </style>
 </head>
@@ -153,12 +275,21 @@
   <nav>
     <div class="nav-inner">
       <a href="#" class="nav-wordmark">SAFE</a>
-      <ul class="nav-links">
-        <li><a href="#how">How it works</a></li>
-        <li><a href="#rights">Rights</a></li>
-        <li><a href="#governance">Governance</a></li>
-        <li><a href="https://github.com/rudi193-cmd/SAFE" target="_blank">GitHub ↗</a></li>
-      </ul>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#rights">Rights</a></li>
+          <li><a href="#governance">Governance</a></li>
+          <li><a href="https://github.com/rudi193-cmd/SAFE" target="_blank">GitHub ↗</a></li>
+        </ul>
+        <div class="nav-user-chip" id="nav-user-chip">
+          <span class="user-dot"></span>
+          <span id="nav-username"></span>
+          <a href="dashboard.html">Dashboard</a>
+          <a href="#" id="btn-signout">Sign out</a>
+        </div>
+        <button class="btn-nav-cta" id="btn-nav-setup">Get Started</button>
+      </div>
     </div>
   </nav>
 
@@ -171,9 +302,14 @@
         SAFE proposes a different model: every session, you decide what an app can access.
         When you close it, those permissions are gone.
       </p>
-      <div class="hero-actions">
-        <a href="#how" class="btn-primary">See how it works</a>
-        <a href="https://github.com/rudi193-cmd/SAFE" target="_blank" class="btn-secondary">Read the spec ↗</a>
+      <div class="hero-actions" id="hero-actions-anon">
+        <button class="btn-primary" id="btn-hero-setup">Get Started</button>
+        <a href="#how" class="btn-secondary">See how it works</a>
+      </div>
+      <div class="hero-logged-in" id="hero-actions-user">
+        <span class="hero-logged-in-msg">Welcome back, <strong id="hero-username"></strong>.</span>
+        <a href="jane.html" class="btn-primary">Talk to Jane</a>
+        <a href="dashboard.html" class="btn-secondary">Your Dashboard</a>
       </div>
     </section>
   </div>
@@ -323,6 +459,276 @@
       </div>
     </div>
   </footer>
+
+  <!-- ── SETUP MODAL ── -->
+  <div class="modal-overlay" id="setup-modal">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">✕</button>
+
+      <!-- Step 1: Create account -->
+      <div class="setup-step active" id="step-1">
+        <div class="setup-progress">
+          <div class="progress-dot active" id="dot-1"></div>
+          <div class="progress-dot" id="dot-2"></div>
+          <div class="progress-dot" id="dot-3"></div>
+          <div class="progress-dot" id="dot-4"></div>
+        </div>
+        <p class="setup-eyebrow">Step 1 of 4</p>
+        <h2 class="setup-title">Create your account.</h2>
+        <p class="setup-desc">
+          Choose a username. This is your local identity — stored on this device only.
+          No email required. No server involved.
+        </p>
+        <div class="setup-field">
+          <label for="input-username">Username</label>
+          <input type="text" id="input-username" placeholder="e.g. sweet-pea" maxlength="32" autocomplete="off">
+          <p class="field-hint">Letters, numbers, and hyphens. Stored in your browser only.</p>
+        </div>
+        <div class="setup-actions">
+          <button class="btn-primary" id="btn-step1-next">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Google (optional) -->
+      <div class="setup-step" id="step-2">
+        <div class="setup-progress">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot active" id="dot-2b"></div>
+          <div class="progress-dot"></div>
+          <div class="progress-dot"></div>
+        </div>
+        <p class="setup-eyebrow">Step 2 of 4 — Optional</p>
+        <h2 class="setup-title">Connect Google.</h2>
+        <p class="setup-desc">
+          Link a Google account to sync your settings across devices.
+          Optional — your account works without it.
+        </p>
+        <button class="google-btn" id="btn-google">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
+          Continue with Google
+        </button>
+        <div class="setup-actions">
+          <button class="btn-setup-skip" id="btn-step2-skip">Skip for now</button>
+        </div>
+      </div>
+
+      <!-- Step 3: API Key (optional) -->
+      <div class="setup-step" id="step-3">
+        <div class="setup-progress">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot active"></div>
+          <div class="progress-dot"></div>
+        </div>
+        <p class="setup-eyebrow">Step 3 of 4 — Optional</p>
+        <h2 class="setup-title">Add an AI key.</h2>
+        <p class="setup-desc">
+          Connect a free API key from Gemini, Groq, or another provider.
+          Your key stays on this device — never sent to a server.
+        </p>
+        <div class="setup-field">
+          <label for="input-provider">Provider</label>
+          <select id="input-provider" style="width:100%;font-family:inherit;font-size:15px;color:var(--fg);background:white;border:1px solid var(--border);border-radius:4px;padding:0.6rem 0.85rem;outline:none;">
+            <option value="gemini">Google Gemini (free tier available)</option>
+            <option value="groq">Groq (free tier available)</option>
+            <option value="openai">OpenAI</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="setup-field">
+          <label for="input-apikey">API Key</label>
+          <input type="password" id="input-apikey" placeholder="Paste your key here" autocomplete="off">
+          <p class="field-hint">Stored in localStorage. Never leaves this browser.</p>
+        </div>
+        <div class="setup-actions">
+          <button class="btn-primary" id="btn-step3-save">Save Key</button>
+          <button class="btn-setup-skip" id="btn-step3-skip">Skip for now</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Ollama (optional) -->
+      <div class="setup-step" id="step-4">
+        <div class="setup-progress">
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot done"></div>
+          <div class="progress-dot active"></div>
+        </div>
+        <p class="setup-eyebrow">Step 4 of 4 — Optional</p>
+        <h2 class="setup-title">Connect Ollama.</h2>
+        <p class="setup-desc">
+          Running a local model? Connect Ollama for fully offline AI — no key required,
+          no data ever leaves your machine.
+        </p>
+        <div class="setup-field">
+          <label for="input-ollama">Ollama endpoint</label>
+          <input type="text" id="input-ollama" value="http://localhost:11434" autocomplete="off">
+          <p class="field-hint">Default: http://localhost:11434</p>
+        </div>
+        <div class="ollama-status" id="ollama-status"></div>
+        <div class="setup-actions">
+          <button class="btn-primary" id="btn-ollama-test">Test Connection</button>
+          <button class="btn-setup-skip" id="btn-step4-skip">Skip for now</button>
+        </div>
+      </div>
+
+      <!-- Done -->
+      <div class="setup-step" id="step-done">
+        <div class="setup-done-icon">✓</div>
+        <h2 class="setup-title">You're set up.</h2>
+        <p class="setup-desc">
+          Your account is ready. Everything is stored locally on this device.
+        </p>
+        <div class="setup-actions">
+          <a href="dashboard.html" class="btn-primary">Go to your dashboard</a>
+          <a href="jane.html" class="btn-secondary">Talk to Jane</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Account state ──────────────────────────────────────
+    const STORAGE_KEY = 'safe_account';
+
+    function loadAccount() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }
+      catch { return null; }
+    }
+
+    function saveAccount(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function clearAccount() {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function applyAccountState() {
+      const acct = loadAccount();
+      const navChip   = document.getElementById('nav-user-chip');
+      const navBtn    = document.getElementById('btn-nav-setup');
+      const heroAnon  = document.getElementById('hero-actions-anon');
+      const heroUser  = document.getElementById('hero-actions-user');
+      const navName   = document.getElementById('nav-username');
+      const heroName  = document.getElementById('hero-username');
+
+      if (acct && acct.username) {
+        navChip.style.display  = 'flex';
+        navBtn.style.display   = 'none';
+        heroAnon.style.display = 'none';
+        heroUser.style.display = 'flex';
+        navName.textContent  = acct.username;
+        heroName.textContent = acct.username;
+      } else {
+        navChip.style.display  = 'none';
+        navBtn.style.display   = '';
+        heroAnon.style.display = '';
+        heroUser.style.display = 'none';
+      }
+    }
+
+    // ── Modal ──────────────────────────────────────────────
+    const overlay = document.getElementById('setup-modal');
+    let currentStep = 1;
+    let pendingAccount = {};
+
+    function openModal() {
+      currentStep = 1;
+      pendingAccount = {};
+      showStep(1);
+      overlay.classList.add('open');
+      setTimeout(() => document.getElementById('input-username').focus(), 50);
+    }
+
+    function closeModal() {
+      overlay.classList.remove('open');
+    }
+
+    function showStep(n) {
+      document.querySelectorAll('.setup-step').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById(n === 'done' ? 'step-done' : `step-${n}`);
+      if (el) el.classList.add('active');
+    }
+
+    document.getElementById('btn-nav-setup').addEventListener('click', openModal);
+    document.getElementById('btn-hero-setup').addEventListener('click', openModal);
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+    // Step 1: username
+    document.getElementById('btn-step1-next').addEventListener('click', () => {
+      const val = document.getElementById('input-username').value.trim();
+      if (!val) { document.getElementById('input-username').focus(); return; }
+      pendingAccount.username = val;
+      pendingAccount.created_at = new Date().toISOString();
+      showStep(2);
+    });
+    document.getElementById('input-username').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-step1-next').click();
+    });
+
+    // Step 2: Google (stub)
+    document.getElementById('btn-google').addEventListener('click', () => {
+      // OAuth wiring pending — mark as connected and continue
+      pendingAccount.google = 'pending';
+      showStep(3);
+    });
+    document.getElementById('btn-step2-skip').addEventListener('click', () => showStep(3));
+
+    // Step 3: API key
+    document.getElementById('btn-step3-save').addEventListener('click', () => {
+      const provider = document.getElementById('input-provider').value;
+      const key = document.getElementById('input-apikey').value.trim();
+      if (key) {
+        pendingAccount.api_provider = provider;
+        pendingAccount.api_key = key;
+      }
+      showStep(4);
+    });
+    document.getElementById('btn-step3-skip').addEventListener('click', () => showStep(4));
+
+    // Step 4: Ollama
+    document.getElementById('btn-ollama-test').addEventListener('click', async () => {
+      const endpoint = document.getElementById('input-ollama').value.trim();
+      const statusEl = document.getElementById('ollama-status');
+      statusEl.className = 'ollama-status';
+      statusEl.textContent = 'Testing…';
+      statusEl.style.display = 'block';
+      try {
+        const res = await fetch(`${endpoint}/api/tags`, { signal: AbortSignal.timeout(4000) });
+        if (res.ok) {
+          const data = await res.json();
+          const models = (data.models || []).map(m => m.name).slice(0, 3).join(', ');
+          pendingAccount.ollama = endpoint;
+          statusEl.className = 'ollama-status ok';
+          statusEl.textContent = `Connected. Models: ${models || 'none loaded'}`;
+          setTimeout(finishSetup, 900);
+        } else {
+          throw new Error(`HTTP ${res.status}`);
+        }
+      } catch (e) {
+        statusEl.className = 'ollama-status err';
+        statusEl.textContent = `Could not connect — is Ollama running? (${e.message})`;
+      }
+    });
+    document.getElementById('btn-step4-skip').addEventListener('click', finishSetup);
+
+    function finishSetup() {
+      saveAccount(pendingAccount);
+      applyAccountState();
+      showStep('done');
+    }
+
+    // Sign out
+    document.getElementById('btn-signout').addEventListener('click', e => {
+      e.preventDefault();
+      clearAccount();
+      applyAccountState();
+    });
+
+    applyAccountState();
+  </script>
 
 </body>
 </html>
