@@ -89,6 +89,36 @@
     .willow-offline { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
     .willow-empty { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
 
+    /* WHAT WILLOW KNOWS */
+    #willowKnowsContainer { margin-top: 1rem; }
+    .entity-group { margin-bottom: 1.5rem; }
+    .entity-group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-muted); margin-bottom: 0.5rem; }
+    .entity-row { border: 1px solid var(--border); border-radius: 4px; padding: 0.7rem 1rem; margin-bottom: 0.4rem; }
+    .entity-row-main { display: flex; align-items: center; gap: 0.75rem; }
+    .entity-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .entity-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--fg); }
+    .entity-count { font-size: 12px; color: var(--fg-muted); flex-shrink: 0; }
+    .entity-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    .btn-entity-why { font-size: 12px; padding: 0.2rem 0.55rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .btn-entity-why:hover { border-color: var(--fg-muted); color: var(--fg); }
+    .btn-entity-rename { font-size: 12px; padding: 0.2rem 0.55rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .btn-entity-rename:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-entity-delete { font-size: 12px; padding: 0.2rem 0.55rem; background: none; color: #c0392b; border: 1px solid #e8c4c0; border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .btn-entity-delete:hover { background: #fdf2f1; }
+    .entity-sources { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); display: none; }
+    .entity-sources.open { display: block; }
+    .entity-source-item { font-size: 12px; color: var(--fg-muted); padding: 0.25rem 0; }
+    .entity-source-title { font-weight: 500; color: var(--fg); }
+    .entity-sources-empty { font-size: 12px; color: var(--fg-muted); font-style: italic; }
+    .entity-rename-form { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); display: none; gap: 0.5rem; align-items: center; }
+    .entity-rename-form.open { display: flex; }
+    .entity-rename-input { flex: 1; font-size: 13px; padding: 0.3rem 0.5rem; border: 1px solid var(--border); border-radius: 3px; font-family: inherit; color: var(--fg); background: var(--bg); }
+    .entity-rename-input:focus { outline: none; border-color: var(--accent); }
+    .btn-rename-apply { font-size: 12px; padding: 0.3rem 0.7rem; background: var(--accent-light); color: var(--accent); border: none; border-radius: 3px; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .btn-rename-cancel { font-size: 12px; padding: 0.3rem 0.6rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .knows-empty { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
+    .knows-offline { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
+
     /* TOAST */
     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--fg); color: var(--bg); font-size: 13px; padding: 0.6rem 1rem; border-radius: 4px; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
     .toast.show { opacity: 1; }
@@ -165,6 +195,13 @@
     <div class="section-eyebrow">Willow Noticed</div>
     <div class="section-sub">Connections Willow proposed &mdash; yours to approve</div>
     <div id="connectionsContainer"></div>
+  </div>
+
+  <!-- Section 5: What Willow Knows -->
+  <div class="section">
+    <div class="section-eyebrow">What Willow Knows</div>
+    <div class="section-sub">People, projects, and concepts Willow has learned from your conversations &mdash; yours to correct</div>
+    <div id="willowKnowsContainer"></div>
   </div>
 </main>
 
@@ -477,6 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderFinishPrompt(acct);
   renderPickup();
   loadConnections();
+  loadWillowKnows();
 });
 </script>
 </body>
