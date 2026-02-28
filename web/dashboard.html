@@ -597,9 +597,10 @@ async function loadConnections() {
     });
     clearTimeout(timer);
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const connections = await res.json();
+    const data = await res.json();
+    const connections = data.connections || [];
 
-    if (!Array.isArray(connections) || connections.length === 0) {
+    if (connections.length === 0) {
       el.innerHTML = '<p class="willow-empty">No pending connections.</p>';
       return;
     }
@@ -613,9 +614,9 @@ async function loadConnections() {
 }
 
 function buildConnectionCard(c) {
-  const entityA = escHtml(c.entity_a || c.source || '?');
-  const entityB = escHtml(c.entity_b || c.target || '?');
-  const reason  = escHtml(c.reason || c.description || '');
+  const entityA = escHtml(c.name_a || '?');
+  const entityB = escHtml(c.name_b || '?');
+  const reason  = escHtml(c.connection_type || c.reason || '');
   return '<div class="connection-card" id="conn-' + c.id + '">' +
     '<div class="connection-left">' +
       '<div class="connection-entities">' + entityA + ' → ' + entityB + '</div>' +
@@ -660,6 +661,34 @@ async function dismissConnection(id) {
   }
 }
 
+
+async function loadWillowKnows() {
+  const el = document.getElementById('willowKnowsContainer');
+  if (!el) return;
+  el.innerHTML =
+    '<div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.5rem">' +
+    '<button class="btn-willow-test" onclick="triggerWillowScan()" id="btnWillowScan">Scan for connections</button>' +
+    '<span id="willowScanResult" style="font-size:12px;color:var(--fg-muted)"></span>' +
+    '</div>';
+}
+
+async function triggerWillowScan() {
+  const btn = document.getElementById('btnWillowScan');
+  const result = document.getElementById('willowScanResult');
+  if (btn) btn.textContent = 'Scanning…';
+  try {
+    const res = await fetch(getWillowBase() + '/api/willow/scan-connections', { method: 'POST' });
+    const data = await res.json();
+    if (btn) btn.textContent = 'Scan for connections';
+    if (result) result.textContent = data.new_proposals > 0
+      ? data.new_proposals + ' new proposals found'
+      : 'No new connections found';
+    if (data.new_proposals > 0) loadConnections();
+  } catch (e) {
+    if (btn) btn.textContent = 'Scan for connections';
+    if (result) result.textContent = 'Willow offline';
+  }
+}
 
 // ── Pigeon Mail ────────────────────────────────────────────
 
