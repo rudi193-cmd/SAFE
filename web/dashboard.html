@@ -221,6 +221,11 @@
         <div id="googleAction"></div>
       </div>
       <div class="status-card">
+        <div class="card-label">Free Fleet</div>
+        <div class="card-status" id="fleetStatus">&mdash;</div>
+        <div class="card-detail" id="fleetDetail"></div>
+      </div>
+      <div class="status-card">
         <div class="card-label">Willow Server</div>
         <div class="card-status" id="willowServerStatus">&mdash;</div>
         <div class="card-detail" id="willowServerDetail"></div>
@@ -442,6 +447,35 @@ function renderGoogle(acct) {
     statusEl.style.color = 'var(--fg-muted)';
     actionEl.innerHTML =
       '<a href="#" class="card-link" onclick="showToast(\'Coming soon\'); return false;">Connect →</a>';
+  }
+}
+
+// ── Render: Free Fleet card ──────────────────────────────────────────────────
+
+async function renderFleet() {
+  const statusEl = document.getElementById('fleetStatus');
+  const detailEl = document.getElementById('fleetDetail');
+  if (!statusEl) return;
+  try {
+    const res = await fetch('http://localhost:8420/api/fleet/providers');
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const active = data.active || 0;
+    const total = data.total || 0;
+    if (active > 0) {
+      statusEl.innerHTML = '<span class="status-dot-green"></span>' + active + ' of ' + total + ' providers active';
+      statusEl.style.color = '';
+      const names = (data.providers || []).filter(p => p.active).map(p => p.name).join(', ');
+      detailEl.textContent = names;
+    } else {
+      statusEl.textContent = 'No fleet providers active';
+      statusEl.style.color = 'var(--fg-muted)';
+      detailEl.textContent = '';
+    }
+  } catch (e) {
+    statusEl.textContent = 'Fleet unavailable';
+    statusEl.style.color = 'var(--fg-muted)';
+    detailEl.textContent = '';
   }
 }
 
@@ -769,6 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderProvider(acct);
   renderOllama(acct);
   renderGoogle(acct);
+  renderFleet();
   renderFinishPrompt(acct);
   renderWillowServer(acct);
   renderPickup();
