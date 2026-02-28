@@ -145,6 +145,21 @@
     .knows-empty { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
     .knows-offline { font-size: 14px; color: var(--fg-muted); margin-top: 1rem; }
 
+    /* PIGEON MAIL */
+    #pigeonMailContainer { margin-top: 1rem; }
+    .pigeon-dropping { border: 1px solid var(--border); border-radius: 4px; padding: 0.7rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.75rem; }
+    .pigeon-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+    .pigeon-body { flex: 1; min-width: 0; }
+    .pigeon-filename { font-size: 13px; font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pigeon-meta { font-size: 11px; color: var(--fg-muted); margin-top: 2px; }
+    .pigeon-summary { font-size: 12px; color: var(--fg-muted); margin-top: 4px; line-height: 1.4; }
+    .pigeon-category { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: var(--accent-light); color: var(--accent); margin-right: 6px; }
+    .btn-sweep { font-size: 12px; padding: 0.2rem 0.55rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; flex-shrink: 0; margin-top: 2px; }
+    .btn-sweep:hover { border-color: #c0392b; color: #c0392b; }
+    .pigeon-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+    .btn-pigeon-scan { font-size: 12px; padding: 0.3rem 0.8rem; background: var(--accent-light); color: var(--accent); border: none; border-radius: 3px; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .btn-pigeon-sweep-all { font-size: 12px; padding: 0.3rem 0.8rem; background: none; color: var(--fg-muted); border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .pigeon-empty { font-size: 13px; color: var(--fg-muted); margin-top: 0.5rem; font-style: italic; }
     /* TOAST */
     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--fg); color: var(--bg); font-size: 13px; padding: 0.6rem 1rem; border-radius: 4px; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
     .toast.show { opacity: 1; }
@@ -250,6 +265,17 @@
     <div class="section-eyebrow">What Willow Knows</div>
     <div class="section-sub">People, projects, and concepts Willow has learned from your conversations &mdash; yours to correct</div>
     <div id="willowKnowsContainer"></div>
+  </div>
+
+  <!-- Section: Pigeon Mail -->
+  <div class="section">
+    <div class="section-eyebrow">Pigeon Mail</div>
+    <div class="section-sub">Drop files in your Nest &mdash; Pigeon files them and leaves a note &mdash; sweep when done</div>
+    <div id="pigeonMailContainer"><p class="pigeon-empty" style="opacity:0.5">Loading&hellip;</p></div>
+    <div class="pigeon-actions">
+      <button class="btn-pigeon-scan" onclick="pigeonScan()">Scan Nest</button>
+      <button class="btn-pigeon-sweep-all" onclick="pigeonSweepAll()">Clean Nest</button>
+    </div>
   </div>
 </main>
 
@@ -634,6 +660,76 @@ async function dismissConnection(id) {
   }
 }
 
+
+// ── Pigeon Mail ────────────────────────────────────────────
+
+async function loadPigeonMail() {
+  const el = document.getElementById('pigeonMailContainer');
+  try {
+    const res = await fetch('http://localhost:8420/api/pigeon/droppings');
+    if (!res.ok) throw new Error('offline');
+    const data = await res.json();
+    const droppings = data.droppings || [];
+    if (droppings.length === 0) {
+      el.innerHTML = '<p class="pigeon-empty">Nest is clean. Drop files in your Nest folder and click Scan Nest.</p>';
+      return;
+    }
+    el.innerHTML = droppings.map(function(d) {
+      const parts = (d.filed_to || '').replace(/\\/g, '/').split('/');
+      const filed = parts.slice(-2).join('/');
+      return '<div class="pigeon-dropping" id="pd-' + d.id + '">' +
+        '<span class="pigeon-icon">\uD83D\uDC26</span>' +
+        '<div class="pigeon-body">' +
+          '<div class="pigeon-filename">' + escHtml(d.filename) + '</div>' +
+          '<div class="pigeon-meta"><span class="pigeon-category">' + escHtml(d.category || '?') + '</span>Filed \u2192 ' + escHtml(filed) + '</div>' +
+          (d.summary ? '<div class="pigeon-summary">' + escHtml(d.summary) + '</div>' : '') +
+        '</div>' +
+        '<button class="btn-sweep" onclick="pigeonSweep(' + d.id + ')">\u00D7</button>' +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<p class="pigeon-empty">Pigeon is offline. Nest data appears when the server is running.</p>';
+  }
+}
+
+async function pigeonScan() {
+  const btn = document.querySelector('.btn-pigeon-scan');
+  if (btn) btn.textContent = 'Scanning\u2026';
+  try {
+    const res = await fetch('http://localhost:8420/api/pigeon/scan', { method: 'POST' });
+    const data = await res.json();
+    showToast(data.new_droppings > 0 ? 'Pigeon filed ' + data.new_droppings + ' file(s)' : 'Nest is empty');
+    await loadPigeonMail();
+  } catch (e) {
+    showToast('Scan failed');
+  } finally {
+    if (btn) btn.textContent = 'Scan Nest';
+  }
+}
+
+async function pigeonSweep(id) {
+  try {
+    const res = await fetch('http://localhost:8420/api/pigeon/droppings/' + id, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      const el = document.getElementById('pd-' + id);
+      if (el) el.remove();
+      const c = document.getElementById('pigeonMailContainer');
+      if (c && !c.querySelector('.pigeon-dropping')) c.innerHTML = '<p class="pigeon-empty">Nest is clean.</p>';
+    }
+  } catch (e) { showToast('Sweep failed'); }
+}
+
+async function pigeonSweepAll() {
+  if (!confirm('Clean Nest? Removes all droppings (filed files are not affected).')) return;
+  try {
+    const res = await fetch('http://localhost:8420/api/pigeon/droppings', { method: 'DELETE' });
+    const data = await res.json();
+    showToast('Cleaned ' + (data.swept || 0) + ' droppings');
+    await loadPigeonMail();
+  } catch (e) { showToast('Clean failed'); }
+}
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -649,6 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderPickup();
   loadConnections();
   loadWillowKnows();
+  loadPigeonMail();
 });
 </script>
 </body>
