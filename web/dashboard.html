@@ -307,21 +307,21 @@ const STORAGE_KEY = 'safe_account';
 function loadAccount() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    window.location.href = 'index.html';
+    window.location.href = '/';
     return null;
   }
   try {
     return JSON.parse(raw);
   } catch (e) {
     localStorage.removeItem(STORAGE_KEY);
-    window.location.href = 'index.html';
+    window.location.href = '/';
     return null;
   }
 }
 
 function signOut() {
   localStorage.removeItem(STORAGE_KEY);
-  window.location.href = 'index.html';
+  window.location.href = '/';
 }
 
 function formatDate(iso) {
