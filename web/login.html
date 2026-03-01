@@ -310,7 +310,7 @@
       }
 
       const next = getNextUrl();
-      window.location.href = next || 'index.html';
+      window.location.href = next || '/';
 
     } catch (err) {
       errEl.textContent = err.message === 'Invalid credentials'
