@@ -247,6 +247,10 @@
           </div>
         </div>
       </div>
+      <div class="status-card">
+        <div class="card-label">Endpoints</div>
+        <div id="endpointRows" style="margin-top:0.35rem;display:flex;flex-direction:column;gap:0.3rem;"></div>
+      </div>
     </div>
     <div id="finishPrompt"></div>
   </div>
@@ -477,6 +481,41 @@ async function renderFleet() {
     statusEl.style.color = 'var(--fg-muted)';
     detailEl.textContent = '';
   }
+}
+
+// ── Render: Endpoints card ──────────────────────────────────────────────────
+
+async function renderEndpoints() {
+  const el = document.getElementById('endpointRows');
+  if (!el) return;
+
+  const endpoints = [
+    { name: 'Willow', port: 8420, url: 'http://localhost:8420/api/safe/whoami' },
+    { name: 'Jane',   port: 8421, url: 'http://localhost:8421/health' },
+  ];
+
+  el.innerHTML = endpoints.map(function(ep) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;">' +
+      '<span style="color:var(--fg-muted)">' + ep.name +
+        '<span style="font-family:monospace;font-size:11px;margin-left:4px;color:var(--fg-muted)">:' + ep.port + '</span>' +
+      '</span>' +
+      '<span id="ep-badge-' + ep.port + '" style="font-size:11px;font-weight:700;padding:1px 7px;border-radius:3px;background:#f5f5f3;color:var(--fg-muted)">…</span>' +
+    '</div>';
+  }).join('');
+
+  await Promise.all(endpoints.map(async function(ep) {
+    const badge = document.getElementById('ep-badge-' + ep.port);
+    try {
+      const res = await fetch(ep.url, { signal: AbortSignal.timeout(2500) });
+      badge.textContent = res.ok ? 'online' : 'err ' + res.status;
+      badge.style.background = res.ok ? 'var(--accent-light)' : '#fef2f2';
+      badge.style.color = res.ok ? 'var(--accent)' : '#b42318';
+    } catch {
+      badge.textContent = 'offline';
+      badge.style.background = '#fef2f2';
+      badge.style.color = '#b42318';
+    }
+  }));
 }
 
 // ── Render: Finish Prompt ────────────────────────────────────────────────────
@@ -804,6 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderOllama(acct);
   renderGoogle(acct);
   renderFleet();
+  renderEndpoints();
   renderFinishPrompt(acct);
   renderWillowServer(acct);
   renderPickup();

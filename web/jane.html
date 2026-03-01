@@ -433,6 +433,18 @@
         <button class="btn-primary" id="btn-authorize">Authorize Session</button>
         <button class="btn-ghost" id="btn-decline">Decline</button>
       </div>
+
+        <div class="endpoint-rows">
+          <div class="endpoint-row">
+            <span><span class="endpoint-name">Jane</span><span class="endpoint-url">:8421</span></span>
+            <span class="endpoint-badge checking" id="badge-jane">checking</span>
+          </div>
+          <div class="endpoint-row">
+            <span><span class="endpoint-name">Willow</span><span class="endpoint-url">:8420</span></span>
+            <span class="endpoint-badge checking" id="badge-willow">checking</span>
+          </div>
+        </div>
+      </div>
       <p class="consent-fine-print">
         This authorization expires when you close this session or click End Session.
       </p>
@@ -670,6 +682,8 @@
       btnAuthorize.disabled = false;
       btnAuthorize.textContent = 'Authorize Session';
       showScreen('consent');
+
+
     });
 
     btnSend.addEventListener('click', () => sendMessage(chatInput.value));
@@ -684,6 +698,8 @@
     chatInput.addEventListener('input', autoResize);
 
     showScreen('consent');
+
+
   </script>
 
 </body>
