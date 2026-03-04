@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jane — SAFE</title>
+  <meta name="description" content="Jane — built on the SAFE consent framework. Your conversation is local to this session and deleted when you leave.">
+  <style>
+    :root {
+      --bg: #f9f9f7;
+      --fg: #1c1c1a;
+      --fg-muted: #6b6b64;
+      --accent: #2d6a4f;
+      --accent-light: #e8f4ee;
+      --border: #e2e2de;
+      --max: 680px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.75;
+      font-size: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Nav ───────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+    .nav-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+    }
+    .nav-wordmark {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--fg);
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      color: var(--fg-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* ── Buttons ───────────────────────────────────────── */
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      padding: 0.6rem 1.4rem;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .btn-primary:hover { background: #1e4d38; }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-ghost {
+      background: none;
+      border: none;
+      font-size: 14px;
+      color: var(--fg-muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-family: inherit;
+      transition: color 0.15s;
+    }
+    .btn-ghost:hover { color: var(--fg); }
+
+    /* ── SCREEN 1: CONSENT ─────────────────────────────── */
+    #consent-gate {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+    }
+    .consent-card {
+      max-width: var(--max);
+      width: 100%;
+    }
+    .consent-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .consent-card h1 {
+      font-size: clamp(1.5rem, 4vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .consent-lead {
+      font-size: 16px;
+      color: var(--fg-muted);
+      line-height: 1.7;
+      margin-bottom: 1.75rem;
+    }
+    .consent-permissions {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-bottom: 2rem;
+    }
+    .consent-permissions li {
+      font-size: 15px;
+      color: var(--fg-muted);
+      display: flex;
+      gap: 0.75rem;
+      line-height: 1.6;
+    }
+    .consent-permissions li .perm-arrow {
+      color: var(--accent);
+      flex-shrink: 0;
+      line-height: 1.6;
+    }
+    .consent-permissions strong { color: var(--fg); }
+    .consent-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .consent-fine-print {
+      margin-top: 1.25rem;
+      font-size: 13px;
+      color: var(--fg-muted);
+    }
+
+    /* ── SCREEN 2: CHAT ────────────────────────────────── */
+    #chat-interface {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+    #chat-interface.active { display: flex; }
+
+    .chat-header {
+      max-width: var(--max);
+      width: 100%;
+      margin: 0 auto;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .chat-name {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .chat-status {
+      font-size: 13px;
+      color: var(--fg-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .btn-end-session {
+      font-size: 13px;
+      color: var(--fg-muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.3rem 0.75rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-end-session:hover { color: #c0392b; border-color: #c0392b; }
+
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    .messages-inner {
+      max-width: var(--max);
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    /* Messages — no bubbles */
+    .msg {
+      display: flex;
+      flex-direction: column;
+    }
+    .msg-jane { align-items: flex-start; }
+    .msg-user { align-items: flex-end; }
+    .msg-system { align-items: center; }
+
+    .msg-sender {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg-muted);
+      margin-bottom: 0.3rem;
+    }
+    .msg-text {
+      font-size: 16px;
+      line-height: 1.75;
+      max-width: 88%;
+    }
+    .msg-jane .msg-text { color: var(--fg); }
+    .msg-user .msg-text { color: var(--fg-muted); text-align: right; }
+    .msg-system .msg-text {
+      font-size: 13px;
+      color: var(--fg-muted);
+      font-style: italic;
+    }
+
+    /* Typing indicator */
+    .typing-wrap {
+      max-width: var(--max);
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1.5rem 0.5rem;
+    }
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+    .typing-indicator.visible { display: flex; }
+    .typing-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--fg-muted);
+      border-radius: 50%;
+      animation: typingPulse 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingPulse {
+      0%, 60%, 100% { opacity: 0.2; }
+      30% { opacity: 0.8; }
+    }
+
+    .offline-bar {
+      max-width: var(--max);
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1.5rem 0.5rem;
+      font-size: 13px;
+      color: #a0720a;
+      display: none;
+    }
+    .offline-bar.visible { display: block; }
+
+    .input-bar {
+      max-width: var(--max);
+      width: 100%;
+      margin: 0 auto;
+      padding: 0.5rem 1.5rem 1.5rem;
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .input-bar textarea {
+      flex: 1;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--fg);
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.6rem 0.85rem;
+      resize: none;
+      min-height: 42px;
+      max-height: 140px;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input-bar textarea:focus { border-color: var(--accent); }
+    .input-bar textarea:disabled {
+      background: #f3f3f1;
+      color: var(--fg-muted);
+      cursor: not-allowed;
+    }
+    .input-bar textarea::placeholder { color: #bbb; }
+
+    /* ── SCREEN 3: SESSION END ─────────────────────────── */
+    #session-end {
+      display: none;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    #session-end.active { display: flex; }
+    .end-card { max-width: 480px; width: 100%; }
+    .end-card h1 {
+      font-size: clamp(1.5rem, 4vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .end-card p {
+      font-size: 16px;
+      color: var(--fg-muted);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .safe-badge {
+      display: inline-block;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 0.35rem 0.8rem;
+      border-radius: 3px;
+      margin-bottom: 1.75rem;
+    }
+
+    /* ── Footer ────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 0;
+      flex-shrink: 0;
+    }
+    .footer-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .footer-left { font-size: 13px; color: var(--fg-muted); }
+    .footer-right { display: flex; gap: 1.25rem; }
+    .footer-right a {
+      font-size: 13px;
+      color: var(--fg-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-right a:hover { color: var(--accent); }
+
+    @media (max-width: 480px) {
+      .consent-card h1, .end-card h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-wordmark">SAFE</a>
+      <ul class="nav-links">
+        <li><a href="index.html#rights">Rights</a></li>
+        <li><a href="index.html">SAFE ↗</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- SCREEN 1: CONSENT GATE -->
+  <section id="consent-gate">
+    <div class="consent-card">
+      <p class="consent-eyebrow">Session Authorization</p>
+      <h1>Before we begin.</h1>
+      <p class="consent-lead">
+        Jane is requesting access to your conversation for this session.
+        When you end the session, your conversation is deleted.
+        Jane cannot access anything you haven't explicitly shared.
+      </p>
+      <ul class="consent-permissions">
+        <li>
+          <span class="perm-arrow">→</span>
+          <span><strong>Conversation history</strong> — Jane can read what you type in this session. Access expires at session end.</span>
+        </li>
+        <li>
+          <span class="perm-arrow">→</span>
+          <span><strong>Session memory</strong> — Jane can reference earlier messages in this conversation. Not stored after session ends.</span>
+        </li>
+      </ul>
+      <div class="consent-actions">
+        <button class="btn-primary" id="btn-authorize">Authorize Session</button>
+        <button class="btn-ghost" id="btn-decline">Decline</button>
+      </div>
+
+        <div class="endpoint-rows">
+          <div class="endpoint-row">
+            <span><span class="endpoint-name">Shiva</span><span class="endpoint-url">:8421</span></span>
+            <span class="endpoint-badge checking" id="badge-jane">checking</span>
+          </div>
+          <div class="endpoint-row">
+            <span><span class="endpoint-name">Willow</span><span class="endpoint-url">:8420</span></span>
+            <span class="endpoint-badge checking" id="badge-willow">checking</span>
+          </div>
+        </div>
+      </div>
+      <p class="consent-fine-print">
+        This authorization expires when you close this session or click End Session.
+      </p>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: CHAT -->
+  <div id="chat-interface">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <span class="chat-name">Shiva</span>
+        <span class="chat-status">
+          <span class="status-dot"></span>
+          active
+        </span>
+      </div>
+      <button class="btn-end-session" id="btn-end-top">End Session</button>
+    </div>
+
+    <div class="messages-area" id="messages-area">
+      <div class="messages-inner" id="messages-inner"></div>
+      <div class="typing-wrap">
+        <div class="typing-indicator" id="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="offline-bar" id="offline-bar">Jane is offline — connect to start chatting</div>
+
+    <div class="input-bar">
+      <textarea
+        id="chat-input"
+        placeholder="Type a message…"
+        rows="1"
+        aria-label="Message input"
+      ></textarea>
+      <button class="btn-primary" id="btn-send">Send</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: SESSION END -->
+  <section id="session-end">
+    <div class="end-card">
+      <h1>Session ended.</h1>
+      <p>Your conversation has been deleted from this device.<br>Nothing was stored beyond this session.</p>
+      <div><span class="safe-badge">SAFE Compliant ✓</span></div>
+      <button class="btn-primary" id="btn-new-session">Start new session</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">Jane — built on the SAFE consent framework</div>
+      <div class="footer-right">
+        <a href="index.html">SAFE ↗</a>
+        <a href="index.html#rights">Rights</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const JANE_API  = 'http://localhost:8421';
+    const GUEST_USER = 'guest';
+
+    let sessionId = null;
+    let conversationHistory = [];
+    let janeOnline = true;
+
+    const consentGate    = document.getElementById('consent-gate');
+    const chatInterface  = document.getElementById('chat-interface');
+    const sessionEnd     = document.getElementById('session-end');
+    const messagesInner  = document.getElementById('messages-inner');
+    const messagesArea   = document.getElementById('messages-area');
+    const chatInput      = document.getElementById('chat-input');
+    const btnSend        = document.getElementById('btn-send');
+    const btnAuthorize   = document.getElementById('btn-authorize');
+    const btnDecline     = document.getElementById('btn-decline');
+    const btnEndTop      = document.getElementById('btn-end-top');
+    const btnNewSession  = document.getElementById('btn-new-session');
+    const offlineBar     = document.getElementById('offline-bar');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    function generateLocalId() {
+      return Math.random().toString(36).slice(2, 10).toUpperCase();
+    }
+
+    function showScreen(name) {
+      consentGate.style.display  = name === 'consent' ? '' : 'none';
+      chatInterface.classList.toggle('active', name === 'chat');
+      if (name === 'end') {
+        sessionEnd.style.display = '';
+        sessionEnd.classList.add('active');
+      } else {
+        sessionEnd.style.display = 'none';
+        sessionEnd.classList.remove('active');
+      }
+    }
+
+    function setOffline(offline) {
+      janeOnline = !offline;
+      offlineBar.classList.toggle('visible', offline);
+      chatInput.disabled = offline;
+      btnSend.disabled   = offline;
+    }
+
+    function appendMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.className = 'msg msg-' + (role === 'user' ? 'user' : role === 'system' ? 'system' : 'jane');
+
+      if (role !== 'system') {
+        const sender = document.createElement('div');
+        sender.className = 'msg-sender';
+        sender.textContent = role === 'user' ? 'You' : 'Shiva';
+        msg.appendChild(sender);
+      }
+
+      const textEl = document.createElement('div');
+      textEl.className = 'msg-text';
+      textEl.textContent = text;
+      msg.appendChild(textEl);
+
+      messagesInner.appendChild(msg);
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function showTyping(visible) {
+      typingIndicator.classList.toggle('visible', visible);
+      if (visible) messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function autoResize() {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 140) + 'px';
+    }
+
+    async function startSession() {
+      try {
+        const res = await fetch(`${JANE_API}/session/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: GUEST_USER })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        sessionId = data.session_id || data.sessionId || generateLocalId();
+        setOffline(false);
+      } catch {
+        sessionId = generateLocalId();
+        setOffline(true);
+      }
+    }
+
+    async function endSession() {
+      if (sessionId && janeOnline) {
+        try {
+          await fetch(`${JANE_API}/session/end`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: GUEST_USER, session_id: sessionId })
+          });
+        } catch { /* session ends locally regardless */ }
+      }
+      sessionId = null;
+      conversationHistory = [];
+      messagesInner.innerHTML = '';
+    }
+
+    async function sendMessage(text) {
+      if (!text.trim()) return;
+
+      appendMessage('user', text);
+      conversationHistory.push({ role: 'user', content: text });
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      btnSend.disabled = true;
+      showTyping(true);
+
+      if (!janeOnline) {
+        showTyping(false);
+        appendMessage('system', 'Jane is currently offline. Your message could not be sent.');
+        btnSend.disabled = false;
+        return;
+      }
+
+      try {
+        const res = await fetch(`${JANE_API}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            username: GUEST_USER,
+            session_id: sessionId,
+            conversation_history: conversationHistory
+          })
+        });
+        showTyping(false);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const reply = data.response || data.message || data.content || "Sorry, I didn't get a response.";
+        appendMessage('jane', reply);
+        conversationHistory.push({ role: 'assistant', content: reply });
+      } catch {
+        showTyping(false);
+        appendMessage('system', 'Something went wrong reaching Jane. Please try again.');
+      }
+
+      btnSend.disabled = false;
+      chatInput.focus();
+    }
+
+    btnAuthorize.addEventListener('click', async () => {
+      btnAuthorize.disabled = true;
+      btnAuthorize.textContent = 'Starting…';
+      await startSession();
+      showScreen('chat');
+      appendMessage('jane', "Hello. What's on your mind?");
+      chatInput.focus();
+    });
+
+    btnDecline.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+
+    async function doEndSession() {
+      await endSession();
+      showScreen('end');
+    }
+
+    btnEndTop.addEventListener('click', doEndSession);
+
+    btnNewSession.addEventListener('click', () => {
+      btnAuthorize.disabled = false;
+      btnAuthorize.textContent = 'Authorize Session';
+      showScreen('consent');
+
+
+    });
+
+    btnSend.addEventListener('click', () => sendMessage(chatInput.value));
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(chatInput.value);
+      }
+    });
+
+    chatInput.addEventListener('input', autoResize);
+
+    showScreen('consent');
+
+
+  </script>
+
+</body>
+</html>

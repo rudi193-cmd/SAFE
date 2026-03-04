@@ -7,7 +7,7 @@ function shortId() {
 
 export function generateSessionId() {
   const date = new Date().toISOString().split('T')[0]
-  return 'jane-' + date + '-' + shortId()
+  return 'shiva-' + date + '-' + shortId()
 }
 
 export function sessionTimer() {

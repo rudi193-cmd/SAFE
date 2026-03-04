@@ -178,7 +178,7 @@
     <a href="index.html" class="nav-wordmark">SAFE</a>
     <div class="nav-right">
       <ul class="nav-links">
-        <li><a href="jane.html">Jane</a></li>
+        <li><a href="shiva.html">Shiva</a></li>
       </ul>
       <div class="nav-user-chip" id="navUserChip">
         <span class="user-dot"></span>
@@ -291,7 +291,7 @@
 <footer>
   <div class="footer-inner">
     <span>SAFE &middot; Session-Authorized, Fully Explicit</span>
-    <span><a href="jane.html">Jane</a> &middot; <a href="index.html">Back to home</a></span>
+    <span><a href="shiva.html">Shiva</a> &middot; <a href="index.html">Back to home</a></span>
   </div>
 </footer>
 
@@ -491,7 +491,7 @@ async function renderEndpoints() {
 
   const endpoints = [
     { name: 'Willow', port: 8420, url: 'http://localhost:8420/api/safe/whoami' },
-    { name: 'Jane',   port: 8421, url: 'http://localhost:8421/health' },
+    { name: 'Kart',   port: 8420, url: 'http://localhost:8420/api/kart/status' },
   ];
 
   el.innerHTML = endpoints.map(function(ep) {
@@ -796,16 +796,23 @@ async function loadPigeonMail() {
 
 async function pigeonScan() {
   const btn = document.querySelector('.btn-pigeon-scan');
-  if (btn) btn.textContent = 'Scanning\u2026';
+  if (btn) { btn.textContent = 'Scanning\u2026'; btn.disabled = true; }
   try {
     const res = await fetch('http://localhost:8420/api/pigeon/scan', { method: 'POST' });
     const data = await res.json();
-    showToast(data.new_droppings > 0 ? 'Pigeon filed ' + data.new_droppings + ' file(s)' : 'Nest is empty');
+    if (data.new_droppings > 0) {
+      const summary = data.droppings.map(function(d) {
+        return d.filename + ' \u2192 ' + d.category + (d.subcategory ? '/' + d.subcategory : '');
+      }).join('\n');
+      showToast('Pigeon filed ' + data.new_droppings + ' file(s):\n' + summary, 6000);
+    } else {
+      showToast('Nest is empty \u2014 no new files');
+    }
     await loadPigeonMail();
   } catch (e) {
-    showToast('Scan failed');
+    showToast('Scan failed: ' + e.message);
   } finally {
-    if (btn) btn.textContent = 'Scan Nest';
+    if (btn) { btn.textContent = 'Scan Nest'; btn.disabled = false; }
   }
 }
 
